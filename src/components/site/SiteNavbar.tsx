@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LogoFull, LogoSymbol } from "@/components/brand/Logo";
+import { useAuth } from "@/hooks/useAuth";
 
 const links = [
   { label: "How It Works", href: "#how-it-works" },
@@ -13,6 +14,7 @@ const links = [
 
 export function SiteNavbar() {
   const [open, setOpen] = useState(false);
+  const { isAuthenticated, loading } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
@@ -35,12 +37,20 @@ export function SiteNavbar() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Button variant="ghost" asChild>
-            <Link to="/login">Log In</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/register">Get Started</Link>
-          </Button>
+          {loading ? null : isAuthenticated ? (
+            <Button asChild>
+              <Link to="/dashboard">Go to Dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link to="/login">Log In</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/register">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <button
@@ -69,12 +79,20 @@ export function SiteNavbar() {
             ))}
           </nav>
           <div className="mt-3 flex flex-col gap-2">
-            <Button variant="outline" asChild>
-              <Link to="/login">Log In</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/register">Get Started</Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button asChild>
+                <Link to="/dashboard">Go to Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" asChild>
+                  <Link to="/login">Log In</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
