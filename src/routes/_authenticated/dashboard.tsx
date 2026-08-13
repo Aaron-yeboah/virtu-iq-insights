@@ -4,7 +4,7 @@ import { Coins, ScanSearch, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/app/AppShell";
-import { analysesQuery, profileQuery, referralsQuery } from "@/lib/data";
+import { analysesQuery, profileQuery, referralsQuery, rolesQuery } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -22,23 +22,27 @@ function DashboardPage() {
   const { user } = Route.useRouteContext();
   const { data: profile } = useQuery(profileQuery(user.id));
   const { data: analyses } = useQuery(analysesQuery(user.id));
-  const { data: referrals } = useQuery(referralsQuery(user.id));
+  const { data: roles } = useQuery(rolesQuery(user.id));
+  const isPartner = (roles ?? []).includes("partner");
+  const { data: referrals } = useQuery({ ...referralsQuery(user.id), enabled: isPartner });
 
   const completed = (analyses ?? []).filter((a) => a.status === "completed").length;
   const recent = (analyses ?? []).slice(0, 5);
 
   const stats = [
     { label: "Credits available", value: profile?.credits ?? 0, icon: Coins },
-    { label: "Analyses run", value: analyses?.length ?? 0, icon: ScanSearch },
-    { label: "Reports completed", value: completed, icon: Sparkles },
-    { label: "Members referred", value: referrals ?? 0, icon: Users },
+    { label: "Predictions run", value: analyses?.length ?? 0, icon: ScanSearch },
+    { label: "Verdicts delivered", value: completed, icon: Sparkles },
+    ...(isPartner
+      ? [{ label: "Members referred", value: referrals ?? 0, icon: Users }]
+      : []),
   ];
 
   return (
     <>
       <PageHeader
         title={`Welcome back${profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}`}
-        description="Upload a screenshot and Virtu-IQ turns it into a structured insight report."
+        description="Upload a football screenshot and Virtu-IQ picks the most likely outcome."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -54,19 +58,19 @@ function DashboardPage() {
       </div>
 
       <div className="mt-6 rounded-xl border border-border bg-gradient-to-br from-primary to-[var(--color-primary-deep,var(--color-primary))] p-6 text-primary-foreground sm:p-8">
-        <h2 className="text-xl font-bold">Ready for your next insight?</h2>
+        <h2 className="text-xl font-bold">Ready for your next verdict?</h2>
         <p className="mt-2 max-w-lg text-sm opacity-90">
-          Each analysis costs 1 credit. Upload any screenshot — dashboards, statements, reports or
-          chat threads — and get a structured breakdown in seconds.
+          Each verdict costs 1 credit. Upload a fixture list, bet slip or stats screenshot and
+          Virtu-IQ names the most likely outcome in seconds.
         </p>
         <Button asChild variant="secondary" className="mt-5">
-          <Link to="/analyze">Start an analysis</Link>
+          <Link to="/analyze">Get a verdict</Link>
         </Button>
       </div>
 
       <section className="mt-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Recent analyses</h2>
+          <h2 className="text-lg font-semibold text-foreground">Recent verdicts</h2>
           <Link to="/history" className="text-sm font-medium text-primary hover:underline">
             View all
           </Link>
@@ -74,7 +78,7 @@ function DashboardPage() {
         <div className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {recent.length === 0 && (
             <p className="p-6 text-sm text-muted-foreground">
-              No analyses yet. Your reports will appear here.
+              No verdicts yet. Your predictions will appear here.
             </p>
           )}
           {recent.map((a) => (
