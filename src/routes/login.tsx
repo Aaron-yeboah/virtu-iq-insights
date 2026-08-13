@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { LogoFull } from "@/components/brand/Logo";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -20,10 +21,56 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/dashboard", replace: true });
+    });
+  }, [navigate]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+    if (!email.includes("@")) return setError("Please enter a valid email address.");
+    if (password.length < 6) return setError("Please enter your password.");
+
+    setPending(true);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    setPending(false);
+    if (signInError) return setError(signInError.message);
+    navigate({ to: "/dashboard", replace: true });
+  }
+
+  async function handleGoogle() {
+    setError(null);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) return setError("Google sign-in failed. Please try again.");
+    if (result.redirected) return;
+    navigate({ to: "/dashboard", replace: true });
+  }
+
+  async function handleReset() {
+    setError(null);
+    if (!email.includes("@")) return setError("Enter your email address first.");
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (resetError) return setError(resetError.message);
+    setNotice("Check your inbox for a password reset link.");
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
@@ -33,19 +80,18 @@ function LoginPage() {
         </Link>
         <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            Log in to continue your analysis work.
-          </p>
+          <p className="mt-1.5 text-sm text-muted-foreground">Log in to continue your analysis work.</p>
 
-          <form
-            className="mt-6 space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!email.includes("@")) return setError("Please enter a valid email address.");
-              if (password.length < 6) return setError("Please enter your password.");
-              setError("Accounts aren't connected yet. Secure sign-in arrives with the next build step.");
-            }}
-          >
+          <Button type="button" variant="outline" className="mt-6 w-full" onClick={handleGoogle}>
+            Continue with Google
+          </Button>
+          <div className="my-5 flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -80,23 +126,21 @@ function LoginPage() {
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox id="remember" defaultChecked />
-                <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground">
-                  Remember me
-                </Label>
-              </div>
-              <a href="#" className="text-sm font-medium text-primary hover:underline">
+            <div className="flex justify-end">
+              <button type="button" onClick={handleReset} className="text-sm font-medium text-primary hover:underline">
                 Forgot password?
-              </a>
+              </button>
             </div>
             {error && (
               <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
               </p>
             )}
-            <Button type="submit" className="w-full">
+            {notice && (
+              <p className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">{notice}</p>
+            )}
+            <Button type="submit" className="w-full" disabled={pending}>
+              {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
               Log In
             </Button>
           </form>
