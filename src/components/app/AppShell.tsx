@@ -1,0 +1,145 @@
+import { useState, type ReactNode } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  LayoutDashboard,
+  ScanSearch,
+  History,
+  Coins,
+  Handshake,
+  ShieldCheck,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { LogoFull, LogoSymbol } from "@/components/brand/Logo";
+import { profileQuery, rolesQuery } from "@/lib/data";
+import { cn } from "@/lib/utils";
+
+const baseNav = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/analyze", label: "New Analysis", icon: ScanSearch },
+  { to: "/history", label: "History", icon: History },
+  { to: "/credits", label: "Credits", icon: Coins },
+  { to: "/partner", label: "Partner", icon: Handshake },
+] as const;
+
+export function AppShell({ userId, children }: { userId: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const { data: profile } = useQuery(profileQuery(userId));
+  const { data: roles } = useQuery(rolesQuery(userId));
+  const isAdmin = (roles ?? []).includes("admin");
+
+  const nav = [
+    ...baseNav,
+    ...(isAdmin ? ([{ to: "/admin", label: "Admin", icon: ShieldCheck }] as const) : []),
+  ];
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/", replace: true });
+  }
+
+  const navList = (
+    <nav className="flex flex-col gap-1" aria-label="Workspace">
+      {nav.map((item) => {
+        const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={() => setOpen(false)}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              active
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            <item.icon className="size-4" />
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
+  return (
+    <div className="min-h-screen bg-secondary/30">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-border bg-card px-4 py-5 lg:flex">
+        <Link to="/" aria-label="Virtu-IQ home">
+          <LogoFull className="h-8" />
+        </Link>
+        <div className="mt-8 flex-1">{navList}</div>
+        <div className="rounded-lg border border-border bg-secondary/60 p-3">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Credit balance
+          </p>
+          <p className="mt-1 text-2xl font-bold text-foreground">{profile?.credits ?? 0}</p>
+          <Button asChild size="sm" className="mt-3 w-full">
+            <Link to="/credits">Top up</Link>
+          </Button>
+        </div>
+        <button
+          type="button"
+          onClick={signOut}
+          className="mt-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <LogOut className="size-4" /> Sign out
+        </button>
+      </aside>
+
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/90 px-4 backdrop-blur lg:hidden">
+        <Link to="/" aria-label="Virtu-IQ home">
+          <LogoSymbol className="h-8" />
+        </Link>
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-foreground">
+            {profile?.credits ?? 0} credits
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label={open ? "Close menu" : "Open menu"}
+            className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-accent"
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+        </div>
+      </header>
+
+      {open && (
+        <div className="border-b border-border bg-card px-4 py-4 lg:hidden">
+          {navList}
+          <button
+            type="button"
+            onClick={signOut}
+            className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <LogOut className="size-4" /> Sign out
+          </button>
+        </div>
+      )}
+
+      <main className="px-4 py-6 sm:px-6 lg:ml-64 lg:px-10 lg:py-10">{children}</main>
+    </div>
+  );
+}
+
+export function PageHeader({ title, description }: { title: string; description?: string }) {
+  return (
+    <header className="mb-8">
+      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+      {description && <p className="mt-2 text-sm text-muted-foreground">{description}</p>}
+    </header>
+  );
+}
