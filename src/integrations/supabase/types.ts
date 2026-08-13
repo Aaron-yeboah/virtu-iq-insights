@@ -14,16 +14,411 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analyses: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          credits_used: number
+          error_message: string | null
+          id: string
+          image_path: string
+          prompt: string | null
+          result: Json | null
+          status: Database["public"]["Enums"]["analysis_status"]
+          summary: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          id?: string
+          image_path: string
+          prompt?: string | null
+          result?: Json | null
+          status?: Database["public"]["Enums"]["analysis_status"]
+          summary?: string | null
+          title?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          id?: string
+          image_path?: string
+          prompt?: string | null
+          result?: Json | null
+          status?: Database["public"]["Enums"]["analysis_status"]
+          summary?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          meta: Json
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          meta?: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          meta?: Json
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          created_at: string
+          delta: number
+          id: string
+          reason: string
+          ref_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          id?: string
+          reason: string
+          ref_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: string
+          reason?: string
+          ref_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      packages: {
+        Row: {
+          created_at: string
+          credits: number
+          id: string
+          is_active: boolean
+          name: string
+          perks: Json
+          price_ghs: number
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          credits: number
+          id?: string
+          is_active?: boolean
+          name: string
+          perks?: Json
+          price_ghs: number
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          perks?: Json
+          price_ghs?: number
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      partner_applications: {
+        Row: {
+          admin_note: string | null
+          audience: string
+          created_at: string
+          id: string
+          motivation: string
+          payout_details: string
+          payout_method: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          audience: string
+          created_at?: string
+          id?: string
+          motivation: string
+          payout_details: string
+          payout_method: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          audience?: string
+          created_at?: string
+          id?: string
+          motivation?: string
+          payout_details?: string
+          payout_method?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      partner_commissions: {
+        Row: {
+          amount_ghs: number
+          created_at: string
+          id: string
+          partner_id: string
+          payment_id: string
+          referred_user_id: string
+        }
+        Insert: {
+          amount_ghs: number
+          created_at?: string
+          id?: string
+          partner_id: string
+          payment_id: string
+          referred_user_id: string
+        }
+        Update: {
+          amount_ghs?: number
+          created_at?: string
+          id?: string
+          partner_id?: string
+          payment_id?: string
+          referred_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_commissions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          admin_note: string | null
+          amount_ghs: number
+          created_at: string
+          credits: number
+          id: string
+          method: string
+          package_id: string | null
+          reference: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount_ghs: number
+          created_at?: string
+          credits: number
+          id?: string
+          method: string
+          package_id?: string | null
+          reference: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount_ghs?: number
+          created_at?: string
+          credits?: number
+          id?: string
+          method?: string
+          package_id?: string | null
+          reference?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          credits: number
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          referral_code: string
+          referred_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          referral_code: string
+          referred_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          referral_code?: string
+          referred_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_stats: { Args: never; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      refund_credits: {
+        Args: { _amount: number; _reason: string; _ref_id?: string }
+        Returns: number
+      }
+      review_partner_application: {
+        Args: { _application_id: string; _approve: boolean; _note?: string }
+        Returns: {
+          admin_note: string | null
+          audience: string
+          created_at: string
+          id: string
+          motivation: string
+          payout_details: string
+          payout_method: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "partner_applications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      review_payment: {
+        Args: { _approve: boolean; _note?: string; _payment_id: string }
+        Returns: {
+          admin_note: string | null
+          amount_ghs: number
+          created_at: string
+          credits: number
+          id: string
+          method: string
+          package_id: string | null
+          reference: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      spend_credits: {
+        Args: { _amount: number; _reason: string; _ref_id?: string }
+        Returns: number
+      }
     }
     Enums: {
-      [_ in never]: never
+      analysis_status: "pending" | "processing" | "completed" | "failed"
+      app_role: "admin" | "partner" | "member"
+      application_status: "pending" | "approved" | "rejected"
+      payment_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +545,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      analysis_status: ["pending", "processing", "completed", "failed"],
+      app_role: ["admin", "partner", "member"],
+      application_status: ["pending", "approved", "rejected"],
+      payment_status: ["pending", "approved", "rejected"],
+    },
   },
 } as const
