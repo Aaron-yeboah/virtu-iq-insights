@@ -197,6 +197,7 @@ function PartnerPage() {
           ))}
         </div>
       </section>
+      )}
     </>
   );
 }
