@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_bootstrap_emails: {
+        Row: {
+          created_at: string
+          email: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
       analyses: {
         Row: {
           completed_at: string | null
