@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { ANALYSIS_MODEL, ANALYSIS_SYSTEM_PROMPT } from "./analysis-prompt";
+import { ANALYSIS_MODEL, ANALYSIS_SYSTEM_PROMPT, IRRELEVANT_MESSAGE } from "./analysis-prompt";
 
 export const runAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -15,7 +15,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
 
     const { data: analysis, error: loadError } = await supabase
       .from("analyses")
-      .select("id, image_path, prompt, status, credits_used")
+      .select("id, image_path, status, credits_used")
       .eq("id", data.analysisId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -72,9 +72,8 @@ export const runAnalysis = createServerFn({ method: "POST" })
               content: [
                 {
                   type: "text",
-                  text: analysis.prompt?.trim()
-                    ? `Focus of this analysis: ${analysis.prompt.slice(0, 800)}`
-                    : "Analyze this screenshot and return the structured JSON insight report.",
+                  text:
+                    "Read this screenshot and pick the most likely outcome for every football match you can clearly see. Apply the relevance gate first.",
                 },
                 { type: "image_url", image_url: { url: signed.signedUrl } },
               ],
@@ -99,11 +98,33 @@ export const runAnalysis = createServerFn({ method: "POST" })
     try {
       parsed = JSON.parse(cleaned) as Record<string, unknown>;
     } catch {
-      parsed = { title: "Analysis", category: "General", summary: cleaned, key_findings: [], data_points: [], recommendations: [], extracted_text: "", confidence: 0.5 };
+      return fail("Virtu-IQ could not read this screenshot clearly. Please try again.");
     }
 
-    const title = typeof parsed["title"] === "string" && parsed["title"] ? String(parsed["title"]).slice(0, 120) : "Screenshot analysis";
-    const summary = typeof parsed["summary"] === "string" ? String(parsed["summary"]).slice(0, 2000) : "";
+    const matches = Array.isArray(parsed["matches"]) ? (parsed["matches"] as unknown[]) : [];
+
+    // Relevance gate: not football => credit stays spent, no refund.
+    if (parsed["relevant"] === false || matches.length === 0) {
+      const reason = typeof parsed["reason"] === "string" ? String(parsed["reason"]).slice(0, 200) : "";
+      await supabase
+        .from("analyses")
+        .update({
+          status: "failed",
+          title: "Not a football screenshot",
+          summary: reason,
+          result: { relevant: false, reason } as never,
+          error_message: IRRELEVANT_MESSAGE,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", analysis.id);
+      throw new Error("IRRELEVANT_IMAGE");
+    }
+
+    const title =
+      typeof parsed["title"] === "string" && parsed["title"]
+        ? String(parsed["title"]).slice(0, 120)
+        : "Football prediction";
+    const summary = typeof parsed["headline"] === "string" ? String(parsed["headline"]).slice(0, 500) : "";
 
     const { error: saveError } = await supabase
       .from("analyses")
