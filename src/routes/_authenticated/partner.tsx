@@ -16,6 +16,7 @@ import {
   partnerApplicationQuery,
   profileQuery,
   referralsQuery,
+  rolesQuery,
 } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/partner")({
@@ -35,8 +36,10 @@ function PartnerPage() {
   const queryClient = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user.id));
   const { data: application, isLoading } = useQuery(partnerApplicationQuery(user.id));
-  const { data: commissions } = useQuery(commissionsQuery(user.id));
-  const { data: referrals } = useQuery(referralsQuery(user.id));
+  const { data: roles } = useQuery(rolesQuery(user.id));
+  const isPartner = (roles ?? []).includes("partner") && application?.status === "approved";
+  const { data: commissions } = useQuery({ ...commissionsQuery(user.id), enabled: isPartner });
+  const { data: referrals } = useQuery({ ...referralsQuery(user.id), enabled: isPartner });
 
   const [audience, setAudience] = useState("");
   const [motivation, setMotivation] = useState("");
@@ -66,7 +69,7 @@ function PartnerPage() {
   });
 
   const referralLink =
-    typeof window !== "undefined" && profile?.referral_code
+    isPartner && typeof window !== "undefined" && profile?.referral_code
       ? `${window.location.origin}/register?ref=${profile.referral_code}`
       : "";
   const earned = (commissions ?? []).reduce((sum, c) => sum + Number(c.amount_ghs), 0);
@@ -78,31 +81,44 @@ function PartnerPage() {
         description="Refer members to Virtu-IQ and earn 10% of every approved package payment."
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Members referred" value={String(referrals ?? 0)} />
-        <Stat label="Commissions earned" value={ghs(earned)} />
-        <Stat label="Payouts recorded" value={String((commissions ?? []).length)} />
-      </div>
+      {isPartner && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Stat label="Members referred" value={String(referrals ?? 0)} />
+            <Stat label="Commissions earned" value={ghs(earned)} />
+            <Stat label="Payouts recorded" value={String((commissions ?? []).length)} />
+          </div>
 
-      <section className="mt-6 rounded-xl border border-border bg-card p-6">
-        <h2 className="text-lg font-semibold text-foreground">Your referral link</h2>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <Input readOnly value={referralLink} aria-label="Referral link" />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              void navigator.clipboard.writeText(referralLink);
-              toast.success("Referral link copied");
-            }}
-          >
-            <Copy className="mr-2 size-4" /> Copy
-          </Button>
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Referral code: <span className="font-semibold">{profile?.referral_code}</span>
-        </p>
-      </section>
+          <section className="mt-6 rounded-xl border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold text-foreground">Your referral link</h2>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <Input readOnly value={referralLink} aria-label="Referral link" />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  void navigator.clipboard.writeText(referralLink);
+                  toast.success("Referral link copied");
+                }}
+              >
+                <Copy className="mr-2 size-4" /> Copy
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Referral code: <span className="font-semibold">{profile?.referral_code}</span>
+            </p>
+          </section>
+        </>
+      )}
+
+      {!isPartner && (
+        <section className="rounded-xl border border-border bg-secondary/50 p-6">
+          <h2 className="text-base font-semibold text-foreground">Referral link locked</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Referral links and commissions unlock once an admin verifies your partner application.
+          </p>
+        </section>
+      )}
 
       {!isLoading && !application && (
         <section className="mt-6 max-w-2xl rounded-xl border border-border bg-card p-6">
@@ -162,6 +178,7 @@ function PartnerPage() {
         </section>
       )}
 
+      {isPartner && (
       <section className="mt-8">
         <h2 className="text-lg font-semibold text-foreground">Commission history</h2>
         <div className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
@@ -180,6 +197,7 @@ function PartnerPage() {
           ))}
         </div>
       </section>
+      )}
     </>
   );
 }

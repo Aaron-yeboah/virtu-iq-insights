@@ -1,31 +1,37 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Upload } from "lucide-react";
+import { Coins, ImageUp, ScanSearch, Sparkles, Target, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { runAnalysis } from "@/lib/analysis.functions";
 import { profileQuery } from "@/lib/data";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/analyze")({
   head: () => ({
     meta: [
-      { title: "New Analysis — Virtu-IQ" },
-      { name: "description", content: "Upload a screenshot and let Virtu-IQ's AI extract structured insights, data points and recommendations." },
-      { property: "og:title", content: "New Analysis — Virtu-IQ" },
-      { property: "og:description", content: "Turn any screenshot into a structured AI insight report." },
+      { title: "New Prediction — Virtu-IQ" },
+      { name: "description", content: "Upload a football fixture, slip or stats screenshot and Virtu-IQ picks the most likely outcome with confidence." },
+      { property: "og:title", content: "New Prediction — Virtu-IQ" },
+      { property: "og:description", content: "Virtu-IQ reads your football screenshot and delivers a decisive verdict." },
     ],
   }),
   component: AnalyzePage,
 });
 
 const MAX_BYTES = 8 * 1024 * 1024;
+
+const STAGES = [
+  { label: "Reading the screenshot", icon: ScanSearch },
+  { label: "Matching fixtures & form", icon: Trophy },
+  { label: "Weighing the markets", icon: Sparkles },
+  { label: "Locking the verdict", icon: Target },
+];
 
 function AnalyzePage() {
   const { user } = Route.useRouteContext();
@@ -36,11 +42,11 @@ function AnalyzePage() {
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState("");
+  const [stage, setStage] = useState(0);
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!file) throw new Error("Select a screenshot first.");
+      if (!file) throw new Error("Select a football screenshot first.");
       if (!file.type.startsWith("image/")) throw new Error("Only image files are supported.");
       if (file.size > MAX_BYTES) throw new Error("Images must be smaller than 8MB.");
 
@@ -57,34 +63,56 @@ function AnalyzePage() {
         .insert({
           user_id: user.id,
           image_path: path,
-          prompt: prompt.trim().slice(0, 800) || null,
           title: file.name.slice(0, 80),
         })
         .select("id")
         .single();
       if (insertError) throw new Error(insertError.message);
 
-      await analyze({ data: { analysisId: created.id } });
-      return created.id;
+      try {
+        await analyze({ data: { analysisId: created.id } });
+        return { id: created.id, irrelevant: false };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.includes("IRRELEVANT_IMAGE")) return { id: created.id, irrelevant: true };
+        throw error instanceof Error ? error : new Error(message);
+      }
     },
-    onSuccess: async (id) => {
+    onSuccess: async ({ id, irrelevant }) => {
       await queryClient.invalidateQueries();
-      toast.success("Analysis complete");
+      if (irrelevant) {
+        toast.error("Not a football screenshot — 1 credit was used.");
+      } else {
+        toast.success("Verdict ready");
+      }
       navigate({ to: "/analysis/$id", params: { id } });
     },
     onError: (error: Error) => {
-      const message = error.message.includes("INSUFFICIENT_CREDITS")
-        ? "You're out of credits. Top up to keep analyzing."
-        : error.message;
-      toast.error(message);
+      void queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+      toast.error(
+        error.message.includes("INSUFFICIENT_CREDITS")
+          ? "You're out of credits. Top up to keep predicting."
+          : error.message,
+      );
     },
   });
+
+  useEffect(() => {
+    if (!mutation.isPending) {
+      setStage(0);
+      return;
+    }
+    const timer = setInterval(() => setStage((s) => (s + 1) % STAGES.length), 1400);
+    return () => clearInterval(timer);
+  }, [mutation.isPending]);
+
+  const busy = mutation.isPending;
 
   return (
     <>
       <PageHeader
-        title="New analysis"
-        description={`Costs 1 credit. You have ${profile?.credits ?? 0} available.`}
+        title="Virtu-IQ prediction"
+        description="Drop in a football fixture list, bet slip or stats screenshot. We pick the outcome — you place it."
       />
 
       <form
@@ -94,54 +122,112 @@ function AnalyzePage() {
           mutation.mutate();
         }}
       >
-        <div className="rounded-xl border border-border bg-card p-6">
-          <Label htmlFor="screenshot">Screenshot</Label>
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft sm:p-6">
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 opacity-[0.06]",
+              busy && "animate-grid-drift",
+            )}
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, var(--color-primary) 1px, transparent 1px), linear-gradient(to bottom, var(--color-primary) 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
+            }}
+            aria-hidden
+          />
+
           <label
             htmlFor="screenshot"
-            className="mt-3 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-secondary/40 px-4 py-10 text-center transition-colors hover:border-primary"
+            className={cn(
+              "relative flex cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed border-border bg-secondary/40 px-4 py-10 text-center transition-colors hover:border-primary",
+              busy && "cursor-wait border-primary",
+            )}
           >
             {preview ? (
-              <img src={preview} alt="Selected screenshot preview" className="max-h-64 rounded-md" />
+              <img src={preview} alt="Selected football screenshot" className="max-h-72 rounded-lg" />
             ) : (
               <>
-                <Upload className="size-6 text-primary" />
-                <span className="text-sm font-medium text-foreground">
-                  Tap to choose an image
+                <span className="relative inline-flex size-14 items-center justify-center rounded-full bg-primary/10">
+                  <span className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring" aria-hidden />
+                  <ImageUp className="relative size-6 text-primary" />
                 </span>
-                <span className="text-xs text-muted-foreground">PNG or JPG, up to 8MB</span>
+                <span className="text-sm font-semibold text-foreground">
+                  Tap to upload your football screenshot
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Fixtures, odds, bet slips or stats · PNG/JPG up to 8MB
+                </span>
               </>
             )}
+
+            {busy && (
+              <>
+                <span
+                  className="animate-scan pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-transparent via-primary/40 to-transparent"
+                  aria-hidden
+                />
+                <span className="pointer-events-none absolute inset-0 bg-background/55 backdrop-blur-[1px]" aria-hidden />
+              </>
+            )}
+
+            {busy && (
+              <div className="animate-verdict absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <span className="relative inline-flex size-16 items-center justify-center rounded-full bg-primary/15">
+                  <span className="absolute inset-0 rounded-full bg-primary/25 animate-pulse-ring" aria-hidden />
+                  <ScanSearch className="relative size-7 text-primary" />
+                </span>
+                <p className="text-sm font-semibold text-foreground">{STAGES[stage]!.label}…</p>
+                <div className="flex gap-1.5">
+                  {STAGES.map((s, i) => (
+                    <span
+                      key={s.label}
+                      className={cn(
+                        "h-1.5 w-8 rounded-full transition-colors",
+                        i <= stage ? "bg-primary" : "bg-border",
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </label>
+
           <Input
             id="screenshot"
             type="file"
             accept="image/*"
             className="sr-only"
+            disabled={busy}
             onChange={(e) => {
               const selected = e.target.files?.[0] ?? null;
               setFile(selected);
               setPreview(selected ? URL.createObjectURL(selected) : null);
             }}
           />
-          {file && <p className="mt-3 text-xs text-muted-foreground">{file.name}</p>}
+
+          <div className="relative mt-5 grid gap-2 sm:grid-cols-3">
+            {STAGES.slice(0, 3).map((s) => (
+              <div key={s.label} className="flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2">
+                <s.icon className="size-4 shrink-0 text-primary" />
+                <span className="text-xs font-medium text-foreground">{s.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-6">
-          <Label htmlFor="prompt">What should we focus on? (optional)</Label>
-          <Textarea
-            id="prompt"
-            value={prompt}
-            maxLength={800}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="e.g. Summarise the performance numbers and flag anything unusual."
-            className="mt-3 min-h-28"
-          />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Coins className="size-4 text-primary" />
+            1 credit per verdict · {profile?.credits ?? 0} available
+          </p>
+          <Button type="submit" size="lg" disabled={!file || busy} className="sm:min-w-56">
+            {busy ? "Virtu-IQ is deciding…" : "Get my verdict"}
+          </Button>
         </div>
 
-        <Button type="submit" size="lg" disabled={!file || mutation.isPending}>
-          {mutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-          {mutation.isPending ? "Analyzing…" : "Analyze screenshot"}
-        </Button>
+        <p className="text-xs text-muted-foreground">
+          Non-football screenshots still consume 1 credit — Virtu-IQ only predicts football.
+        </p>
       </form>
     </>
   );
