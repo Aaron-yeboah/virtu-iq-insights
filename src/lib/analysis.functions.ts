@@ -111,7 +111,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
         status: "completed",
         title,
         summary,
-        result: parsed,
+        result: parsed as never,
         error_message: null,
         completed_at: new Date().toISOString(),
       })

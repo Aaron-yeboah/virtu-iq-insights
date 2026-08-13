@@ -61,7 +61,6 @@ function AdminPage() {
       const { error } = await supabase.rpc("review_partner_application", {
         _application_id: id,
         _approve: approve,
-        _note: null,
       });
       if (error) throw new Error(error.message);
     },
