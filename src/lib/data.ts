@@ -7,7 +7,9 @@ export const profileQuery = (userId: string) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, email, full_name, phone, credits, referral_code, referred_by, created_at")
+        .select(
+          "id, email, full_name, phone, credits, referral_code, referred_by, created_at, registration_paid",
+        )
         .eq("id", userId)
         .maybeSingle();
       if (error) throw error;
@@ -54,6 +56,7 @@ export type PaymentSettings = {
   recipient_name: string;
   network: string;
   instructions: string;
+  registration_fee_ghs: number;
 };
 
 export const paymentSettingsQuery = () =>
@@ -62,10 +65,27 @@ export const paymentSettingsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payment_settings")
-        .select("momo_number, recipient_name, network, instructions")
+        .select("momo_number, recipient_name, network, instructions, registration_fee_ghs")
         .maybeSingle();
       if (error) throw error;
       return (data ?? null) as PaymentSettings | null;
+    },
+  });
+
+export const registrationPaymentQuery = (userId: string) =>
+  queryOptions({
+    queryKey: ["registration-payment", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payments")
+        .select("id, amount_ghs, method, reference, sender_name, status, admin_note, created_at")
+        .eq("user_id", userId)
+        .eq("kind", "registration")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -187,7 +207,7 @@ export const adminPaymentsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
-        .select("id, user_id, amount_ghs, credits, method, reference, sender_name, status, admin_note, created_at")
+        .select("id, user_id, amount_ghs, credits, kind, method, reference, sender_name, status, admin_note, created_at")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;

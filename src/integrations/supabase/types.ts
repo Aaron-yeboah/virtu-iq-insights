@@ -254,6 +254,7 @@ export type Database = {
           momo_number: string
           network: string
           recipient_name: string
+          registration_fee_ghs: number
           updated_at: string
         }
         Insert: {
@@ -262,6 +263,7 @@ export type Database = {
           momo_number?: string
           network?: string
           recipient_name?: string
+          registration_fee_ghs?: number
           updated_at?: string
         }
         Update: {
@@ -270,6 +272,7 @@ export type Database = {
           momo_number?: string
           network?: string
           recipient_name?: string
+          registration_fee_ghs?: number
           updated_at?: string
         }
         Relationships: []
@@ -281,6 +284,7 @@ export type Database = {
           created_at: string
           credits: number
           id: string
+          kind: string
           method: string
           package_id: string | null
           reference: string
@@ -296,6 +300,7 @@ export type Database = {
           created_at?: string
           credits: number
           id?: string
+          kind?: string
           method: string
           package_id?: string | null
           reference: string
@@ -311,6 +316,7 @@ export type Database = {
           created_at?: string
           credits?: number
           id?: string
+          kind?: string
           method?: string
           package_id?: string | null
           reference?: string
@@ -342,6 +348,8 @@ export type Database = {
           phone: string | null
           referral_code: string
           referred_by: string | null
+          registration_paid: boolean
+          registration_paid_at: string | null
           updated_at: string
         }
         Insert: {
@@ -355,6 +363,8 @@ export type Database = {
           phone?: string | null
           referral_code: string
           referred_by?: string | null
+          registration_paid?: boolean
+          registration_paid_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -368,6 +378,8 @@ export type Database = {
           phone?: string | null
           referral_code?: string
           referred_by?: string | null
+          registration_paid?: boolean
+          registration_paid_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -533,6 +545,7 @@ export type Database = {
           created_at: string
           credits: number
           id: string
+          kind: string
           method: string
           package_id: string | null
           reference: string
