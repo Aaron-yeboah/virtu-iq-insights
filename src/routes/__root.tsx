@@ -101,6 +101,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Virtu-IQ",
+              url: "https://virtu-iq.lovable.app",
+              logo: "https://virtu-iq.lovable.app/icon-512.png",
+            },
+            {
+              "@type": "WebSite",
+              name: "Virtu-IQ",
+              url: "https://virtu-iq.lovable.app",
+            },
+          ],
+        }),
+      },
+    ],
     links: [
       {
         rel: "stylesheet",
