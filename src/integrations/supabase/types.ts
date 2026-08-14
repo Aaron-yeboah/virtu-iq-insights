@@ -367,6 +367,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_credits: {
+        Args: { _delta: number; _reason?: string; _user_id: string }
+        Returns: number
+      }
+      admin_credit_overview: { Args: never; Returns: Json }
+      admin_delete_package: { Args: { _id: string }; Returns: boolean }
       admin_member_list: {
         Args: {
           _only_partners?: boolean
@@ -392,6 +398,35 @@ export type Database = {
         Returns: boolean
       }
       admin_stats: { Args: never; Returns: Json }
+      admin_upsert_package: {
+        Args: {
+          _credits: number
+          _id?: string
+          _is_active?: boolean
+          _name: string
+          _perks?: Json
+          _price_ghs: number
+          _slug: string
+          _sort_order?: number
+        }
+        Returns: {
+          created_at: string
+          credits: number
+          id: string
+          is_active: boolean
+          name: string
+          perks: Json
+          price_ghs: number
+          slug: string
+          sort_order: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "packages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
