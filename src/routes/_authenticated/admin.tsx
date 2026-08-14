@@ -23,6 +23,7 @@ import {
   adminCreditOverviewQuery,
   adminMemberListQuery,
   adminPackagesQuery,
+  adminPartnerApplicationsQuery,
   adminPartnerListQuery,
   adminPaymentsQuery,
   adminStatsQuery,
@@ -30,6 +31,7 @@ import {
   ghs,
   paymentSettingsQuery,
   rolesQuery,
+  type AdminApplicationRow,
   type AdminPartnerRow,
   type PackageRow,
 } from "@/lib/data";
@@ -352,6 +354,9 @@ function PartnerManager() {
 
   return (
     <div className="space-y-4">
+      <PartnerInviteLink />
+      <PartnerApplications />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           value={search}
