@@ -9,8 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/register")({
-  validateSearch: (search: Record<string, unknown>): { ref?: string } =>
-    typeof search["ref"] === "string" ? { ref: search["ref"].slice(0, 16) } : {},
+  validateSearch: (search: Record<string, unknown>): { ref?: string; partner?: boolean } => ({
+    ...(typeof search["ref"] === "string" ? { ref: search["ref"].slice(0, 16) } : {}),
+    ...(search["partner"] === "1" || search["partner"] === true ? { partner: true } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Create Account — Virtu-IQ" },
@@ -33,7 +35,8 @@ function strength(password: string) {
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const { ref } = Route.useSearch();
+  const { ref, partner } = Route.useSearch();
+  const isPartnerInvite = partner === true;
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -71,7 +74,8 @@ function RegisterPage() {
         data: {
           full_name: fullName.trim().slice(0, 80),
           phone: phone.trim().slice(0, 24),
-          referral_code: referral.trim().toUpperCase().slice(0, 16),
+          referral_code: isPartnerInvite ? "" : referral.trim().toUpperCase().slice(0, 16),
+          ...(isPartnerInvite ? { partner_applicant: "true" } : {}),
         },
       },
     });
@@ -80,7 +84,7 @@ function RegisterPage() {
     if (!data.session) {
       return setNotice("Almost there — check your email to confirm your account.");
     }
-    navigate({ to: "/credits", replace: true });
+    navigate({ to: isPartnerInvite ? "/partner-apply" : "/credits", replace: true });
   }
 
   return (
@@ -90,9 +94,13 @@ function RegisterPage() {
           <LogoFull className="h-10" />
         </Link>
         <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Create your account</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {isPartnerInvite ? "Partner registration" : "Create your account"}
+          </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Start with 3 free analyses — no card required.
+            {isPartnerInvite
+              ? "Create your account, then apply to become a Virtu-IQ partner — no registration fee."
+              : "Start with 3 free analyses — no card required."}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -146,10 +154,12 @@ function RegisterPage() {
                 </div>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="referral">Referral code (optional)</Label>
-              <Input id="referral" value={referral} maxLength={16} onChange={(e) => setReferral(e.target.value)} placeholder="ABCD1234" />
-            </div>
+            {!isPartnerInvite && (
+              <div className="space-y-2">
+                <Label htmlFor="referral">Referral code (optional)</Label>
+                <Input id="referral" value={referral} maxLength={16} onChange={(e) => setReferral(e.target.value)} placeholder="ABCD1234" />
+              </div>
+            )}
             {error && (
               <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}

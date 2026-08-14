@@ -20,6 +20,7 @@ import { Route as AuthenticatedCreditsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedPartnerRouteImport } from './routes/_authenticated/partner'
+import { Route as AuthenticatedPartnerApplyRouteImport } from './routes/_authenticated/partner-apply'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated/registration'
 import { Route as AuthenticatedAnalysisIdRouteImport } from './routes/_authenticated/analysis.$id'
 
@@ -77,6 +78,12 @@ const AuthenticatedPartnerRoute = AuthenticatedPartnerRouteImport.update({
   path: '/partner',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPartnerApplyRoute =
+  AuthenticatedPartnerApplyRouteImport.update({
+    id: '/partner-apply',
+    path: '/partner-apply',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRegistrationRoute =
   AuthenticatedRegistrationRouteImport.update({
     id: '/registration',
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/partner': typeof AuthenticatedPartnerRoute
+  '/partner-apply': typeof AuthenticatedPartnerApplyRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/analysis/$id': typeof AuthenticatedAnalysisIdRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/partner': typeof AuthenticatedPartnerRoute
+  '/partner-apply': typeof AuthenticatedPartnerApplyRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/analysis/$id': typeof AuthenticatedAnalysisIdRoute
 }
@@ -130,6 +139,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/partner': typeof AuthenticatedPartnerRoute
+  '/_authenticated/partner-apply': typeof AuthenticatedPartnerApplyRoute
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/analysis/$id': typeof AuthenticatedAnalysisIdRoute
 }
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/history'
     | '/partner'
+    | '/partner-apply'
     | '/registration'
     | '/analysis/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/history'
     | '/partner'
+    | '/partner-apply'
     | '/registration'
     | '/analysis/$id'
   id:
@@ -175,6 +187,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
     | '/_authenticated/partner'
+    | '/_authenticated/partner-apply'
     | '/_authenticated/registration'
     | '/_authenticated/analysis/$id'
   fileRoutesById: FileRoutesById
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPartnerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/partner-apply': {
+      id: '/_authenticated/partner-apply'
+      path: '/partner-apply'
+      fullPath: '/partner-apply'
+      preLoaderRoute: typeof AuthenticatedPartnerApplyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/registration': {
       id: '/_authenticated/registration'
       path: '/registration'
@@ -290,6 +310,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedPartnerRoute: typeof AuthenticatedPartnerRoute
+  AuthenticatedPartnerApplyRoute: typeof AuthenticatedPartnerApplyRoute
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedAnalysisIdRoute: typeof AuthenticatedAnalysisIdRoute
 }
@@ -301,6 +322,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedPartnerRoute: AuthenticatedPartnerRoute,
+  AuthenticatedPartnerApplyRoute: AuthenticatedPartnerApplyRoute,
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedAnalysisIdRoute: AuthenticatedAnalysisIdRoute,
 }
