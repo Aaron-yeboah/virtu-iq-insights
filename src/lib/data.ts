@@ -209,6 +209,46 @@ export const auditLogsQuery = () =>
 export const ghs = (value: number | string) =>
   `GH\u20B5${Number(value).toLocaleString("en-GH", { minimumFractionDigits: 0 })}`;
 
+export type PackageRow = {
+  id: string;
+  name: string;
+  slug: string;
+  price_ghs: number;
+  credits: number;
+  perks: unknown;
+  is_active: boolean;
+  sort_order: number;
+};
+
+export const adminPackagesQuery = () =>
+  queryOptions({
+    queryKey: ["admin-packages"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("packages")
+        .select("id, name, slug, price_ghs, credits, perks, is_active, sort_order")
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as PackageRow[];
+    },
+  });
+
+export const adminCreditOverviewQuery = () =>
+  queryOptions({
+    queryKey: ["admin-credit-overview"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_credit_overview");
+      if (error) throw error;
+      return (data ?? {}) as {
+        credits_outstanding: number;
+        credits_sold: number;
+        credits_spent: number;
+        revenue_ghs: number;
+        active_packages: number;
+      };
+    },
+  });
+
 export const partnerStatsQuery = (userId: string) =>
   queryOptions({
     queryKey: ["partner-stats", userId],
