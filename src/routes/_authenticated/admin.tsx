@@ -187,9 +187,126 @@ function AdminPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/5">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-2 text-xl font-bold tracking-tight text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function PartnerPayouts() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [rates, setRates] = useState<Record<string, string>>({});
+  const { data, isFetching } = useQuery(adminPartnerListQuery(search));
+  const rows = data ?? [];
+
+  const setRate = useMutation({
+    mutationFn: async ({ id, rate }: { id: string; rate: number }) => {
+      if (!Number.isFinite(rate) || rate < 0 || rate > 100)
+        throw new Error("Commission must be between 0 and 100%.");
+      const { error } = await supabase.rpc("admin_set_commission_rate", { _user_id: id, _rate: rate });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success("Commission percentage saved");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const clearPayout = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("admin_clear_partner_payout", { _user_id: id });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success("Revenue and commission reset to zero");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search partners by name, email or code"
+        aria-label="Search partners"
+        className="sm:max-w-sm"
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {rows.length === 0 && (
+          <p className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+            {isFetching ? "Loading partners…" : "No approved partners yet."}
+          </p>
+        )}
+        {rows.map((p: AdminPartnerRow) => (
+          <div
+            key={p.id}
+            className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/5"
+          >
+            <p className="truncate text-sm font-semibold text-foreground">{p.full_name ?? p.email}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {p.email} · code {p.referral_code} · {p.referral_count} referred
+            </p>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-border bg-background p-3">
+                <p className="text-xs text-muted-foreground">Revenue</p>
+                <p className="mt-1 text-sm font-bold text-foreground">{ghs(p.revenue_ghs)}</p>
+              </div>
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
+                <p className="text-xs text-muted-foreground">Commission</p>
+                <p className="mt-1 text-sm font-bold text-primary">{ghs(p.commissions_ghs)}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-end gap-2">
+              <div className="flex-1 space-y-1">
+                <Label htmlFor={`rate-${p.id}`} className="text-xs">
+                  Commission %
+                </Label>
+                <Input
+                  id={`rate-${p.id}`}
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.5"
+                  value={rates[p.id] ?? String(p.commission_rate)}
+                  onChange={(e) => setRates({ ...rates, [p.id]: e.target.value })}
+                />
+              </div>
+              <Button
+                size="sm"
+                disabled={setRate.isPending}
+                onClick={() =>
+                  setRate.mutate({ id: p.id, rate: Number(rates[p.id] ?? p.commission_rate) })
+                }
+              >
+                Save
+              </Button>
+            </div>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-3 w-full"
+              disabled={clearPayout.isPending}
+              onClick={() => clearPayout.mutate(p.id)}
+            >
+              Paid out — clear revenue &amp; commission
+            </Button>
+            {p.payout_cleared_at && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Last cleared {new Date(p.payout_cleared_at).toLocaleString()}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
