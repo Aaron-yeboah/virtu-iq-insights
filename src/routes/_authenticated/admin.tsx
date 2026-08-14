@@ -477,9 +477,13 @@ type MemberRow = {
   id: string;
   email: string | null;
   full_name: string | null;
+  phone: string | null;
   credits: number;
   referral_code: string;
   created_at: string;
+  last_sign_in_at: string | null;
+  registration_paid: boolean;
+  registration_paid_at: string | null;
   is_partner: boolean;
   is_admin: boolean;
   referred_by: string | null;
