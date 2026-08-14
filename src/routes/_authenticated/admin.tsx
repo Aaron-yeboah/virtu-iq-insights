@@ -167,6 +167,9 @@ function AdminPage() {
               <div className="flex shrink-0 items-center gap-2">
                 <span className="text-sm font-semibold text-foreground">{ghs(m.spent_ghs)}</span>
                 <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
+                {m.id !== user.id && (
+                  <RemoveMember userId={m.id} label={m.full_name ?? m.email ?? "this member"} />
+                )}
               </div>
             </div>
           ))}
