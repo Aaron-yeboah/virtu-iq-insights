@@ -231,11 +231,13 @@ export const adminMemberListQuery = (args: {
   queryOptions({
     queryKey: ["admin-member-list", args.search ?? "", args.onlyPartners ?? false, args.partnerId ?? null],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_member_list", {
-        _search: args.search?.trim() || undefined,
+      const search = args.search?.trim();
+      const params: { _only_partners: boolean; _search?: string; _partner_id?: string } = {
         _only_partners: args.onlyPartners ?? false,
-        _partner_id: args.partnerId ?? undefined,
-      });
+      };
+      if (search) params._search = search;
+      if (args.partnerId) params._partner_id = args.partnerId;
+      const { data, error } = await supabase.rpc("admin_member_list", params);
       if (error) throw error;
       return data ?? [];
     },
