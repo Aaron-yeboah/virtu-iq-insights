@@ -4,7 +4,7 @@ import { ANALYSIS_MODEL, buildAnalysisSystemPrompt, IRRELEVANT_MESSAGE } from ".
 
 export const runAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: { analysisId: string }) => {
+  .inputValidator((input: { analysisId: string }) => {
     if (!input?.analysisId || typeof input.analysisId !== "string") {
       throw new Error("analysisId is required");
     }
@@ -210,7 +210,12 @@ export const runAnalysis = createServerFn({ method: "POST" })
       );
     }
 
-    const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    let cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    if (!cleaned.startsWith("{")) {
+      const first = cleaned.indexOf("{");
+      const last = cleaned.lastIndexOf("}");
+      if (first !== -1 && last > first) cleaned = cleaned.slice(first, last + 1);
+    }
 
     let parsed: Record<string, unknown>;
     try {

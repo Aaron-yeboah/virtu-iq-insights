@@ -48,6 +48,7 @@ function AnalyzePage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if ((profile?.credits ?? 0) < 1) throw new Error("INSUFFICIENT_CREDITS");
       if (!file) throw new Error("Select a football screenshot first.");
       if (!file.type.startsWith("image/")) throw new Error("Only image files are supported.");
       if (file.size > MAX_BYTES) throw new Error("Images must be smaller than 8MB.");
