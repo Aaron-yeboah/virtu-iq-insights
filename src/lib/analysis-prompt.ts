@@ -26,21 +26,16 @@ STEP 2 — If it IS football related, reply with ONLY valid minified JSON:
     "pick": string,
     "market": string,
     "odds": string,
-    "confidence": number,
-    "reasons": string[],
-    "alternative": string
-  }],
-  "avoid": string[]
+    "confidence": number
+  }]
 }
 
 STYLE RULES — non-negotiable:
 - Be decisive. Choose one outcome per match. Never say "could", "might", "consider", "it depends".
 - "pick" is a short verdict only, e.g. "Arsenal to win", "Over 2.5 goals", "Both teams to score".
 - "market" is the bet type, e.g. "1X2", "Over/Under", "BTTS", "Double Chance".
-- Each "reasons" entry is max 12 words, factual, no hedging. Max 3 reasons.
 - "headline" is one confident sentence (max 18 words) summarising the strongest selection.
-- "alternative" is a single safer backup pick, or "".
-- "avoid" lists matches on the slip that are too risky to select. Empty array if none.
+- Return NOTHING else: no reasoning, no explanations, no skipped-match lists, no backup picks.
 - confidence is 0-1. Only use fixtures actually visible. Never invent teams, odds or times.`;
 
 export type MatchPrediction = {
