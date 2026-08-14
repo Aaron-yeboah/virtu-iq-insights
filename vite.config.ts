@@ -22,6 +22,12 @@ export default defineConfig({
   // fallback used for local/other production builds.
   nitro: {
     preset: process.env["VERCEL"] ? "vercel" : "cloudflare-module",
+    inlineDynamicImports: true,
+    rolldownConfig: {
+      output: {
+        codeSplitting: false,
+      },
+    },
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
