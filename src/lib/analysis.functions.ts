@@ -24,16 +24,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
     if (!analysis) throw new Error("Analysis not found");
     if (analysis.status === "completed") return { ok: true, alreadyDone: true, irrelevant: false };
 
-    // One credit = one verdict. Read the balance first so the verdict count
-    // never exceeds what the member can pay for.
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("credits")
-      .eq("id", userId)
-      .maybeSingle();
-    const availableCredits = Math.max(0, Number(profileRow?.credits ?? 0));
-
-    const cost = analysis.credits_used ?? 1;
+    // Exactly 1 credit per scan. The plan (max_verdicts) decides how many
+    // verdicts the AI returns — verdicts are NOT credits.
+    const cost = 1;
     const { error: spendError } = await supabase.rpc("spend_credits", {
       _amount: cost,
       _reason: "Screenshot analysis",
@@ -113,9 +106,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
     const openAiKey = process.env["OPENAI_API_KEY"];
 
     const { data: limitData } = await supabase.rpc("my_verdict_limit");
-    const planLimit = Math.max(1, Number(limitData ?? 1));
-    // Cap verdicts by the credits the member actually holds (1 credit = 1 verdict).
-    const verdictLimit = Math.max(1, Math.min(planLimit, availableCredits || 1));
+    const verdictLimit = Math.max(1, Number(limitData ?? 1));
     const promptText = buildAnalysisSystemPrompt(verdictLimit);
     const userPrompt = `Read this instant/virtual football screenshot and pick the most likely outcome for your ${verdictLimit} highest-confidence fixture(s) only. Apply the relevance gate first.`;
 
@@ -295,23 +286,13 @@ export const runAnalysis = createServerFn({ method: "POST" })
       verdict_limit: verdictLimit,
     };
 
-    // Charge the remaining credits for the extra verdicts (1 credit per verdict).
-    const extraCredits = limited.length - cost;
-    if (extraCredits > 0) {
-      await supabase.rpc("spend_credits", {
-        _amount: extraCredits,
-        _reason: "Additional verdicts",
-        _ref_id: analysis.id,
-      });
-    }
-
     const { error: saveError } = await supabase
       .from("analyses")
       .update({
         status: "completed",
         title,
         summary,
-        credits_used: Math.max(cost, limited.length),
+        credits_used: cost,
         result: result as never,
         error_message: null,
         completed_at: new Date().toISOString(),

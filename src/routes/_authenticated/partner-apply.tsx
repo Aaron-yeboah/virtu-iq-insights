@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogoFull, LogoSymbol } from "@/components/brand/Logo";
+import { LogoFull, LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { partnerApplicationQuery } from "@/lib/data";
 
@@ -118,7 +118,7 @@ function PartnerApplyPage() {
         </section>
       ) : status === "approved" ? (
         <section className="relative mt-8 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary via-primary to-[#1D4ED8] p-8 text-center text-primary-foreground">
-          <LogoSymbol className="pointer-events-none absolute -right-6 -bottom-8 h-44 w-auto opacity-[0.14]" aria-hidden />
+          <LogoWatermark className="h-52 sm:h-64" />
           <CheckCircle2 className="relative mx-auto size-12" />
           <h1 className="relative mt-4 text-2xl font-bold tracking-tight">Accepted</h1>
           <p className="relative mt-2 text-sm opacity-90">

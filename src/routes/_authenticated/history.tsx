@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/app/AppShell";
 import { analysesQuery } from "@/lib/data";
 
@@ -22,7 +24,14 @@ function HistoryPage() {
 
   return (
     <>
-      <PageHeader title="Analysis history" description="Every report you've generated, newest first." />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <PageHeader title="Analysis history" description="Every report you've generated, newest first." />
+        <Button asChild className="mb-4 shrink-0">
+          <Link to="/analyze">
+            <Plus className="size-4" /> New analysis
+          </Link>
+        </Button>
+      </div>
       <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
         {isLoading && <p className="p-6 text-sm text-muted-foreground">Loading…</p>}
         {!isLoading && (analyses ?? []).length === 0 && (

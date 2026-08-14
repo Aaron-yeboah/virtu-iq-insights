@@ -25,3 +25,24 @@ export function LogoSymbol({ className, ...rest }: LogoProps) {
     />
   );
 }
+
+/**
+ * Large faint-white Virtu-IQ symbol used as a watermark inside brand-blue cards.
+ * `brightness-0 invert` flattens the mark to pure white so it reads as a soft
+ * embossed watermark rather than a pasted logo.
+ */
+export function LogoWatermark({ className, ...rest }: LogoProps) {
+  return (
+    <img
+      src={symbolLogo}
+      alt=""
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute select-none brightness-0 invert",
+        "-right-8 -bottom-10 h-64 w-auto opacity-[0.12] sm:h-80 sm:-right-10 sm:-bottom-14",
+        className,
+      )}
+      {...rest}
+    />
+  );
+}
