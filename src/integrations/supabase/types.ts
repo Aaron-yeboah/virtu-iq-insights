@@ -137,6 +137,7 @@ export type Database = {
           credits: number
           id: string
           is_active: boolean
+          max_verdicts: number
           name: string
           perks: Json
           price_ghs: number
@@ -148,6 +149,7 @@ export type Database = {
           credits: number
           id?: string
           is_active?: boolean
+          max_verdicts?: number
           name: string
           perks?: Json
           price_ghs: number
@@ -159,6 +161,7 @@ export type Database = {
           credits?: number
           id?: string
           is_active?: boolean
+          max_verdicts?: number
           name?: string
           perks?: Json
           price_ghs?: number
@@ -403,6 +406,7 @@ export type Database = {
           _credits: number
           _id?: string
           _is_active?: boolean
+          _max_verdicts?: number
           _name: string
           _perks?: Json
           _price_ghs: number
@@ -414,6 +418,7 @@ export type Database = {
           credits: number
           id: string
           is_active: boolean
+          max_verdicts: number
           name: string
           perks: Json
           price_ghs: number
@@ -434,6 +439,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      my_verdict_limit: { Args: never; Returns: number }
       partner_stats: { Args: never; Returns: Json }
       refund_credits: {
         Args: { _amount: number; _reason: string; _ref_id?: string }
