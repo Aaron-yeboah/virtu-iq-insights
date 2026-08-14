@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import {
   adminApplicationsQuery,
+  adminMemberListQuery,
   adminMembersQuery,
   adminPaymentsQuery,
   adminStatsQuery,
@@ -96,10 +99,15 @@ function AdminPage() {
       <Tabs defaultValue="payments" className="mt-8">
         <TabsList>
           <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="manage-partners">Manage partners</TabsTrigger>
           <TabsTrigger value="partners">Partners</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="audit">Audit log</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="manage-partners" className="mt-4">
+          <PartnerManager />
+        </TabsContent>
 
         <TabsContent value="payments" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {(payments ?? []).length === 0 && <p className="p-5 text-sm text-muted-foreground">No payments yet.</p>}
