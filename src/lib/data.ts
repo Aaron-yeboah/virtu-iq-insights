@@ -174,7 +174,8 @@ export const adminStatsQuery = () =>
         members: number;
         analyses: number;
         pending_payments: number;
-        pending_partners: number;
+        pending_partners?: number;
+        partners: number;
         revenue_ghs: number;
       };
     },
@@ -290,7 +291,34 @@ export const partnerStatsQuery = (userId: string) =>
         registrations: number;
         revenue_ghs: number;
         commissions_ghs: number;
+        commission_rate?: number;
       };
+    },
+  });
+
+export type AdminPartnerRow = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  referral_code: string;
+  commission_rate: number;
+  payout_cleared_at: string | null;
+  referral_count: number;
+  revenue_ghs: number;
+  commissions_ghs: number;
+};
+
+export const adminPartnerListQuery = (search?: string) =>
+  queryOptions({
+    queryKey: ["admin-partner-list", search ?? ""],
+    queryFn: async () => {
+      const term = search?.trim();
+      const { data, error } = await supabase.rpc(
+        "admin_partner_list",
+        term ? { _search: term } : {},
+      );
+      if (error) throw error;
+      return (data ?? []) as AdminPartnerRow[];
     },
   });
 

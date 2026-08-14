@@ -332,33 +332,39 @@ export type Database = {
       }
       profiles: {
         Row: {
+          commission_rate: number
           created_at: string
           credits: number
           email: string | null
           full_name: string | null
           id: string
+          payout_cleared_at: string | null
           phone: string | null
           referral_code: string
           referred_by: string | null
           updated_at: string
         }
         Insert: {
+          commission_rate?: number
           created_at?: string
           credits?: number
           email?: string | null
           full_name?: string | null
           id: string
+          payout_cleared_at?: string | null
           phone?: string | null
           referral_code: string
           referred_by?: string | null
           updated_at?: string
         }
         Update: {
+          commission_rate?: number
           created_at?: string
           credits?: number
           email?: string | null
           full_name?: string | null
           id?: string
+          payout_cleared_at?: string | null
           phone?: string | null
           referral_code?: string
           referred_by?: string | null
@@ -404,6 +410,10 @@ export type Database = {
         Args: { _delta: number; _reason?: string; _user_id: string }
         Returns: number
       }
+      admin_clear_partner_payout: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       admin_credit_overview: { Args: never; Returns: Json }
       admin_delete_package: { Args: { _id: string }; Returns: boolean }
       admin_member_list: {
@@ -425,6 +435,24 @@ export type Database = {
           referrer_name: string
           spent_ghs: number
         }[]
+      }
+      admin_partner_list: {
+        Args: { _search?: string }
+        Returns: {
+          commission_rate: number
+          commissions_ghs: number
+          email: string
+          full_name: string
+          id: string
+          payout_cleared_at: string
+          referral_code: string
+          referral_count: number
+          revenue_ghs: number
+        }[]
+      }
+      admin_set_commission_rate: {
+        Args: { _rate: number; _user_id: string }
+        Returns: number
       }
       admin_set_partner: {
         Args: { _make: boolean; _user_id: string }

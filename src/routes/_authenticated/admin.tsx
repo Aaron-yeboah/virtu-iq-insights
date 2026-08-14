@@ -20,17 +20,17 @@ import {
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  adminApplicationsQuery,
   adminCreditOverviewQuery,
   adminMemberListQuery,
-  adminMembersQuery,
   adminPackagesQuery,
+  adminPartnerListQuery,
   adminPaymentsQuery,
   adminStatsQuery,
   auditLogsQuery,
   ghs,
   paymentSettingsQuery,
   rolesQuery,
+  type AdminPartnerRow,
   type PackageRow,
 } from "@/lib/data";
 
@@ -54,8 +54,7 @@ function AdminPage() {
 
   const { data: stats } = useQuery({ ...adminStatsQuery(), enabled: isAdmin });
   const { data: payments } = useQuery({ ...adminPaymentsQuery(), enabled: isAdmin });
-  const { data: applications } = useQuery({ ...adminApplicationsQuery(), enabled: isAdmin });
-  const { data: members } = useQuery({ ...adminMembersQuery(), enabled: isAdmin });
+  const { data: members } = useQuery({ ...adminMemberListQuery({}), enabled: isAdmin });
   const { data: logs } = useQuery({ ...auditLogsQuery(), enabled: isAdmin });
 
   const reviewPayment = useMutation({
@@ -70,21 +69,6 @@ function AdminPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries();
       toast.success("Payment reviewed");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const reviewApplication = useMutation({
-    mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
-      const { error } = await supabase.rpc("review_partner_application", {
-        _application_id: id,
-        _approve: approve,
-      });
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries();
-      toast.success("Application reviewed");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -107,7 +91,7 @@ function AdminPage() {
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
         <Stat label="Pending payments" value={String(stats?.pending_payments ?? 0)} />
-        <Stat label="Pending partners" value={String(stats?.pending_partners ?? 0)} />
+        <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Revenue" value={ghs(stats?.revenue_ghs ?? 0)} />
       </div>
 
@@ -117,8 +101,8 @@ function AdminPage() {
             <TabsTrigger value="payments" className="whitespace-nowrap">Payments</TabsTrigger>
             <TabsTrigger value="payment-details" className="whitespace-nowrap">Payment details</TabsTrigger>
             <TabsTrigger value="packages" className="whitespace-nowrap">Packages &amp; credits</TabsTrigger>
-            <TabsTrigger value="manage-partners" className="whitespace-nowrap">Partners</TabsTrigger>
-            <TabsTrigger value="partners" className="whitespace-nowrap">Applications</TabsTrigger>
+            <TabsTrigger value="partners" className="whitespace-nowrap">Partners</TabsTrigger>
+            <TabsTrigger value="manage-partners" className="whitespace-nowrap">Manage partners</TabsTrigger>
             <TabsTrigger value="members" className="whitespace-nowrap">Members</TabsTrigger>
             <TabsTrigger value="audit" className="whitespace-nowrap">Audit log</TabsTrigger>
           </TabsList>
@@ -166,31 +150,8 @@ function AdminPage() {
           ))}
         </TabsContent>
 
-        <TabsContent value="partners" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-          {(applications ?? []).length === 0 && <p className="p-5 text-sm text-muted-foreground">No applications yet.</p>}
-          {(applications ?? []).map((a) => (
-            <div key={a.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">user {a.user_id.slice(0, 8)}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{a.audience}</p>
-                <p className="mt-1 break-words text-xs text-muted-foreground">
-                  Payout: {a.payout_method} · {a.payout_details}
-                </p>
-              </div>
-              {a.status === "pending" ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" className="flex-1 sm:flex-none" disabled={reviewApplication.isPending} onClick={() => reviewApplication.mutate({ id: a.id, approve: true })}>
-                    Approve
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={reviewApplication.isPending} onClick={() => reviewApplication.mutate({ id: a.id, approve: false })}>
-                    Reject
-                  </Button>
-                </div>
-              ) : (
-                <Badge className="w-fit" variant={a.status === "approved" ? "default" : "destructive"}>{a.status}</Badge>
-              )}
-            </div>
-          ))}
+        <TabsContent value="partners" className="mt-4">
+          <PartnerPayouts />
         </TabsContent>
 
         <TabsContent value="members" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
@@ -201,7 +162,7 @@ function AdminPage() {
                 <p className="truncate text-xs text-muted-foreground">{m.email} · {m.referral_code}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{m.credits}</span>
+                <span className="text-sm font-semibold text-foreground">{ghs(m.spent_ghs)}</span>
                 <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
               </div>
             </div>
@@ -226,9 +187,126 @@ function AdminPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/5">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-2 text-xl font-bold tracking-tight text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function PartnerPayouts() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [rates, setRates] = useState<Record<string, string>>({});
+  const { data, isFetching } = useQuery(adminPartnerListQuery(search));
+  const rows = data ?? [];
+
+  const setRate = useMutation({
+    mutationFn: async ({ id, rate }: { id: string; rate: number }) => {
+      if (!Number.isFinite(rate) || rate < 0 || rate > 100)
+        throw new Error("Commission must be between 0 and 100%.");
+      const { error } = await supabase.rpc("admin_set_commission_rate", { _user_id: id, _rate: rate });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success("Commission percentage saved");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const clearPayout = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("admin_clear_partner_payout", { _user_id: id });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success("Revenue and commission reset to zero");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search partners by name, email or code"
+        aria-label="Search partners"
+        className="sm:max-w-sm"
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {rows.length === 0 && (
+          <p className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+            {isFetching ? "Loading partners…" : "No approved partners yet."}
+          </p>
+        )}
+        {rows.map((p: AdminPartnerRow) => (
+          <div
+            key={p.id}
+            className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/5"
+          >
+            <p className="truncate text-sm font-semibold text-foreground">{p.full_name ?? p.email}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {p.email} · code {p.referral_code} · {p.referral_count} referred
+            </p>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-border bg-background p-3">
+                <p className="text-xs text-muted-foreground">Revenue</p>
+                <p className="mt-1 text-sm font-bold text-foreground">{ghs(p.revenue_ghs)}</p>
+              </div>
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
+                <p className="text-xs text-muted-foreground">Commission</p>
+                <p className="mt-1 text-sm font-bold text-primary">{ghs(p.commissions_ghs)}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-end gap-2">
+              <div className="flex-1 space-y-1">
+                <Label htmlFor={`rate-${p.id}`} className="text-xs">
+                  Commission %
+                </Label>
+                <Input
+                  id={`rate-${p.id}`}
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.5"
+                  value={rates[p.id] ?? String(p.commission_rate)}
+                  onChange={(e) => setRates({ ...rates, [p.id]: e.target.value })}
+                />
+              </div>
+              <Button
+                size="sm"
+                disabled={setRate.isPending}
+                onClick={() =>
+                  setRate.mutate({ id: p.id, rate: Number(rates[p.id] ?? p.commission_rate) })
+                }
+              >
+                Save
+              </Button>
+            </div>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-3 w-full"
+              disabled={clearPayout.isPending}
+              onClick={() => clearPayout.mutate(p.id)}
+            >
+              Paid out — clear revenue &amp; commission
+            </Button>
+            {p.payout_cleared_at && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Last cleared {new Date(p.payout_cleared_at).toLocaleString()}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -632,10 +710,8 @@ function MonetisationManager() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Stat label="Credits outstanding" value={String(overview?.credits_outstanding ?? 0)} />
+      <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Credits sold" value={String(overview?.credits_sold ?? 0)} />
-        <Stat label="Credits used" value={String(overview?.credits_spent ?? 0)} />
         <Stat label="Revenue" value={ghs(overview?.revenue_ghs ?? 0)} />
         <Stat label="Active packages" value={String(overview?.active_packages ?? 0)} />
       </div>
