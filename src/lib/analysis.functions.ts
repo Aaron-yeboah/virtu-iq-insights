@@ -55,46 +55,133 @@ export const runAnalysis = createServerFn({ method: "POST" })
       .createSignedUrl(analysis.image_path, 600);
     if (signError || !signed?.signedUrl) return fail("Could not read the uploaded screenshot.");
 
-    const apiKey = process.env["LOVABLE_API_KEY"];
-    if (!apiKey) return fail("AI service is not configured.");
+    // Retrieve image data for AI processing
+    let base64Image = "";
+    let mimeType = "image/png";
+    try {
+      const { data: fileBlob } = await supabase.storage
+        .from("screenshots")
+        .download(analysis.image_path);
+      if (fileBlob) {
+        mimeType = fileBlob.type || "image/png";
+        const buffer = await fileBlob.arrayBuffer();
+        base64Image = Buffer.from(buffer).toString("base64");
+      }
+    } catch {
+      // If direct download fails, fetch from signedUrl
+      try {
+        const fetchRes = await fetch(signed.signedUrl);
+        if (fetchRes.ok) {
+          const contentType = fetchRes.headers.get("content-type");
+          if (contentType) mimeType = contentType;
+          const buffer = await fetchRes.arrayBuffer();
+          base64Image = Buffer.from(buffer).toString("base64");
+        }
+      } catch {}
+    }
+
+    const geminiKey =
+      process.env["GEMINI_API_KEY"] ||
+      (process.env["LOVABLE_API_KEY"]?.startsWith("AQ.") || process.env["LOVABLE_API_KEY"]?.startsWith("AIza")
+        ? process.env["LOVABLE_API_KEY"]
+        : "");
+    const openAiKey = process.env["OPENAI_API_KEY"];
+    const lovableKey = process.env["LOVABLE_API_KEY"];
 
     const { data: limitData } = await supabase.rpc("my_verdict_limit");
     const verdictLimit = Math.max(1, Number(limitData ?? 1));
+    const promptText = buildAnalysisSystemPrompt(verdictLimit);
+    const userPrompt = `Read this instant/virtual football screenshot and pick the most likely outcome for your ${verdictLimit} highest-confidence fixture(s) only. Apply the relevance gate first.`;
 
-    let response: Response;
-    try {
-      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model: ANALYSIS_MODEL,
-          messages: [
-            { role: "system", content: buildAnalysisSystemPrompt(verdictLimit) },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text:
-                    `Read this instant/virtual football screenshot and pick the most likely outcome for your ${verdictLimit} highest-confidence fixture(s) only. Apply the relevance gate first.`,
-                },
-                { type: "image_url", image_url: { url: signed.signedUrl } },
-              ],
+    let raw = "";
+
+    if (geminiKey) {
+      // Use Google Gemini API directly
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`;
+      const contentsParts: Record<string, unknown>[] = [
+        { text: `${promptText}\n\n${userPrompt}` },
+      ];
+      if (base64Image) {
+        contentsParts.push({
+          inlineData: {
+            mimeType,
+            data: base64Image,
+          },
+        });
+      }
+
+      let geminiRes: Response;
+      try {
+        geminiRes = await fetch(geminiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: contentsParts }],
+            generationConfig: {
+              responseMimeType: "application/json",
             },
-          ],
-        }),
-      });
-    } catch {
-      return fail("The AI service could not be reached. Please try again.");
+          }),
+        });
+      } catch {
+        return fail("The AI service could not be reached. Please try again.");
+      }
+
+      if (geminiRes.status === 429) return fail("Rate limit reached. Please try again in a moment.");
+      if (!geminiRes.ok) {
+        const errBody = await geminiRes.text().catch(() => "");
+        return fail(`AI service error (${geminiRes.status}): ${errBody.slice(0, 150)}`);
+      }
+
+      const geminiData = (await geminiRes.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+      raw = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    } else if (openAiKey || lovableKey) {
+      const endpoint = openAiKey
+        ? "https://api.openai.com/v1/chat/completions"
+        : "https://ai.gateway.lovable.dev/v1/chat/completions";
+      const key = openAiKey || lovableKey;
+      const model = openAiKey ? "gpt-4o-mini" : ANALYSIS_MODEL;
+
+      let response: Response;
+      try {
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: promptText },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: userPrompt },
+                  { type: "image_url", image_url: { url: signed.signedUrl } },
+                ],
+              },
+            ],
+          }),
+        });
+      } catch {
+        return fail("The AI service could not be reached. Please try again.");
+      }
+
+      if (response.status === 429) return fail("Rate limit reached. Please try again in a moment.");
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        return fail(`AI service error (${response.status}): ${errText.slice(0, 150)}`);
+      }
+
+      const payload = (await response.json()) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      raw = payload.choices?.[0]?.message?.content ?? "";
+    } else {
+      return fail(
+        "AI service is not configured. Please set GEMINI_API_KEY, LOVABLE_API_KEY, or OPENAI_API_KEY in your environment variables."
+      );
     }
 
-    if (response.status === 429) return fail("Rate limit reached. Please try again in a moment.");
-    if (!response.ok) return fail(`AI service error (${response.status}).`);
-
-    const payload = (await response.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const raw = payload.choices?.[0]?.message?.content ?? "";
     const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
 
     let parsed: Record<string, unknown>;
