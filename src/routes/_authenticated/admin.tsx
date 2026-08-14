@@ -400,10 +400,10 @@ function PartnerManager() {
         {rows.map((m) => (
           <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div className="min-w-0">
-              <p className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
+              <div className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
                 {m.full_name ?? m.email}
                 {m.is_partner && <Badge>Partner</Badge>}
-              </p>
+              </div>
               <p className="truncate text-xs text-muted-foreground">
                 {m.email} · code {m.referral_code} · spent {ghs(m.spent_ghs)}
               </p>
