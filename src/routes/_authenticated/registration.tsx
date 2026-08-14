@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LogoFull, LogoSymbol } from "@/components/brand/Logo";
+import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
 import { supabase } from "@/integrations/supabase/client";
 import { ghs, paymentSettingsQuery, profileQuery, registrationPaymentQuery } from "@/lib/data";
 
@@ -34,22 +35,26 @@ function RegistrationFeePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: settings } = useQuery(paymentSettingsQuery());
-  const { data: profile } = useQuery({ ...profileQuery(user.id), refetchInterval: 15000 });
-  const { data: pending } = useQuery({ ...registrationPaymentQuery(user.id), refetchInterval: 15000 });
+  const { data: profile } = useQuery({ ...profileQuery(user.id), refetchInterval: 3000 });
+  const { data: pending } = useQuery({ ...registrationPaymentQuery(user.id), refetchInterval: 3000 });
+  usePaymentRealtime(user.id);
 
   const [method, setMethod] = useState<string>(METHODS[0]);
   const [senderName, setSenderName] = useState("");
   const [reference, setReference] = useState("");
 
   const fee = Number(settings?.registration_fee_ghs ?? 50);
-  const submitted = !!pending && pending.status === "pending";
+  const approved = !!pending && pending.status === "approved";
+  const submitted = !!pending && (pending.status === "pending" || approved);
   const rejected = !!pending && pending.status === "rejected";
 
   useEffect(() => {
-    if (profile?.registration_paid) {
-      toast.success("Registration approved — welcome to Virtu-IQ!");
+    if (!profile?.registration_paid) return;
+    toast.success("Registration approved — welcome to Virtu-IQ!");
+    const timer = window.setTimeout(() => {
       void navigate({ to: "/credits", replace: true });
-    }
+    }, 1400);
+    return () => window.clearTimeout(timer);
   }, [profile?.registration_paid, navigate]);
 
   const submit = useMutation({
@@ -103,19 +108,22 @@ function RegistrationFeePage() {
         <div className="animate-verdict relative mt-5 overflow-hidden rounded-2xl border border-border bg-card p-6 text-center">
           <LogoSymbol className="pointer-events-none absolute -right-6 -bottom-8 h-40 w-auto opacity-[0.06]" aria-hidden />
           <span className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Clock className="relative size-7" />
+            {approved ? <Check className="relative size-7" /> : <Clock className="relative size-7" />}
           </span>
-          <h2 className="relative mt-4 text-lg font-bold text-foreground">Awaiting admin approval</h2>
+          <h2 className="relative mt-4 text-lg font-bold text-foreground">
+            {approved ? "Registration approved" : "Awaiting admin approval"}
+          </h2>
           <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            We are verifying your {ghs(pending.amount_ghs)} payment against the MoMo name
-            “{pending.sender_name ?? "—"}”. This page unlocks automatically once approved.
+            {approved
+              ? "You are all set — taking you to your credits now…"
+              : `We are verifying your ${ghs(pending.amount_ghs)} payment against the MoMo name “${pending.sender_name ?? "—"}”. This page unlocks automatically once approved — no reload needed.`}
           </p>
           <dl className="relative mx-auto mt-6 grid max-w-sm gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
             <Row label="Amount" value={ghs(pending.amount_ghs)} />
             <Row label="Method" value={pending.method} />
             <Row label="MoMo name" value={pending.sender_name ?? "—"} />
             <Row label="Reference" value={pending.reference} />
-            <Row label="Status" value="Pending approval" />
+            <Row label="Status" value={approved ? "Approved" : "Pending approval"} />
           </dl>
         </div>
       ) : (
