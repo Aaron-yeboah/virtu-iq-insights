@@ -172,19 +172,109 @@ function AdminPage() {
           ))}
         </TabsContent>
 
-        <TabsContent value="audit" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-          {(logs ?? []).length === 0 && <p className="p-5 text-sm text-muted-foreground">No admin activity recorded yet.</p>}
-          {(logs ?? []).map((l) => (
-            <div key={l.id} className="p-4">
-              <p className="text-sm font-medium text-foreground">{l.action}</p>
-              <p className="text-xs text-muted-foreground">
-                {l.entity} · {new Date(l.created_at).toLocaleString()}
-              </p>
-            </div>
-          ))}
+        <TabsContent value="audit" className="mt-4 space-y-4">
+          <ExplodeCard />
+          <AuditLogList logs={logs ?? []} />
         </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+type AuditLog = { id: string; action: string; entity: string; created_at: string };
+
+function AuditLogList({ logs }: { logs: AuditLog[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? logs : logs.slice(0, 4);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      {logs.length === 0 && <p className="p-5 text-sm text-muted-foreground">No admin activity recorded yet.</p>}
+      <div className="divide-y divide-border">
+        {visible.map((l) => (
+          <div key={l.id} className="p-4">
+            <p className="text-sm font-medium text-foreground">{l.action}</p>
+            <p className="text-xs text-muted-foreground">
+              {l.entity} · {new Date(l.created_at).toLocaleString()}
+            </p>
+          </div>
+        ))}
+      </div>
+      {logs.length > 4 && (
+        <div className="border-t border-border p-3">
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => setExpanded((v) => !v)}>
+            {expanded ? "Collapse" : `Show ${logs.length - 4} more`}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExplodeCard() {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState("");
+
+  const explode = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("admin_explode_data");
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      setOpen(false);
+      setConfirm("");
+      await queryClient.invalidateQueries();
+      toast.success("Platform data cleared — everything starts fresh.");
+    },
+    onError: (e: Error) =>
+      toast.error(e.message === "FORBIDDEN" ? "Admins only" : e.message),
+  });
+
+  return (
+    <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">Explode platform data</p>
+          <p className="mt-1 max-w-xl text-xs text-muted-foreground">
+            Wipes payments, analyses, credit history, partner commissions, applications and this audit
+            log, and resets balances and partner earnings to zero. Accounts, roles, packages and payment
+            details are kept.
+          </p>
+        </div>
+        <Button variant="destructive" size="sm" onClick={() => setOpen(true)}>
+          Explode
+        </Button>
+      </div>
+
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirm(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Explode all platform data?</DialogTitle>
+            <DialogDescription>
+              This permanently clears the admin dashboard and every partner dashboard. Type EXPLODE to
+              confirm.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value.toUpperCase())}
+            placeholder="EXPLODE"
+            aria-label="Type EXPLODE to confirm"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={confirm !== "EXPLODE" || explode.isPending}
+              onClick={() => explode.mutate()}
+            >
+              {explode.isPending ? "Clearing…" : "Explode everything"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 

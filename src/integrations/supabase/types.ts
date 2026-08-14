@@ -431,6 +431,7 @@ export type Database = {
       }
       admin_credit_overview: { Args: never; Returns: Json }
       admin_delete_package: { Args: { _id: string }; Returns: boolean }
+      admin_explode_data: { Args: never; Returns: Json }
       admin_member_list: {
         Args: {
           _only_partners?: boolean
