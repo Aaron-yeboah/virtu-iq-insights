@@ -346,7 +346,7 @@ function UpgradeDialog() {
         {step === 1 && (
         <div className="grid gap-4 sm:grid-cols-3">
           {(packages ?? []).map((pkg) => {
-            const active = selected === pkg.id;
+            const popular = pkg.slug === "plus";
             return (
               <button
                 key={pkg.id}
@@ -356,31 +356,65 @@ function UpgradeDialog() {
                   setStep(2);
                 }}
                 className={cn(
-                  "rounded-xl border-2 bg-card p-5 text-left transition-all",
-                  active
-                    ? "border-primary shadow-[var(--shadow-soft)]"
-                    : "border-border hover:border-primary/50",
+                  "group relative overflow-hidden rounded-2xl border-2 p-5 text-left transition-all duration-300 hover:-translate-y-1",
+                  popular
+                    ? "border-primary/40 bg-gradient-to-br from-primary via-primary to-[#1D4ED8] text-primary-foreground shadow-[var(--shadow-soft)] sm:scale-[1.03]"
+                    : "border-border bg-card hover:border-primary/50 hover:shadow-[var(--shadow-soft)]",
                 )}
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-foreground">{pkg.name}</h3>
-                  {pkg.slug === "plus" && <Badge>Popular</Badge>}
+                {popular && (
+                  <span className="pointer-events-none absolute -right-14 -top-14 size-40 rounded-full bg-white/15 blur-2xl" />
+                )}
+                <LogoSymbol
+                  className={cn(
+                    "pointer-events-none absolute -right-5 -bottom-7 h-36 w-auto transition-transform duration-500 group-hover:scale-110",
+                    popular ? "opacity-[0.16] mix-blend-screen" : "opacity-[0.07]",
+                  )}
+                  aria-hidden
+                />
+                <div className="relative">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className={cn("font-bold", popular ? "" : "text-foreground")}>{pkg.name}</h3>
+                    {popular && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                        <Sparkles className="size-3" /> Popular
+                      </span>
+                    )}
+                  </div>
+                  <p className={cn("mt-2 text-2xl font-extrabold tracking-tight", popular ? "" : "text-foreground")}>
+                    {ghs(pkg.price_ghs)}
+                  </p>
+                  <p className={cn("mt-1 text-sm", popular ? "opacity-85" : "text-muted-foreground")}>
+                    {pkg.credits} scan credits
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
+                      popular ? "bg-white/20" : "bg-primary/10 text-primary",
+                    )}
+                  >
+                    {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
+                  </p>
+                  <ul className="mt-3 space-y-1.5">
+                    {((pkg.perks as string[]) ?? []).map((perk) => (
+                      <li
+                        key={perk}
+                        className={cn("flex gap-2 text-xs", popular ? "opacity-90" : "text-muted-foreground")}
+                      >
+                        <Check className={cn("mt-0.5 size-3.5 shrink-0", popular ? "" : "text-primary")} />
+                        {perk}
+                      </li>
+                    ))}
+                  </ul>
+                  <span
+                    className={cn(
+                      "mt-4 inline-flex items-center gap-1 text-xs font-semibold",
+                      popular ? "" : "text-primary",
+                    )}
+                  >
+                    Choose {pkg.name} <ArrowUpRight className="size-3.5" />
+                  </span>
                 </div>
-                <p className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">
-                  {ghs(pkg.price_ghs)}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">{pkg.credits} scan credits</p>
-                <p className="mt-1 text-xs font-semibold text-primary">
-                  {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
-                </p>
-                <ul className="mt-3 space-y-1.5">
-                  {((pkg.perks as string[]) ?? []).map((perk) => (
-                    <li key={perk} className="flex gap-2 text-xs text-muted-foreground">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-primary" />
-                      {perk}
-                    </li>
-                  ))}
-                </ul>
               </button>
             );
           })}
