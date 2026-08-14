@@ -4,6 +4,7 @@ import { Coins, ScanSearch, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/app/AppShell";
+import { LogoSymbol } from "@/components/brand/Logo";
 import { analysesQuery, profileQuery, referralsQuery, rolesQuery } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -42,7 +43,7 @@ function DashboardPage() {
     <>
       <PageHeader
         title={`Welcome back${profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}`}
-        description="Upload a football screenshot and Virtu-IQ picks the most likely outcome."
+        description="Upload an instant virtual football screenshot and Virtu-IQ picks the most likely outcomes."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -57,15 +58,21 @@ function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 rounded-xl border border-border bg-gradient-to-br from-primary to-[var(--color-primary-deep,var(--color-primary))] p-6 text-primary-foreground sm:p-8">
-        <h2 className="text-xl font-bold">Ready for your next verdict?</h2>
-        <p className="mt-2 max-w-lg text-sm opacity-90">
-          Each verdict costs 1 credit. Upload a fixture list, bet slip or stats screenshot and
-          Virtu-IQ names the most likely outcome in seconds.
-        </p>
-        <Button asChild variant="secondary" className="mt-5">
-          <Link to="/analyze">Get a verdict</Link>
-        </Button>
+      <div className="relative mt-6 overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary to-[var(--color-primary-deep,var(--color-primary))] p-6 text-primary-foreground sm:p-8">
+        <LogoSymbol
+          className="pointer-events-none absolute -right-4 -bottom-8 h-44 w-auto opacity-[0.13] mix-blend-screen"
+          aria-hidden
+        />
+        <div className="relative">
+          <h2 className="text-xl font-bold">Ready for your next verdict?</h2>
+          <p className="mt-2 max-w-lg text-sm opacity-90">
+            Each scan costs 1 credit. Upload an instant/virtual football screenshot and Virtu-IQ names
+            the most likely outcomes your plan covers in seconds.
+          </p>
+          <Button asChild variant="secondary" className="mt-5">
+            <Link to="/analyze">Get a verdict</Link>
+          </Button>
+        </div>
       </div>
 
       <section className="mt-8">

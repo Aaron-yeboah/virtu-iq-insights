@@ -75,22 +75,22 @@ const packages = [
   {
     name: "Starter",
     price: "GH₵250",
-    credits: "2 analysis credits",
-    perks: ["2 AI screenshot analyses", "Structured insight reports", "Analysis history", "Email support"],
+    credits: "2 verdicts per screenshot",
+    perks: ["50 scan credits", "Instant virtual football only", "Analysis history", "Email support"],
     popular: false,
   },
   {
     name: "Plus",
     price: "GH₵350",
-    credits: "3 analysis credits",
-    perks: ["3 AI screenshot analyses", "Structured insight reports", "Downloadable reports", "Priority email support"],
+    credits: "4 verdicts per screenshot",
+    perks: ["100 scan credits", "Instant virtual football only", "Analysis history", "Priority email support"],
     popular: false,
   },
   {
     name: "Premium",
     price: "GH₵500",
-    credits: "5 analysis credits",
-    perks: ["5 AI screenshot analyses", "Structured insight reports", "Downloadable reports", "Priority support"],
+    credits: "8 verdicts per screenshot",
+    perks: ["200 scan credits", "Instant virtual football only", "Analysis history", "Priority support"],
     popular: true,
   },
 ];

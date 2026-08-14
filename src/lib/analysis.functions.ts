@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { ANALYSIS_MODEL, ANALYSIS_SYSTEM_PROMPT, IRRELEVANT_MESSAGE } from "./analysis-prompt";
+import { ANALYSIS_MODEL, buildAnalysisSystemPrompt, IRRELEVANT_MESSAGE } from "./analysis-prompt";
 
 export const runAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -58,6 +58,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) return fail("AI service is not configured.");
 
+    const { data: limitData } = await supabase.rpc("my_verdict_limit");
+    const verdictLimit = Math.max(1, Number(limitData ?? 1));
+
     let response: Response;
     try {
       response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -66,14 +69,14 @@ export const runAnalysis = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model: ANALYSIS_MODEL,
           messages: [
-            { role: "system", content: ANALYSIS_SYSTEM_PROMPT },
+            { role: "system", content: buildAnalysisSystemPrompt(verdictLimit) },
             {
               role: "user",
               content: [
                 {
                   type: "text",
                   text:
-                    "Read this screenshot and pick the most likely outcome for every football match you can clearly see. Apply the relevance gate first.",
+                    `Read this instant/virtual football screenshot and pick the most likely outcome for your ${verdictLimit} highest-confidence fixture(s) only. Apply the relevance gate first.`,
                 },
                 { type: "image_url", image_url: { url: signed.signedUrl } },
               ],
@@ -102,9 +105,10 @@ export const runAnalysis = createServerFn({ method: "POST" })
     }
 
     const matches = Array.isArray(parsed["matches"]) ? (parsed["matches"] as unknown[]) : [];
+    const limited = matches.slice(0, verdictLimit);
 
     // Relevance gate: not football => credit stays spent, no refund.
-    if (parsed["relevant"] === false || matches.length === 0) {
+    if (parsed["relevant"] === false || limited.length === 0) {
       const reason = typeof parsed["reason"] === "string" ? String(parsed["reason"]).slice(0, 200) : "";
       await supabase
         .from("analyses")
@@ -125,6 +129,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
         ? String(parsed["title"]).slice(0, 120)
         : "Football prediction";
     const summary = typeof parsed["headline"] === "string" ? String(parsed["headline"]).slice(0, 500) : "";
+    const result = { ...parsed, matches: limited, verdict_limit: verdictLimit };
 
     const { error: saveError } = await supabase
       .from("analyses")
@@ -132,7 +137,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
         status: "completed",
         title,
         summary,
-        result: parsed as never,
+        result: result as never,
         error_message: null,
         completed_at: new Date().toISOString(),
       })

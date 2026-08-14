@@ -24,8 +24,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/app/AppShell";
+import { LogoSymbol } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { creditHistoryQuery, ghs, packagesQuery, paymentsQuery, profileQuery } from "@/lib/data";
+import {
+  creditHistoryQuery,
+  ghs,
+  packagesQuery,
+  paymentsQuery,
+  profileQuery,
+  verdictLimitQuery,
+} from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/credits")({
@@ -48,6 +56,7 @@ function CreditsPage() {
   const { data: packages } = useQuery(packagesQuery());
   const { data: payments } = useQuery(paymentsQuery(user.id));
   const { data: history } = useQuery(creditHistoryQuery(user.id));
+  const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
 
   const credits = profile?.credits ?? 0;
   const capacity = Math.max(
@@ -64,13 +73,21 @@ function CreditsPage() {
     <>
       <PageHeader
         title="Credits"
-        description="One credit powers one Virtu-IQ football screenshot verdict."
+        description="One credit powers one Virtu-IQ instant virtual football scan."
       />
 
       <div className="grid gap-5 lg:grid-cols-3">
         <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary via-primary to-[#1D4ED8] p-6 text-primary-foreground shadow-[var(--shadow-soft)] sm:p-8 lg:col-span-2">
           <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/10 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-20 -left-10 size-56 rounded-full bg-black/20 blur-3xl" />
+          <LogoSymbol
+            className="pointer-events-none absolute -right-4 -bottom-6 h-52 w-auto opacity-[0.13] mix-blend-screen sm:h-64"
+            aria-hidden
+          />
+          <LogoSymbol
+            className="pointer-events-none absolute right-5 top-5 h-7 w-auto opacity-70 mix-blend-screen"
+            aria-hidden
+          />
 
           <div className="relative">
             <div className="flex items-center justify-between gap-3">
@@ -84,6 +101,10 @@ function CreditsPage() {
               <p className="text-6xl font-extrabold leading-none tracking-tight">{credits}</p>
               <p className="pb-1 text-sm opacity-80">credits available</p>
             </div>
+
+            <p className="mt-2 text-sm opacity-85">
+              Your plan delivers {verdictLimit ?? 1} verdict{(verdictLimit ?? 1) === 1 ? "" : "s"} per scan
+            </p>
 
             <div className="mt-6">
               <Progress
@@ -284,7 +305,10 @@ function UpgradeDialog() {
                 <p className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">
                   {ghs(pkg.price_ghs)}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">{pkg.credits} prediction credits</p>
+                <p className="mt-1 text-sm text-muted-foreground">{pkg.credits} scan credits</p>
+                <p className="mt-1 text-xs font-semibold text-primary">
+                  {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
+                </p>
                 <ul className="mt-3 space-y-1.5">
                   {((pkg.perks as string[]) ?? []).map((perk) => (
                     <li key={perk} className="flex gap-2 text-xs text-muted-foreground">
