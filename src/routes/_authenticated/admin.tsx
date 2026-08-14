@@ -103,7 +103,7 @@ function AdminPage() {
     <>
       <PageHeader title="Admin console" description="Review payments, partners and platform activity." />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
         <Stat label="Pending payments" value={String(stats?.pending_payments ?? 0)} />
@@ -112,15 +112,17 @@ function AdminPage() {
       </div>
 
       <Tabs defaultValue="payments" className="mt-8">
-        <TabsList>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="payment-details">Payment details</TabsTrigger>
-          <TabsTrigger value="packages">Packages & credits</TabsTrigger>
-          <TabsTrigger value="manage-partners">Manage partners</TabsTrigger>
-          <TabsTrigger value="partners">Partners</TabsTrigger>
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="audit">Audit log</TabsTrigger>
-        </TabsList>
+        <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <TabsList className="w-max min-w-full justify-start gap-1">
+            <TabsTrigger value="payments" className="whitespace-nowrap">Payments</TabsTrigger>
+            <TabsTrigger value="payment-details" className="whitespace-nowrap">Payment details</TabsTrigger>
+            <TabsTrigger value="packages" className="whitespace-nowrap">Packages &amp; credits</TabsTrigger>
+            <TabsTrigger value="manage-partners" className="whitespace-nowrap">Partners</TabsTrigger>
+            <TabsTrigger value="partners" className="whitespace-nowrap">Applications</TabsTrigger>
+            <TabsTrigger value="members" className="whitespace-nowrap">Members</TabsTrigger>
+            <TabsTrigger value="audit" className="whitespace-nowrap">Audit log</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="packages" className="mt-4">
           <MonetisationManager />
@@ -137,28 +139,28 @@ function AdminPage() {
         <TabsContent value="payments" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {(payments ?? []).length === 0 && <p className="p-5 text-sm text-muted-foreground">No payments yet.</p>}
           {(payments ?? []).map((p) => (
-            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div key={p.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
                   {ghs(p.amount_ghs)} · {p.credits} credits · {p.method}
                 </p>
-                <p className="text-xs text-muted-foreground">Ref: {p.reference}</p>
-                <p className="text-xs text-muted-foreground">MoMo name: {p.sender_name ?? "—"}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="truncate text-xs text-muted-foreground">Ref: {p.reference}</p>
+                <p className="truncate text-xs text-muted-foreground">MoMo name: {p.sender_name ?? "—"}</p>
+                <p className="truncate text-xs text-muted-foreground">
                   {new Date(p.created_at).toLocaleString()} · user {p.user_id.slice(0, 8)}
                 </p>
               </div>
               {p.status === "pending" ? (
-                <div className="flex gap-2">
-                  <Button size="sm" disabled={reviewPayment.isPending} onClick={() => reviewPayment.mutate({ id: p.id, approve: true })}>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" className="flex-1 sm:flex-none" disabled={reviewPayment.isPending} onClick={() => reviewPayment.mutate({ id: p.id, approve: true })}>
                     Approve
                   </Button>
-                  <Button size="sm" variant="outline" disabled={reviewPayment.isPending} onClick={() => reviewPayment.mutate({ id: p.id, approve: false })}>
+                  <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={reviewPayment.isPending} onClick={() => reviewPayment.mutate({ id: p.id, approve: false })}>
                     Reject
                   </Button>
                 </div>
               ) : (
-                <Badge variant={p.status === "approved" ? "default" : "destructive"}>{p.status}</Badge>
+                <Badge className="w-fit" variant={p.status === "approved" ? "default" : "destructive"}>{p.status}</Badge>
               )}
             </div>
           ))}
@@ -167,25 +169,25 @@ function AdminPage() {
         <TabsContent value="partners" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {(applications ?? []).length === 0 && <p className="p-5 text-sm text-muted-foreground">No applications yet.</p>}
           {(applications ?? []).map((a) => (
-            <div key={a.id} className="flex flex-wrap items-start justify-between gap-3 p-4">
-              <div className="min-w-0 max-w-xl">
+            <div key={a.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">user {a.user_id.slice(0, 8)}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{a.audience}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 break-words text-xs text-muted-foreground">
                   Payout: {a.payout_method} · {a.payout_details}
                 </p>
               </div>
               {a.status === "pending" ? (
-                <div className="flex gap-2">
-                  <Button size="sm" disabled={reviewApplication.isPending} onClick={() => reviewApplication.mutate({ id: a.id, approve: true })}>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" className="flex-1 sm:flex-none" disabled={reviewApplication.isPending} onClick={() => reviewApplication.mutate({ id: a.id, approve: true })}>
                     Approve
                   </Button>
-                  <Button size="sm" variant="outline" disabled={reviewApplication.isPending} onClick={() => reviewApplication.mutate({ id: a.id, approve: false })}>
+                  <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={reviewApplication.isPending} onClick={() => reviewApplication.mutate({ id: a.id, approve: false })}>
                     Reject
                   </Button>
                 </div>
               ) : (
-                <Badge variant={a.status === "approved" ? "default" : "destructive"}>{a.status}</Badge>
+                <Badge className="w-fit" variant={a.status === "approved" ? "default" : "destructive"}>{a.status}</Badge>
               )}
             </div>
           ))}
@@ -193,13 +195,13 @@ function AdminPage() {
 
         <TabsContent value="members" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {(members ?? []).map((m) => (
-            <div key={m.id} className="flex items-center justify-between gap-3 p-4">
+            <div key={m.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-4">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{m.full_name ?? m.email}</p>
                 <p className="truncate text-xs text-muted-foreground">{m.email} · {m.referral_code}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-foreground">{m.credits} credits</span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">{m.credits}</span>
                 <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
               </div>
             </div>
