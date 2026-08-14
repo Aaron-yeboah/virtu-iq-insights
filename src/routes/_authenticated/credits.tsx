@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -67,9 +68,10 @@ function CreditsPage() {
   const queryClient = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user.id));
   const { data: packages } = useQuery(packagesQuery());
-  const { data: payments } = useQuery({ ...paymentsQuery(user.id), refetchInterval: 10000 });
+  const { data: payments } = useQuery({ ...paymentsQuery(user.id), refetchInterval: 3000 });
   const { data: history } = useQuery(creditHistoryQuery(user.id));
   const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
+  usePaymentRealtime(user.id);
 
   const seen = useRef<Map<string, string> | null>(null);
   useEffect(() => {
@@ -84,7 +86,9 @@ function CreditsPage() {
     if (justApproved) {
       void queryClient.invalidateQueries();
       toast.success(`Payment approved — ${justApproved.credits} credits added`);
-      navigate({ to: "/analyze" });
+      window.setTimeout(() => {
+        void navigate({ to: "/analyze" });
+      }, 1400);
     }
   }, [payments, navigate, queryClient]);
 
@@ -264,6 +268,14 @@ function UpgradeDialog() {
   const [method, setMethod] = useState(METHODS[0]!);
   const [senderName, setSenderName] = useState("");
   const [reference, setReference] = useState("");
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const { data: livePayments } = useQuery({
+    ...paymentsQuery(user.id),
+    refetchInterval: paymentId ? 3000 : false,
+  });
+  const livePayment = paymentId ? (livePayments ?? []).find((p) => p.id === paymentId) : undefined;
+  const approved = livePayment?.status === "approved";
+  const rejected = livePayment?.status === "rejected";
 
   const pkg = (packages ?? []).find((p) => p.id === selected) ?? null;
 
@@ -272,6 +284,7 @@ function UpgradeDialog() {
     setSelected(null);
     setSenderName("");
     setReference("");
+    setPaymentId(null);
   };
 
   const submit = useMutation({
@@ -283,7 +296,9 @@ function UpgradeDialog() {
       }
       const ref = reference.trim();
       if (ref.length > 80) throw new Error("Transaction reference is too long.");
-      const { error } = await supabase.from("payments").insert({
+      const { data, error } = await supabase
+        .from("payments")
+        .insert({
         user_id: user.id,
         package_id: pkg.id,
         amount_ghs: pkg.price_ghs,
@@ -291,10 +306,14 @@ function UpgradeDialog() {
         method,
         sender_name: name,
         reference: ref || "Not provided",
-      });
+        })
+        .select("id")
+        .single();
       if (error) throw new Error(error.message);
+      return data.id as string;
     },
-    onSuccess: async () => {
+    onSuccess: async (id: string) => {
+      setPaymentId(id);
       setStep(3);
       await queryClient.invalidateQueries({ queryKey: ["payments", user.id] });
     },
@@ -536,13 +555,24 @@ function UpgradeDialog() {
               aria-hidden
             />
             <span className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <span className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring" aria-hidden />
-              <Clock className="relative size-7" />
+              {!approved && !rejected && (
+                <span className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring" aria-hidden />
+              )}
+              {approved ? <Check className="relative size-7" /> : <Clock className="relative size-7" />}
             </span>
-            <h3 className="relative mt-4 text-lg font-bold text-foreground">Awaiting admin approval</h3>
+            <h3 className="relative mt-4 text-lg font-bold text-foreground">
+              {approved
+                ? "Payment approved"
+                : rejected
+                  ? "Payment rejected"
+                  : "Awaiting admin approval"}
+            </h3>
             <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Your payment is being verified against the MoMo name you provided. The moment it is
-              approved your credits land and we take you straight to a new analysis.
+              {approved
+                ? "Your credits have landed. Taking you to a new analysis…"
+                : rejected
+                  ? livePayment?.admin_note || "Please check your payment details and submit again."
+                  : "Your payment is being verified against the MoMo name you provided. This updates live — no need to reload."}
             </p>
 
             <dl className="relative mx-auto mt-6 grid max-w-md gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
@@ -555,7 +585,10 @@ function UpgradeDialog() {
               <Row label="Method" value={method} />
               <Row label="MoMo name" value={senderName} />
               <Row label="Reference" value={reference} />
-              <Row label="Status" value="Pending approval" />
+              <Row
+                label="Status"
+                value={approved ? "Approved" : rejected ? "Rejected" : "Pending approval"}
+              />
             </dl>
 
             <Button

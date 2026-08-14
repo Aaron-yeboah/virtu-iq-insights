@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/partner")({
 function PartnerPage() {
   const { user } = Route.useRouteContext();
   const { data: profile } = useQuery(profileQuery(user.id));
-  const { data: stats } = useQuery(partnerStatsQuery(user.id));
+  const { data: stats } = useQuery({ ...partnerStatsQuery(user.id), refetchInterval: 15000 });
   const { data: commissions } = useQuery(commissionsQuery(user.id));
 
   const referralLink =
