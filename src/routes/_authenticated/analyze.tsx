@@ -16,9 +16,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/analyze")({
   head: () => ({
     meta: [
-      { title: "Virtu-IQ" },
+      { title: "Analyze Screenshot — Virtu-IQ" },
       { name: "description", content: "Upload an instant/virtual football screenshot and Virtu-IQ picks the most likely outcomes your plan allows." },
-      { property: "og:title", content: "Virtu-IQ" },
+      { property: "og:title", content: "Analyze Screenshot — Virtu-IQ" },
       { property: "og:description", content: "Virtu-IQ reads your instant virtual football screenshot and delivers a decisive verdict." },
     ],
   }),
@@ -110,7 +110,7 @@ function AnalyzePage() {
   return (
     <>
       <PageHeader
-        title="Virtu-IQ"
+        title="Analyze Screenshot"
         description="Drop in an instant/virtual football screenshot. We pick the outcomes — you place them."
       />
 
