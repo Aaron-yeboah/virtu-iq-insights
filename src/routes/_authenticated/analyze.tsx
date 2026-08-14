@@ -73,16 +73,22 @@ function AnalyzePage() {
         .single();
       if (insertError) throw new Error(insertError.message);
 
+      const toError = (e: unknown) =>
+        e instanceof Error ? e : new Error(typeof e === "string" && e ? e : "Analysis failed. Please try again.");
       const run = async () => analyze({ data: { analysisId: created.id } });
       let result;
       try {
         result = await run();
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        if (!/unauthor|invalid token|401/i.test(message)) throw err;
+        const normalized = toError(err);
+        if (!/unauthor|invalid token|401/i.test(normalized.message)) throw normalized;
         // Session token was stale — refresh and try once more.
-        await getFreshAccessToken();
-        result = await run();
+        try {
+          await getFreshAccessToken();
+          result = await run();
+        } catch (retryErr) {
+          throw toError(retryErr);
+        }
       }
       return { id: created.id, irrelevant: Boolean(result?.irrelevant) };
     },
@@ -95,12 +101,14 @@ function AnalyzePage() {
       }
       navigate({ to: "/analysis/$id", params: { id } });
     },
-    onError: (error: Error) => {
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong. Please try again.";
       void queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
       toast.error(
-        error.message.includes("INSUFFICIENT_CREDITS")
+        message.includes("INSUFFICIENT_CREDITS")
           ? "You're out of credits. Top up to keep predicting."
-          : error.message,
+          : message,
       );
     },
   });
