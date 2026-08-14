@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, TrendingUp, Users, Wallet } from "lucide-react";
+import { Copy, Handshake, Link2, TrendingUp, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/app/AppShell";
+import { LogoSymbol } from "@/components/brand/Logo";
 import { commissionsQuery, ghs, partnerStatsQuery, profileQuery } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/partner")({
