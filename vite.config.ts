@@ -6,6 +6,16 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// External hosts commonly expose the backend settings without Vite's `VITE_`
+// prefix. Only the public URL and publishable key are copied into the browser
+// bundle; privileged server credentials must never be defined here.
+const publicBackendUrl =
+  process.env["VITE_SUPABASE_URL"] ?? process.env["SUPABASE_URL"];
+const publicBackendKey =
+  process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ??
+  process.env["SUPABASE_PUBLISHABLE_KEY"] ??
+  process.env["SUPABASE_ANON_KEY"];
+
 export default defineConfig({
   // Lovable pins its own deployment target in hosted builds. External Vercel
   // builds need an explicit Vercel output bundle instead of the Cloudflare
@@ -17,5 +27,18 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+  },
+  vite: {
+    define: {
+      ...(publicBackendUrl
+        ? { "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(publicBackendUrl) }
+        : {}),
+      ...(publicBackendKey
+        ? {
+            "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY":
+              JSON.stringify(publicBackendKey),
+          }
+        : {}),
+    },
   },
 });
