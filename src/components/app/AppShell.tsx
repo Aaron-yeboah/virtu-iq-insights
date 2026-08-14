@@ -15,7 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogoFull, LogoSymbol } from "@/components/brand/Logo";
-import { profileQuery, rolesQuery } from "@/lib/data";
+import { profileQuery } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 const baseNav = [
@@ -26,20 +26,32 @@ const baseNav = [
   { to: "/partner", label: "Partner", icon: Handshake },
 ] as const;
 
-export function AppShell({ userId, children }: { userId: string; children: ReactNode }) {
+export function AppShell({
+  userId,
+  isAdmin = false,
+  isPartner = false,
+  children,
+}: {
+  userId: string;
+  isAdmin?: boolean;
+  isPartner?: boolean;
+  children: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const { data: profile } = useQuery(profileQuery(userId));
-  const { data: roles } = useQuery(rolesQuery(userId));
-  const isAdmin = (roles ?? []).includes("admin");
+  const partnerOnly = isPartner && !isAdmin;
 
-  const nav = [
-    ...baseNav,
-    ...(isAdmin ? ([{ to: "/admin", label: "Admin", icon: ShieldCheck }] as const) : []),
-  ];
+  const nav = partnerOnly
+    ? ([{ to: "/partner", label: "Partner Hub", icon: Handshake }] as const)
+    : [
+        ...baseNav.filter((item) => item.to !== "/partner"),
+        ...(isAdmin ? ([{ to: "/partner", label: "Partner", icon: Handshake }] as const) : []),
+        ...(isAdmin ? ([{ to: "/admin", label: "Admin", icon: ShieldCheck }] as const) : []),
+      ];
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -79,15 +91,17 @@ export function AppShell({ userId, children }: { userId: string; children: React
           <LogoFull className="h-8" />
         </Link>
         <div className="mt-8 flex-1">{navList}</div>
-        <div className="rounded-lg border border-border bg-secondary/60 p-3">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Credit balance
-          </p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{profile?.credits ?? 0}</p>
-          <Button asChild size="sm" className="mt-3 w-full">
-            <Link to="/credits">Top up</Link>
-          </Button>
-        </div>
+        {!partnerOnly && (
+          <div className="rounded-lg border border-border bg-secondary/60 p-3">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Credit balance
+            </p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{profile?.credits ?? 0}</p>
+            <Button asChild size="sm" className="mt-3 w-full">
+              <Link to="/credits">Top up</Link>
+            </Button>
+          </div>
+        )}
         <button
           type="button"
           onClick={signOut}
@@ -103,7 +117,7 @@ export function AppShell({ userId, children }: { userId: string; children: React
         </Link>
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-foreground">
-            {profile?.credits ?? 0} credits
+            {partnerOnly ? "Partner" : `${profile?.credits ?? 0} credits`}
           </span>
           <button
             type="button"
