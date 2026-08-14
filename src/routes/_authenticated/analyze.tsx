@@ -69,14 +69,8 @@ function AnalyzePage() {
         .single();
       if (insertError) throw new Error(insertError.message);
 
-      try {
-        await analyze({ data: { analysisId: created.id } });
-        return { id: created.id, irrelevant: false };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        if (message.includes("IRRELEVANT_IMAGE")) return { id: created.id, irrelevant: true };
-        throw error instanceof Error ? error : new Error(message);
-      }
+      const result = await analyze({ data: { analysisId: created.id } });
+      return { id: created.id, irrelevant: Boolean(result?.irrelevant) };
     },
     onSuccess: async ({ id, irrelevant }) => {
       await queryClient.invalidateQueries();

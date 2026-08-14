@@ -22,7 +22,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
 
     if (loadError) throw new Error(loadError.message);
     if (!analysis) throw new Error("Analysis not found");
-    if (analysis.status === "completed") return { ok: true, alreadyDone: true };
+    if (analysis.status === "completed") return { ok: true, alreadyDone: true, irrelevant: false };
 
     const cost = analysis.credits_used ?? 1;
     const { error: spendError } = await supabase.rpc("spend_credits", {
@@ -117,7 +117,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
           completed_at: new Date().toISOString(),
         })
         .eq("id", analysis.id);
-      throw new Error("IRRELEVANT_IMAGE");
+      return { ok: false, alreadyDone: false, irrelevant: true };
     }
 
     const title =
@@ -139,5 +139,5 @@ export const runAnalysis = createServerFn({ method: "POST" })
       .eq("id", analysis.id);
     if (saveError) return fail(saveError.message);
 
-    return { ok: true, alreadyDone: false };
+    return { ok: true, alreadyDone: false, irrelevant: false };
   });
