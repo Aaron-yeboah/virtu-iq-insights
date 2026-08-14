@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -67,9 +68,10 @@ function CreditsPage() {
   const queryClient = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user.id));
   const { data: packages } = useQuery(packagesQuery());
-  const { data: payments } = useQuery({ ...paymentsQuery(user.id), refetchInterval: 10000 });
+  const { data: payments } = useQuery({ ...paymentsQuery(user.id), refetchInterval: 3000 });
   const { data: history } = useQuery(creditHistoryQuery(user.id));
   const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
+  usePaymentRealtime(user.id);
 
   const seen = useRef<Map<string, string> | null>(null);
   useEffect(() => {
@@ -84,7 +86,9 @@ function CreditsPage() {
     if (justApproved) {
       void queryClient.invalidateQueries();
       toast.success(`Payment approved — ${justApproved.credits} credits added`);
-      navigate({ to: "/analyze" });
+      window.setTimeout(() => {
+        void navigate({ to: "/analyze" });
+      }, 1400);
     }
   }, [payments, navigate, queryClient]);
 
