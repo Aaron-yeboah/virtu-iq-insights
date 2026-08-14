@@ -11,7 +11,7 @@ Real-world live football fixtures (actual clubs playing real scheduled matches) 
 
 PLAN LIMIT — CRITICAL.
 The user's plan allows exactly ${verdictLimit} verdict${verdictLimit === 1 ? "" : "s"}.
-No matter how many fixtures appear in the image, return AT MOST ${verdictLimit} object${verdictLimit === 1 ? "" : "s"} in "matches" — the ${verdictLimit} you are most confident about, ordered by confidence descending. List remaining readable fixtures you skipped inside "avoid".
+No matter how many fixtures appear in the image, return EXACTLY ${verdictLimit} object${verdictLimit === 1 ? "" : "s"} in "matches" (fewer only if fewer fixtures are visible) — the ${verdictLimit} you are most confident about, ordered by confidence descending. Do not mention or list any fixture you skipped.
 
 STEP 2 — If it IS football related, reply with ONLY valid minified JSON:
 {
