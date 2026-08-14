@@ -6,17 +6,31 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import {
   adminApplicationsQuery,
+  adminCreditOverviewQuery,
   adminMemberListQuery,
   adminMembersQuery,
+  adminPackagesQuery,
   adminPaymentsQuery,
   adminStatsQuery,
   auditLogsQuery,
   ghs,
   rolesQuery,
+  type PackageRow,
 } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -99,11 +113,16 @@ function AdminPage() {
       <Tabs defaultValue="payments" className="mt-8">
         <TabsList>
           <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="packages">Packages & credits</TabsTrigger>
           <TabsTrigger value="manage-partners">Manage partners</TabsTrigger>
           <TabsTrigger value="partners">Partners</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="audit">Audit log</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="packages" className="mt-4">
+          <MonetisationManager />
+        </TabsContent>
 
         <TabsContent value="manage-partners" className="mt-4">
           <PartnerManager />
@@ -172,7 +191,10 @@ function AdminPage() {
                 <p className="truncate text-sm font-medium text-foreground">{m.full_name ?? m.email}</p>
                 <p className="truncate text-xs text-muted-foreground">{m.email} · {m.referral_code}</p>
               </div>
-              <span className="text-sm font-semibold text-foreground">{m.credits} credits</span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-foreground">{m.credits} credits</span>
+                <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
+              </div>
             </div>
           ))}
         </TabsContent>
@@ -332,6 +354,336 @@ function PartnerManager() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function CreditAdjuster({ userId, label }: { userId: string; label: string }) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("5");
+  const [reason, setReason] = useState("");
+
+  const adjust = useMutation({
+    mutationFn: async (sign: 1 | -1) => {
+      const delta = sign * Math.abs(Number(amount));
+      if (!Number.isFinite(delta) || delta === 0) throw new Error("Enter a credit amount.");
+      const note = reason.trim();
+      const { error } = await supabase.rpc("admin_adjust_credits", {
+        _user_id: userId,
+        _delta: Math.trunc(delta),
+        ...(note ? { _reason: note } : {}),
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      setReason("");
+      setOpen(false);
+      await queryClient.invalidateQueries();
+      toast.success("Credits updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        Credits
+      </Button>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Adjust credits</DialogTitle>
+          <DialogDescription>Grant or remove prediction credits for {label}.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="space-y-2">
+            <Label htmlFor={`amt-${userId}`}>Credits</Label>
+            <Input
+              id={`amt-${userId}`}
+              type="number"
+              min={1}
+              max={10000}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`why-${userId}`}>Reason (shown in their ledger)</Label>
+            <Input
+              id={`why-${userId}`}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Goodwill top-up"
+            />
+          </div>
+        </div>
+        <DialogFooter className="gap-2 sm:justify-start">
+          <Button disabled={adjust.isPending} onClick={() => adjust.mutate(1)}>
+            Add credits
+          </Button>
+          <Button variant="destructive" disabled={adjust.isPending} onClick={() => adjust.mutate(-1)}>
+            Remove credits
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type PackageDraft = {
+  id: string | null;
+  name: string;
+  slug: string;
+  price_ghs: string;
+  credits: string;
+  perks: string;
+  is_active: boolean;
+  sort_order: string;
+};
+
+const emptyDraft: PackageDraft = {
+  id: null,
+  name: "",
+  slug: "",
+  price_ghs: "",
+  credits: "",
+  perks: "",
+  is_active: true,
+  sort_order: "0",
+};
+
+function MonetisationManager() {
+  const queryClient = useQueryClient();
+  const { data: overview } = useQuery(adminCreditOverviewQuery());
+  const { data: packages } = useQuery(adminPackagesQuery());
+  const [draft, setDraft] = useState<PackageDraft | null>(null);
+
+  const save = useMutation({
+    mutationFn: async (d: PackageDraft) => {
+      const perks = d.perks
+        .split("\n")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      const { error } = await supabase.rpc("admin_upsert_package", {
+        ...(d.id ? { _id: d.id } : {}),
+        _name: d.name,
+        _slug: d.slug.trim() || d.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        _price_ghs: Number(d.price_ghs),
+        _credits: Math.trunc(Number(d.credits)),
+        _perks: perks,
+        _is_active: d.is_active,
+        _sort_order: Math.trunc(Number(d.sort_order) || 0),
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      setDraft(null);
+      await queryClient.invalidateQueries();
+      toast.success("Package saved");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggle = useMutation({
+    mutationFn: async (p: PackageRow) => {
+      const { error } = await supabase.rpc("admin_upsert_package", {
+        _id: p.id,
+        _name: p.name,
+        _slug: p.slug,
+        _price_ghs: Number(p.price_ghs),
+        _credits: p.credits,
+        _perks: (p.perks as string[]) ?? [],
+        _is_active: !p.is_active,
+        _sort_order: p.sort_order,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success("Package visibility updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("admin_delete_package", { _id: id });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success("Package removed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <Stat label="Credits outstanding" value={String(overview?.credits_outstanding ?? 0)} />
+        <Stat label="Credits sold" value={String(overview?.credits_sold ?? 0)} />
+        <Stat label="Credits used" value={String(overview?.credits_spent ?? 0)} />
+        <Stat label="Revenue" value={ghs(overview?.revenue_ghs ?? 0)} />
+        <Stat label="Active packages" value={String(overview?.active_packages ?? 0)} />
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-foreground">Packages</h3>
+        <Button size="sm" onClick={() => setDraft({ ...emptyDraft })}>
+          New package
+        </Button>
+      </div>
+
+      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        {(packages ?? []).length === 0 && (
+          <p className="p-5 text-sm text-muted-foreground">No packages yet — create your first one.</p>
+        )}
+        {(packages ?? []).map((p) => (
+          <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                {p.name}
+                {!p.is_active && <Badge variant="secondary">Hidden</Badge>}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {ghs(p.price_ghs)} · {p.credits} credits · slug {p.slug} · order {p.sort_order}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 pr-2">
+                <Switch
+                  checked={p.is_active}
+                  onCheckedChange={() => toggle.mutate(p)}
+                  aria-label={`Toggle ${p.name}`}
+                />
+                <span className="text-xs text-muted-foreground">Live</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setDraft({
+                    id: p.id,
+                    name: p.name,
+                    slug: p.slug,
+                    price_ghs: String(p.price_ghs),
+                    credits: String(p.credits),
+                    perks: (((p.perks as string[]) ?? []) as string[]).join("\n"),
+                    is_active: p.is_active,
+                    sort_order: String(p.sort_order),
+                  })
+                }
+              >
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={remove.isPending}
+                onClick={() => remove.mutate(p.id)}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={!!draft} onOpenChange={(o) => !o && setDraft(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{draft?.id ? "Edit package" : "New package"}</DialogTitle>
+            <DialogDescription>
+              Set the price, credits and perks members see on the credits page.
+            </DialogDescription>
+          </DialogHeader>
+          {draft && (
+            <form
+              className="grid gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                save.mutate(draft);
+              }}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="pkg-name">Name</Label>
+                  <Input
+                    id="pkg-name"
+                    value={draft.name}
+                    onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pkg-slug">Slug</Label>
+                  <Input
+                    id="pkg-slug"
+                    value={draft.slug}
+                    onChange={(e) => setDraft({ ...draft, slug: e.target.value })}
+                    placeholder="starter"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pkg-price">Price (GHS)</Label>
+                  <Input
+                    id="pkg-price"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={draft.price_ghs}
+                    onChange={(e) => setDraft({ ...draft, price_ghs: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pkg-credits">Credits</Label>
+                  <Input
+                    id="pkg-credits"
+                    type="number"
+                    min={1}
+                    value={draft.credits}
+                    onChange={(e) => setDraft({ ...draft, credits: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pkg-order">Display order</Label>
+                  <Input
+                    id="pkg-order"
+                    type="number"
+                    value={draft.sort_order}
+                    onChange={(e) => setDraft({ ...draft, sort_order: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-end gap-2 pb-2">
+                  <Switch
+                    id="pkg-active"
+                    checked={draft.is_active}
+                    onCheckedChange={(v) => setDraft({ ...draft, is_active: v })}
+                  />
+                  <Label htmlFor="pkg-active">Visible to members</Label>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pkg-perks">Perks (one per line)</Label>
+                <Textarea
+                  id="pkg-perks"
+                  rows={4}
+                  value={draft.perks}
+                  onChange={(e) => setDraft({ ...draft, perks: e.target.value })}
+                  placeholder={"Priority verdicts\nEmail support"}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={save.isPending}>
+                  Save package
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
