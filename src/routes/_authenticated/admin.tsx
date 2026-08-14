@@ -710,10 +710,8 @@ function MonetisationManager() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Stat label="Credits outstanding" value={String(overview?.credits_outstanding ?? 0)} />
+      <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Credits sold" value={String(overview?.credits_sold ?? 0)} />
-        <Stat label="Credits used" value={String(overview?.credits_spent ?? 0)} />
         <Stat label="Revenue" value={ghs(overview?.revenue_ghs ?? 0)} />
         <Stat label="Active packages" value={String(overview?.active_packages ?? 0)} />
       </div>
