@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoFull } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/register")({
@@ -60,6 +59,7 @@ function RegisterPage() {
     setNotice(null);
     if (fullName.trim().length < 2) return setError("Please enter your full name.");
     if (!email.includes("@")) return setError("Please enter a valid email address.");
+    if (phone.trim().replace(/\D/g, "").length < 9) return setError("Please enter a valid phone number.");
     if (password.length < 8) return setError("Passwords must be at least 8 characters.");
 
     setPending(true);
@@ -83,16 +83,6 @@ function RegisterPage() {
     navigate({ to: "/credits", replace: true });
   }
 
-  async function handleGoogle() {
-    setError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) return setError("Google sign-up failed. Please try again.");
-    if (result.redirected) return;
-    navigate({ to: "/credits", replace: true });
-  }
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
       <div className="w-full max-w-md">
@@ -105,16 +95,7 @@ function RegisterPage() {
             Start with 3 free analyses — no card required.
           </p>
 
-          <Button type="button" variant="outline" className="mt-6 w-full" onClick={handleGoogle}>
-            Continue with Google
-          </Button>
-          <div className="my-5 flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
               <Input id="name" value={fullName} maxLength={80} onChange={(e) => setFullName(e.target.value)} placeholder="Ama Mensah" required />
@@ -124,8 +105,8 @@ function RegisterPage() {
               <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone (optional)</Label>
-              <Input id="phone" type="tel" value={phone} maxLength={24} onChange={(e) => setPhone(e.target.value)} placeholder="024 000 0000" />
+              <Label htmlFor="phone">Phone number</Label>
+              <Input id="phone" type="tel" autoComplete="tel" value={phone} maxLength={24} onChange={(e) => setPhone(e.target.value)} placeholder="024 000 0000" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
