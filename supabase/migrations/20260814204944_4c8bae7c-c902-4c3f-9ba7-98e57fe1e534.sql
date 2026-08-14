@@ -1,0 +1,1 @@
+update public.profiles set credits = credits + 1 where id = '82b78620-1259-4005-9d3f-8684af283a55';

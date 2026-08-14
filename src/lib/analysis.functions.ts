@@ -57,28 +57,46 @@ export const runAnalysis = createServerFn({ method: "POST" })
 
     // Retrieve image data for AI processing
     let base64Image = "";
-    let mimeType = "image/png";
+    const extGuess = (analysis.image_path.split(".").pop() || "png").toLowerCase();
+    let mimeType =
+      extGuess === "jpg" || extGuess === "jpeg"
+        ? "image/jpeg"
+        : extGuess === "webp"
+          ? "image/webp"
+          : extGuess === "avif"
+            ? "image/avif"
+            : "image/png";
     try {
       const { data: fileBlob } = await supabase.storage
         .from("screenshots")
         .download(analysis.image_path);
-      if (fileBlob) {
-        mimeType = fileBlob.type || "image/png";
+      if (fileBlob && fileBlob.size > 0) {
+        if (fileBlob.type) mimeType = fileBlob.type;
         const buffer = await fileBlob.arrayBuffer();
         base64Image = Buffer.from(buffer).toString("base64");
       }
     } catch {
-      // If direct download fails, fetch from signedUrl
+      // handled by the signed-URL fallback below
+    }
+
+    if (!base64Image) {
+      // Fallback: pull the bytes over the signed URL.
       try {
         const fetchRes = await fetch(signed.signedUrl);
         if (fetchRes.ok) {
           const contentType = fetchRes.headers.get("content-type");
-          if (contentType) mimeType = contentType;
+          if (contentType && contentType.startsWith("image/")) mimeType = contentType;
           const buffer = await fetchRes.arrayBuffer();
-          base64Image = Buffer.from(buffer).toString("base64");
+          if (buffer.byteLength > 0) base64Image = Buffer.from(buffer).toString("base64");
         }
-      } catch {}
+      } catch {
+        // fall through to the guard below
+      }
     }
+
+    // Never let the model answer without actually seeing the screenshot —
+    // otherwise it invents placeholder fixtures ("Team A vs Team B").
+    if (!base64Image) return fail("Could not read the uploaded screenshot. Please upload it again.");
 
     // Preferred: Lovable AI gateway (LOVABLE_API_KEY). Fallbacks: direct Gemini, then OpenAI.
     const lovableKey = process.env["LOVABLE_API_KEY"] || process.env["AI_GATEWAY_API_KEY"];
@@ -184,7 +202,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
                 role: "user",
                 content: [
                   { type: "text", text: userPrompt },
-                  { type: "image_url", image_url: { url: signed.signedUrl } },
+                  { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}` } },
                 ],
               },
             ],

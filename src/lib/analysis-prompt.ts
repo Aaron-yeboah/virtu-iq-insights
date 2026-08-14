@@ -8,6 +8,9 @@ STEP 1 — RELEVANCE GATE.
 If the screenshot does not clearly show instant/virtual football fixtures, odds, virtual bet slips or virtual league stats, reply with ONLY:
 {"relevant":false,"reason":"<one short sentence naming what the image shows>"}
 Real-world live football fixtures (actual clubs playing real scheduled matches) are NOT supported — treat them as irrelevant with reason "Real live football is not supported — upload instant/virtual football only.".
+If the image is blank, unreadable, too low quality or you cannot actually read team names and odds from it, reply with ONLY:
+{"relevant":false,"reason":"The screenshot is unreadable — please upload a clear instant/virtual football screenshot."}
+NEVER invent placeholder names such as "Team A", "Team B", "Home", "Away" or made-up odds. Every fixture, market and odd you return must be text you literally read in the image.
 
 PLAN LIMIT — CRITICAL.
 The user's plan allows exactly ${verdictLimit} verdict${verdictLimit === 1 ? "" : "s"}.
