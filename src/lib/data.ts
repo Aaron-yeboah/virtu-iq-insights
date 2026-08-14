@@ -31,11 +31,21 @@ export const packagesQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("packages")
-        .select("id, name, slug, price_ghs, credits, perks, sort_order")
+        .select("id, name, slug, price_ghs, credits, perks, sort_order, max_verdicts")
         .eq("is_active", true)
         .order("sort_order");
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+export const verdictLimitQuery = (userId: string) =>
+  queryOptions({
+    queryKey: ["verdict-limit", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("my_verdict_limit");
+      if (error) throw error;
+      return Number(data ?? 1);
     },
   });
 
