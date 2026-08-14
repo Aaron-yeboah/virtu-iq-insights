@@ -444,6 +444,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_admin: boolean
           is_partner: boolean
           referral_code: string
           referral_count: number
@@ -482,6 +483,10 @@ export type Database = {
           referral_count: number
           revenue_ghs: number
         }[]
+      }
+      admin_set_admin: {
+        Args: { _make: boolean; _user_id: string }
+        Returns: boolean
       }
       admin_set_commission_rate: {
         Args: { _rate: number; _user_id: string }
@@ -530,6 +535,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_default_admin: { Args: { _user_id: string }; Returns: boolean }
       my_verdict_limit: { Args: never; Returns: number }
       partner_stats: { Args: never; Returns: Json }
       refund_credits: {
