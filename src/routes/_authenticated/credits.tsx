@@ -111,11 +111,11 @@ function CreditsPage() {
           <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/10 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-20 -left-10 size-56 rounded-full bg-black/20 blur-3xl" />
           <LogoSymbol
-            className="pointer-events-none absolute -right-4 -bottom-6 h-52 w-auto opacity-[0.13] mix-blend-screen sm:h-64"
+            className="pointer-events-none absolute -right-4 -bottom-6 h-52 w-auto opacity-[0.13] sm:h-64"
             aria-hidden
           />
           <LogoSymbol
-            className="pointer-events-none absolute right-5 top-5 h-7 w-auto opacity-70 mix-blend-screen"
+            className="pointer-events-none absolute right-5 top-5 h-7 w-auto opacity-70"
             aria-hidden
           />
 
@@ -282,9 +282,7 @@ function UpgradeDialog() {
         throw new Error("Enter the MoMo name on the account you paid from (2-80 characters).");
       }
       const ref = reference.trim();
-      if (ref.length < 4 || ref.length > 80) {
-        throw new Error("Enter the transaction reference from your payment (4-80 characters).");
-      }
+      if (ref.length > 80) throw new Error("Transaction reference is too long.");
       const { error } = await supabase.from("payments").insert({
         user_id: user.id,
         package_id: pkg.id,
@@ -292,7 +290,7 @@ function UpgradeDialog() {
         credits: pkg.credits,
         method,
         sender_name: name,
-        reference: ref,
+        reference: ref || "Not provided",
       });
       if (error) throw new Error(error.message);
     },
@@ -356,9 +354,9 @@ function UpgradeDialog() {
                   setStep(2);
                 }}
                 className={cn(
-                  "group relative overflow-hidden rounded-2xl border-2 p-5 text-left transition-all duration-300 hover:-translate-y-1",
+                  "group relative overflow-hidden rounded-2xl border-2 p-5 text-left transition-shadow duration-300",
                   popular
-                    ? "border-primary/40 bg-gradient-to-br from-primary via-primary to-[#1D4ED8] text-primary-foreground shadow-[var(--shadow-soft)] sm:scale-[1.03]"
+                    ? "border-primary/50 bg-gradient-to-br from-primary via-primary to-[#1D4ED8] text-primary-foreground shadow-[var(--shadow-soft)] hover:shadow-lg"
                     : "border-border bg-card hover:border-primary/50 hover:shadow-[var(--shadow-soft)]",
                 )}
               >
@@ -367,8 +365,8 @@ function UpgradeDialog() {
                 )}
                 <LogoSymbol
                   className={cn(
-                    "pointer-events-none absolute -right-5 -bottom-7 h-36 w-auto transition-transform duration-500 group-hover:scale-110",
-                    popular ? "opacity-[0.16] mix-blend-screen" : "opacity-[0.07]",
+                    "pointer-events-none absolute -right-5 -bottom-7 h-36 w-auto",
+                    popular ? "opacity-[0.16]" : "opacity-[0.07]",
                   )}
                   aria-hidden
                 />
@@ -434,7 +432,7 @@ function UpgradeDialog() {
         >
           <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary to-[#1D4ED8] p-5 text-primary-foreground">
             <LogoSymbol
-              className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-auto opacity-[0.15] mix-blend-screen"
+              className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-auto opacity-[0.15]"
               aria-hidden
             />
             <div className="relative flex flex-wrap items-end justify-between gap-3">
@@ -509,14 +507,13 @@ function UpgradeDialog() {
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="reference">Transaction reference</Label>
+              <Label htmlFor="reference">Transaction reference (optional)</Label>
               <Input
                 id="reference"
                 value={reference}
                 maxLength={80}
                 onChange={(e) => setReference(e.target.value)}
                 placeholder="e.g. MP2401.1234.567890"
-                required
               />
             </div>
           </div>
