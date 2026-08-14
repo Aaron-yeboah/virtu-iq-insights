@@ -81,10 +81,20 @@ function RegisterPage() {
     });
     setPending(false);
     if (signUpError) return setError(signUpError.message);
-    if (!data.session) {
-      return setNotice("Almost there — check your email to confirm your account.");
+
+    if (isPartnerInvite) {
+      if (!data.session) {
+        return setNotice("Almost there — check your email to confirm your account.");
+      }
+      navigate({ to: "/partner-apply", replace: true });
+      return;
     }
-    navigate({ to: isPartnerInvite ? "/partner-apply" : "/credits", replace: true });
+
+    // Members finish registration first, then log in — the registration fee
+    // screen appears only after that first sign-in.
+    if (data.session) await supabase.auth.signOut();
+    setNotice("Account created — log in to continue and complete your registration fee.");
+    window.setTimeout(() => navigate({ to: "/login", replace: true }), 1200);
   }
 
   return (
