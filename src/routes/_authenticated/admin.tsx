@@ -368,10 +368,11 @@ function CreditAdjuster({ userId, label }: { userId: string; label: string }) {
     mutationFn: async (sign: 1 | -1) => {
       const delta = sign * Math.abs(Number(amount));
       if (!Number.isFinite(delta) || delta === 0) throw new Error("Enter a credit amount.");
+      const note = reason.trim();
       const { error } = await supabase.rpc("admin_adjust_credits", {
         _user_id: userId,
         _delta: Math.trunc(delta),
-        _reason: reason.trim() || undefined,
+        ...(note ? { _reason: note } : {}),
       });
       if (error) throw new Error(error.message);
     },
@@ -464,7 +465,7 @@ function MonetisationManager() {
         .map((p) => p.trim())
         .filter(Boolean);
       const { error } = await supabase.rpc("admin_upsert_package", {
-        _id: d.id ?? undefined,
+        ...(d.id ? { _id: d.id } : {}),
         _name: d.name,
         _slug: d.slug.trim() || d.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
         _price_ghs: Number(d.price_ghs),
