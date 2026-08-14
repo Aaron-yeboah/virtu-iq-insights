@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { LogoFull } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { resolveLoginEmail } from "@/lib/auth.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -22,8 +24,9 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const resolveEmail = useServerFn(resolveLoginEmail);
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -39,12 +42,25 @@ function LoginPage() {
     e.preventDefault();
     setError(null);
     setNotice(null);
-    if (!email.includes("@")) return setError("Please enter a valid email address.");
+    const raw = identifier.trim();
+    const isEmail = raw.includes("@");
+    if (!isEmail && raw.replace(/\D/g, "").length < 9) {
+      return setError("Enter your email address or phone number.");
+    }
     if (password.length < 6) return setError("Please enter your password.");
 
     setPending(true);
+    let loginEmail = raw;
+    if (!isEmail) {
+      const resolved = await resolveEmail({ data: { phone: raw } });
+      if (!resolved.email) {
+        setPending(false);
+        return setError("No account found for that phone number.");
+      }
+      loginEmail = resolved.email;
+    }
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email: loginEmail,
       password,
     });
     setPending(false);
@@ -64,8 +80,8 @@ function LoginPage() {
 
   async function handleReset() {
     setError(null);
-    if (!email.includes("@")) return setError("Enter your email address first.");
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    if (!identifier.includes("@")) return setError("Enter your email address first.");
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(identifier.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (resetError) return setError(resetError.message);
@@ -93,14 +109,14 @@ function LoginPage() {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email or phone number</Label>
               <Input
                 id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
+                type="text"
+                autoComplete="username"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="you@company.com or 024 000 0000"
                 required
               />
             </div>
