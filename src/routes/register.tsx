@@ -83,16 +83,6 @@ function RegisterPage() {
     navigate({ to: "/credits", replace: true });
   }
 
-  async function handleGoogle() {
-    setError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) return setError("Google sign-up failed. Please try again.");
-    if (result.redirected) return;
-    navigate({ to: "/credits", replace: true });
-  }
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
       <div className="w-full max-w-md">
