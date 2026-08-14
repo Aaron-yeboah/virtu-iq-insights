@@ -564,7 +564,7 @@ function UpgradeDialog() {
               {approved
                 ? "Payment approved"
                 : rejected
-                  ? "Payment rejected"
+                  ? "Payment declined"
                   : "Awaiting admin approval"}
             </h3>
             <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
@@ -587,19 +587,25 @@ function UpgradeDialog() {
               <Row label="Reference" value={reference} />
               <Row
                 label="Status"
-                value={approved ? "Approved" : rejected ? "Rejected" : "Pending approval"}
+                value={approved ? "Approved" : rejected ? "Declined" : "Pending approval"}
               />
             </dl>
 
-            <Button
-              className="relative mt-6"
-              onClick={() => {
-                setOpen(false);
-                reset();
-              }}
-            >
-              Done
-            </Button>
+            {rejected ? (
+              <Button className="relative mt-6" onClick={() => reset()}>
+                <ArrowLeft className="mr-1 size-4" /> Choose a package again
+              </Button>
+            ) : (
+              <Button
+                className="relative mt-6"
+                onClick={() => {
+                  setOpen(false);
+                  reset();
+                }}
+              >
+                Done
+              </Button>
+            )}
           </div>
         )}
       </DialogContent>
