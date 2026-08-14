@@ -19,6 +19,20 @@ import {
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
+import { deleteMember } from "@/lib/admin.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   adminCreditOverviewQuery,
   adminMemberListQuery,
@@ -185,6 +199,58 @@ function AdminPage() {
 }
 
 type AuditLog = { id: string; action: string; entity: string; created_at: string };
+
+function RemoveMember({ userId, label }: { userId: string; label: string }) {
+  const queryClient = useQueryClient();
+  const removeFn = useServerFn(deleteMember);
+  const remove = useMutation({
+    mutationFn: () => removeFn({ data: { userId } }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success("Member removed");
+    },
+    onError: (e: Error) =>
+      toast.error(
+        e.message === "FORBIDDEN"
+          ? "Admins only"
+          : e.message === "CANNOT_REMOVE_DEFAULT_ADMIN"
+            ? "The default admin cannot be removed"
+            : e.message,
+      ),
+  });
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="icon" variant="outline" aria-label={`Remove ${label}`} className="size-8">
+          <Trash2 className="size-4 text-destructive" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remove {label}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This deletes the account and all of its analyses, payments and credits. To get access
+            again they must register a new account, sign in and pay the registration fee for your
+            approval.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={remove.isPending}
+            onClick={(e) => {
+              e.preventDefault();
+              remove.mutate();
+            }}
+          >
+            Remove member
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 function AuditLogList({ logs }: { logs: AuditLog[] }) {
   const [expanded, setExpanded] = useState(false);
