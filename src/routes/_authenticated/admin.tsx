@@ -172,13 +172,29 @@ function AdminPage() {
         </TabsContent>
 
         <TabsContent value="members" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          {(members ?? []).length === 0 && (
+            <p className="p-5 text-sm text-muted-foreground">No members yet.</p>
+          )}
           {(members ?? []).map((m) => (
-            <div key={m.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-4">
+            <div key={m.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{m.full_name ?? m.email}</p>
-                <p className="truncate text-xs text-muted-foreground">{m.email} · {m.referral_code}</p>
+                <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
+                  <span className="truncate">{m.full_name ?? m.email}</span>
+                  <Badge variant={m.registration_paid ? "default" : "destructive"}>
+                    {m.registration_paid ? "Registered" : "Fee pending"}
+                  </Badge>
+                </div>
+                <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  Phone: {m.phone || "—"} · Code {m.referral_code} · {m.credits} credit
+                  {m.credits === 1 ? "" : "s"}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  Registered {new Date(m.created_at).toLocaleString()} · Last login{" "}
+                  {m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleString() : "never"}
+                </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <span className="text-sm font-semibold text-foreground">{ghs(m.spent_ghs)}</span>
                 <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
                 {m.id !== user.id && (
@@ -477,9 +493,13 @@ type MemberRow = {
   id: string;
   email: string | null;
   full_name: string | null;
+  phone: string | null;
   credits: number;
   referral_code: string;
   created_at: string;
+  last_sign_in_at: string | null;
+  registration_paid: boolean;
+  registration_paid_at: string | null;
   is_partner: boolean;
   is_admin: boolean;
   referred_by: string | null;

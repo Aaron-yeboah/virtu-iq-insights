@@ -446,10 +446,14 @@ export type Database = {
           id: string
           is_admin: boolean
           is_partner: boolean
+          last_sign_in_at: string
+          phone: string
           referral_code: string
           referral_count: number
           referred_by: string
           referrer_name: string
+          registration_paid: boolean
+          registration_paid_at: string
           spent_ghs: number
         }[]
       }
