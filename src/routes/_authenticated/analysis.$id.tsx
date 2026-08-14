@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, CheckCircle2, ShieldAlert, Target } from "lucide-react";
+import { ArrowLeft, ShieldAlert, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/AppShell";
+import { LogoSymbol } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { analysisQuery } from "@/lib/data";
 import type { AnalysisResult } from "@/lib/analysis-prompt";
@@ -98,9 +99,19 @@ function AnalysisDetailPage() {
       )}
 
       {!irrelevant && result?.headline && (
-        <div className="animate-verdict mt-6 rounded-2xl border border-border bg-gradient-to-br from-primary to-brand-deep p-6 text-primary-foreground shadow-lift">
-          <p className="text-xs font-semibold tracking-widest uppercase opacity-80">Virtu-IQ verdict</p>
-          <p className="mt-2 text-xl leading-snug font-bold sm:text-2xl">{result.headline}</p>
+        <div className="animate-verdict relative mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary to-brand-deep p-6 text-primary-foreground shadow-lift">
+          <LogoSymbol
+            className="pointer-events-none absolute -right-6 -bottom-8 h-48 w-auto opacity-[0.14] mix-blend-screen"
+            aria-hidden
+          />
+          <LogoSymbol
+            className="pointer-events-none absolute right-5 top-5 h-7 w-auto opacity-70 mix-blend-screen"
+            aria-hidden
+          />
+          <div className="relative">
+            <p className="text-xs font-semibold tracking-widest uppercase opacity-80">Virtu-IQ verdict</p>
+            <p className="mt-2 text-xl leading-snug font-bold sm:text-2xl">{result.headline}</p>
+          </div>
         </div>
       )}
 
@@ -109,10 +120,14 @@ function AnalysisDetailPage() {
           {matches.map((m, i) => (
             <article
               key={i}
-              className="animate-rise rounded-xl border border-border bg-card p-5"
+              className="animate-rise relative overflow-hidden rounded-xl border border-border bg-card p-5"
               style={{ animationDelay: `${i * 80}ms` }}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <LogoSymbol
+                className="pointer-events-none absolute -right-4 -bottom-6 h-36 w-auto opacity-[0.06]"
+                aria-hidden
+              />
+              <div className="relative flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold text-foreground">{m.fixture}</h2>
                   <p className="mt-0.5 text-xs text-muted-foreground">
@@ -124,7 +139,7 @@ function AnalysisDetailPage() {
                 )}
               </div>
 
-              <div className="mt-4 flex items-center gap-3 rounded-lg bg-primary/10 p-4">
+              <div className="relative mt-4 flex items-center gap-3 rounded-lg bg-primary/10 p-4">
                 <Target className="size-5 shrink-0 text-primary" />
                 <div>
                   <p className="text-lg font-bold text-foreground">{m.pick}</p>
@@ -133,40 +148,8 @@ function AnalysisDetailPage() {
                   </p>
                 </div>
               </div>
-
-              {!!m.reasons?.length && (
-                <ul className="mt-4 space-y-1.5">
-                  {m.reasons.map((r, ri) => (
-                    <li key={ri} className="flex gap-2 text-sm text-foreground">
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {m.alternative && (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Backup: <span className="font-semibold text-foreground">{m.alternative}</span>
-                </p>
-              )}
             </article>
           ))}
-
-          {!!result?.avoid?.length && (
-            <section className="rounded-xl border border-border bg-card p-5">
-              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-                <AlertTriangle className="size-4" /> Skip these
-              </h2>
-              <ul className="space-y-1.5">
-                {result.avoid.map((a, i) => (
-                  <li key={i} className="text-sm text-foreground">
-                    {a}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </div>
 
         <section className="rounded-xl border border-border bg-card p-5">
