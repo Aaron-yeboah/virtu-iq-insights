@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Clock, Copy, Loader2, ShieldCheck } from "lucide-react";
+import { Check, Clock, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,11 +42,13 @@ function RegistrationFeePage() {
   const [method, setMethod] = useState<string>(METHODS[0]);
   const [senderName, setSenderName] = useState("");
   const [reference, setReference] = useState("");
+  const [dismissedDecline, setDismissedDecline] = useState(false);
 
   const fee = Number(settings?.registration_fee_ghs ?? 50);
   const approved = !!pending && pending.status === "approved";
   const submitted = !!pending && (pending.status === "pending" || approved);
   const rejected = !!pending && pending.status === "rejected";
+  const showDeclined = rejected && !dismissedDecline;
 
   useEffect(() => {
     if (!profile?.registration_paid) return;
@@ -104,7 +106,29 @@ function RegistrationFeePage() {
         </div>
       </div>
 
-      {submitted ? (
+      {showDeclined ? (
+        <div className="animate-verdict relative mt-5 overflow-hidden rounded-2xl border border-destructive/40 bg-card p-6 text-center">
+          <LogoSymbol className="pointer-events-none absolute -right-6 -bottom-8 h-40 w-auto opacity-[0.06]" aria-hidden />
+          <span className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <XCircle className="relative size-7" />
+          </span>
+          <h2 className="relative mt-4 text-lg font-bold text-foreground">Payment declined</h2>
+          <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            {pending?.admin_note
+              ? pending.admin_note
+              : "We could not verify this payment. Pay again and resubmit your MoMo details."}
+          </p>
+          <dl className="relative mx-auto mt-6 grid max-w-sm gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
+            <Row label="Amount" value={ghs(pending!.amount_ghs)} />
+            <Row label="Method" value={pending!.method} />
+            <Row label="MoMo name" value={pending!.sender_name ?? "—"} />
+            <Row label="Status" value="Declined" />
+          </dl>
+          <Button className="relative mt-6" onClick={() => setDismissedDecline(true)}>
+            Submit payment again
+          </Button>
+        </div>
+      ) : submitted ? (
         <div className="animate-verdict relative mt-5 overflow-hidden rounded-2xl border border-border bg-card p-6 text-center">
           <LogoSymbol className="pointer-events-none absolute -right-6 -bottom-8 h-40 w-auto opacity-[0.06]" aria-hidden />
           <span className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
