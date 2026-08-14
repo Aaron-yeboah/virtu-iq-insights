@@ -55,7 +55,8 @@ function PartnerPage() {
             {ghs(stats?.commissions_ghs ?? 0)}
           </p>
           <p className="mt-3 text-sm opacity-85">
-            10% of every approved payment from members you bring to Virtu-IQ.
+            {stats?.commission_rate ?? 10}% of every approved payment from members you bring to
+            Virtu-IQ.
           </p>
 
           <div className="mt-7 rounded-xl bg-white/12 p-4 backdrop-blur-[2px]">
@@ -103,7 +104,7 @@ function PartnerPage() {
         <Stat
           label="Commissions made"
           value={ghs(stats?.commissions_ghs ?? 0)}
-          hint="10% of every approved payment"
+          hint={`${stats?.commission_rate ?? 10}% of every approved payment`}
           icon={<Wallet className="size-4" />}
         />
       </div>
