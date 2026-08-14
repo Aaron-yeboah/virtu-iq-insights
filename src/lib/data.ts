@@ -208,3 +208,35 @@ export const auditLogsQuery = () =>
 
 export const ghs = (value: number | string) =>
   `GH\u20B5${Number(value).toLocaleString("en-GH", { minimumFractionDigits: 0 })}`;
+
+export const partnerStatsQuery = (userId: string) =>
+  queryOptions({
+    queryKey: ["partner-stats", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("partner_stats");
+      if (error) throw error;
+      return (data ?? { registrations: 0, revenue_ghs: 0, commissions_ghs: 0 }) as {
+        registrations: number;
+        revenue_ghs: number;
+        commissions_ghs: number;
+      };
+    },
+  });
+
+export const adminMemberListQuery = (args: {
+  search?: string;
+  onlyPartners?: boolean;
+  partnerId?: string | null;
+}) =>
+  queryOptions({
+    queryKey: ["admin-member-list", args.search ?? "", args.onlyPartners ?? false, args.partnerId ?? null],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_member_list", {
+        _search: args.search?.trim() || null,
+        _only_partners: args.onlyPartners ?? false,
+        _partner_id: args.partnerId ?? null,
+      });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
