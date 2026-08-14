@@ -344,6 +344,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          partner_applicant: boolean
           payout_cleared_at: string | null
           phone: string | null
           referral_code: string
@@ -359,6 +360,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          partner_applicant?: boolean
           payout_cleared_at?: string | null
           phone?: string | null
           referral_code: string
@@ -374,6 +376,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          partner_applicant?: boolean
           payout_cleared_at?: string | null
           phone?: string | null
           referral_code?: string
@@ -446,6 +449,23 @@ export type Database = {
           referred_by: string
           referrer_name: string
           spent_ghs: number
+        }[]
+      }
+      admin_partner_applications: {
+        Args: never
+        Returns: {
+          admin_note: string
+          audience: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          motivation: string
+          payout_details: string
+          payout_method: string
+          phone: string
+          status: Database["public"]["Enums"]["application_status"]
+          user_id: string
         }[]
       }
       admin_partner_list: {
