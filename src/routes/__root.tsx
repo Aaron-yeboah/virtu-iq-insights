@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { Component, useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -176,8 +176,63 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <SplashScreen />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AppErrorBoundary>
+        <Outlet />
+      </AppErrorBoundary>
       <Toaster />
     </QueryClientProvider>
   );
+}
+
+// Last-resort boundary: router boundaries ignore falsy thrown values (e.g. `throw undefined`),
+// which loops into a blank screen. This catches anything and always renders a recovery screen.
+class AppErrorBoundary extends Component<{ children: ReactNode }, { crashed: boolean; message: string }> {
+  override state = { crashed: false, message: "" };
+
+  static getDerivedStateFromError(error: unknown) {
+    return {
+      crashed: true,
+      message: error instanceof Error && error.message ? error.message : "",
+    };
+  }
+
+  override componentDidCatch(error: unknown) {
+    console.error("App error boundary:", error);
+    reportLovableError(error, { boundary: "app_root_boundary" });
+  }
+
+  override render() {
+    if (!this.state.crashed) return this.props.children;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            This page didn't load
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Something went wrong. Please try again.
+          </p>
+          {this.state.message && (
+            <p className="mt-3 max-w-sm mx-auto overflow-auto rounded-lg bg-destructive/10 p-2.5 text-left font-mono text-xs text-destructive">
+              {this.state.message}
+            </p>
+          )}
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Reload
+            </button>
+            <a
+              href="/"
+              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Go home
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
