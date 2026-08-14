@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import {
   adminApplicationsQuery,
+  adminMemberListQuery,
   adminMembersQuery,
   adminPaymentsQuery,
   adminStatsQuery,
@@ -96,10 +99,15 @@ function AdminPage() {
       <Tabs defaultValue="payments" className="mt-8">
         <TabsList>
           <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="manage-partners">Manage partners</TabsTrigger>
           <TabsTrigger value="partners">Partners</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="audit">Audit log</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="manage-partners" className="mt-4">
+          <PartnerManager />
+        </TabsContent>
 
         <TabsContent value="payments" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {(payments ?? []).length === 0 && <p className="p-5 text-sm text-muted-foreground">No payments yet.</p>}
@@ -190,6 +198,140 @@ function Stat({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl border border-border bg-card p-5">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-2 text-xl font-bold tracking-tight text-foreground">{value}</p>
+    </div>
+  );
+}
+
+type MemberRow = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  credits: number;
+  referral_code: string;
+  created_at: string;
+  is_partner: boolean;
+  referred_by: string | null;
+  referrer_name: string | null;
+  spent_ghs: number;
+  referral_count: number;
+};
+
+function PartnerManager() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [onlyPartners, setOnlyPartners] = useState(false);
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [partnerName, setPartnerName] = useState<string>("");
+
+  const { data, isFetching } = useQuery(
+    adminMemberListQuery({ search, onlyPartners, partnerId }),
+  );
+  const rows = (data ?? []) as MemberRow[];
+
+  const setPartner = useMutation({
+    mutationFn: async ({ id, make }: { id: string; make: boolean }) => {
+      const { error } = await supabase.rpc("admin_set_partner", { _user_id: id, _make: make });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async (_d, vars) => {
+      await queryClient.invalidateQueries();
+      toast.success(vars.make ? "Partner added" : "Partner removed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, email or referral code"
+          aria-label="Search members"
+          className="sm:max-w-sm"
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={!onlyPartners && !partnerId ? "default" : "outline"}
+            onClick={() => {
+              setOnlyPartners(false);
+              setPartnerId(null);
+            }}
+          >
+            All members
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={onlyPartners ? "default" : "outline"}
+            onClick={() => {
+              setOnlyPartners(true);
+              setPartnerId(null);
+            }}
+          >
+            Partners only
+          </Button>
+          {partnerId && (
+            <Button type="button" size="sm" variant="secondary" onClick={() => setPartnerId(null)}>
+              Clear: referred by {partnerName}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        {rows.length === 0 && (
+          <p className="p-5 text-sm text-muted-foreground">
+            {isFetching ? "Loading members…" : "No members match this filter."}
+          </p>
+        )}
+        {rows.map((m) => (
+          <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
+                {m.full_name ?? m.email}
+                {m.is_partner && <Badge>Partner</Badge>}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {m.email} · code {m.referral_code} · spent {ghs(m.spent_ghs)}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {m.is_partner
+                  ? `${m.referral_count} referred member${m.referral_count === 1 ? "" : "s"}`
+                  : m.referrer_name
+                    ? `Joined via ${m.referrer_name}`
+                    : "Direct signup"}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {m.is_partner && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setPartnerId(m.id);
+                    setPartnerName(m.full_name ?? m.email ?? "partner");
+                    setOnlyPartners(false);
+                    setSearch("");
+                  }}
+                >
+                  View members
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant={m.is_partner ? "destructive" : "default"}
+                disabled={setPartner.isPending}
+                onClick={() => setPartner.mutate({ id: m.id, make: !m.is_partner })}
+              >
+                {m.is_partner ? "Remove partner" : "Add partner"}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

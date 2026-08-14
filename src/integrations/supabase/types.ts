@@ -367,6 +367,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_member_list: {
+        Args: {
+          _only_partners?: boolean
+          _partner_id?: string
+          _search?: string
+        }
+        Returns: {
+          created_at: string
+          credits: number
+          email: string
+          full_name: string
+          id: string
+          is_partner: boolean
+          referral_code: string
+          referral_count: number
+          referred_by: string
+          referrer_name: string
+          spent_ghs: number
+        }[]
+      }
+      admin_set_partner: {
+        Args: { _make: boolean; _user_id: string }
+        Returns: boolean
+      }
       admin_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
@@ -375,6 +399,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      partner_stats: { Args: never; Returns: Json }
       refund_credits: {
         Args: { _amount: number; _reason: string; _ref_id?: string }
         Returns: number
