@@ -55,8 +55,17 @@ export const runAnalysis = createServerFn({ method: "POST" })
       .createSignedUrl(analysis.image_path, 600);
     if (signError || !signed?.signedUrl) return fail("Could not read the uploaded screenshot.");
 
-    const apiKey = process.env["LOVABLE_API_KEY"];
-    if (!apiKey) return fail("AI service is not configured.");
+    // Works on Lovable Cloud (LOVABLE_API_KEY injected automatically) and on
+    // external hosts like Vercel, where the key is set as an env var.
+    const apiKey =
+      process.env["LOVABLE_API_KEY"] ||
+      process.env["AI_GATEWAY_API_KEY"] ||
+      process.env["VITE_LOVABLE_API_KEY"];
+    if (!apiKey) {
+      return fail(
+        "AI service is not configured: set LOVABLE_API_KEY in the deployment environment variables.",
+      );
+    }
 
     const { data: limitData } = await supabase.rpc("my_verdict_limit");
     const verdictLimit = Math.max(1, Number(limitData ?? 1));
