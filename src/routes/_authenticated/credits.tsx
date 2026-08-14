@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -63,11 +63,30 @@ const METHODS = ["MTN MoMo", "Telecel Cash", "AirtelTigo Money", "Bank transfer"
 
 function CreditsPage() {
   const { user } = Route.useRouteContext();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user.id));
   const { data: packages } = useQuery(packagesQuery());
-  const { data: payments } = useQuery(paymentsQuery(user.id));
+  const { data: payments } = useQuery({ ...paymentsQuery(user.id), refetchInterval: 10000 });
   const { data: history } = useQuery(creditHistoryQuery(user.id));
   const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
+
+  const seen = useRef<Map<string, string> | null>(null);
+  useEffect(() => {
+    if (!payments) return;
+    const next = new Map(payments.map((p) => [p.id, p.status as string]));
+    const prev = seen.current;
+    seen.current = next;
+    if (!prev) return;
+    const justApproved = payments.find(
+      (p) => p.status === "approved" && prev.get(p.id) === "pending",
+    );
+    if (justApproved) {
+      void queryClient.invalidateQueries();
+      toast.success(`Payment approved — ${justApproved.credits} credits added`);
+      navigate({ to: "/analyze" });
+    }
+  }, [payments, navigate, queryClient]);
 
   const credits = profile?.credits ?? 0;
   const capacity = Math.max(
@@ -139,14 +158,8 @@ function CreditsPage() {
           </div>
         </section>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid gap-5">
           <MiniStat icon={Zap} label="Credits used" value={String(spent)} hint="Verdicts delivered so far" />
-          <MiniStat
-            icon={Sparkles}
-            label="Lifetime top-ups"
-            value={ghs((payments ?? []).filter((p) => p.status === "approved").reduce((s, p) => s + Number(p.amount_ghs), 0))}
-            hint="Approved payments"
-          />
         </div>
       </div>
 
