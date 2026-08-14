@@ -202,7 +202,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
                 role: "user",
                 content: [
                   { type: "text", text: userPrompt },
-                  { type: "image_url", image_url: { url: signed.signedUrl } },
+                  { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}` } },
                 ],
               },
             ],
