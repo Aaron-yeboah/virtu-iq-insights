@@ -412,6 +412,7 @@ type MemberRow = {
   referral_code: string;
   created_at: string;
   is_partner: boolean;
+  is_admin: boolean;
   referred_by: string | null;
   referrer_name: string | null;
   spent_ghs: number;
@@ -420,6 +421,7 @@ type MemberRow = {
 
 function PartnerManager() {
   const queryClient = useQueryClient();
+  const { user } = Route.useRouteContext();
   const [search, setSearch] = useState("");
   const [onlyPartners, setOnlyPartners] = useState(false);
   const [partnerId, setPartnerId] = useState<string | null>(null);
@@ -429,6 +431,34 @@ function PartnerManager() {
     adminMemberListQuery({ search, onlyPartners, partnerId }),
   );
   const rows = (data ?? []) as MemberRow[];
+
+  const { data: isDefaultAdmin } = useQuery({
+    queryKey: ["is-default-admin", user.id],
+    queryFn: async () => {
+      const { data: ok, error } = await supabase.rpc("is_default_admin", { _user_id: user.id });
+      if (error) throw new Error(error.message);
+      return !!ok;
+    },
+  });
+
+  const setAdmin = useMutation({
+    mutationFn: async ({ id, make }: { id: string; make: boolean }) => {
+      const { error } = await supabase.rpc("admin_set_admin", { _user_id: id, _make: make });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async (_d, vars) => {
+      await queryClient.invalidateQueries();
+      toast.success(vars.make ? "Admin added" : "Admin removed");
+    },
+    onError: (e: Error) =>
+      toast.error(
+        e.message === "FORBIDDEN"
+          ? "Only the default admin can manage admins"
+          : e.message === "CANNOT_REMOVE_DEFAULT_ADMIN"
+            ? "The default admin cannot be removed"
+            : e.message,
+      ),
+  });
 
   const setPartner = useMutation({
     mutationFn: async ({ id, make }: { id: string; make: boolean }) => {
@@ -498,6 +528,7 @@ function PartnerManager() {
               <div className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
                 {m.full_name ?? m.email}
                 {m.is_partner && <Badge>Partner</Badge>}
+                {m.is_admin && <Badge variant="secondary">Admin</Badge>}
               </div>
               <p className="truncate text-xs text-muted-foreground">
                 {m.email} · code {m.referral_code} · spent {ghs(m.spent_ghs)}
@@ -533,6 +564,16 @@ function PartnerManager() {
               >
                 {m.is_partner ? "Remove partner" : "Add partner"}
               </Button>
+              {isDefaultAdmin && (
+                <Button
+                  size="sm"
+                  variant={m.is_admin ? "outline" : "secondary"}
+                  disabled={setAdmin.isPending}
+                  onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
+                >
+                  {m.is_admin ? "Remove admin" : "Add admin"}
+                </Button>
+              )}
             </div>
           </div>
         ))}
