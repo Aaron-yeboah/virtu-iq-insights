@@ -1,7 +1,9 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
-import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+// Project-specific bearer attacher: refreshes stale sessions before the RPC so
+// server functions never receive an expired token.
+import { attachFreshSupabaseAuth } from "@/lib/auth-bearer";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -19,7 +21,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachSupabaseAuth],
+  functionMiddleware: [attachFreshSupabaseAuth],
   requestMiddleware: [errorMiddleware],
 }));
 

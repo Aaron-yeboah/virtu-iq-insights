@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { runAnalysis } from "@/lib/analysis.functions";
+import { getFreshAccessToken } from "@/lib/auth-bearer";
 import { profileQuery, verdictLimitQuery } from "@/lib/data";
 import { LogoSymbol } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,17 @@ function AnalyzePage() {
         .single();
       if (insertError) throw new Error(insertError.message);
 
-      const result = await analyze({ data: { analysisId: created.id } });
+      const run = async () => analyze({ data: { analysisId: created.id } });
+      let result;
+      try {
+        result = await run();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (!/unauthor|invalid token|401/i.test(message)) throw err;
+        // Session token was stale — refresh and try once more.
+        await getFreshAccessToken();
+        result = await run();
+      }
       return { id: created.id, irrelevant: Boolean(result?.irrelevant) };
     },
     onSuccess: async ({ id, irrelevant }) => {
