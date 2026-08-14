@@ -226,6 +226,7 @@ export type PackageRow = {
   price_ghs: number;
   credits: number;
   perks: unknown;
+  max_verdicts: number;
   is_active: boolean;
   sort_order: number;
 };
@@ -236,7 +237,7 @@ export const adminPackagesQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("packages")
-        .select("id, name, slug, price_ghs, credits, perks, is_active, sort_order")
+        .select("id, name, slug, price_ghs, credits, perks, max_verdicts, is_active, sort_order")
         .order("sort_order");
       if (error) throw error;
       return (data ?? []) as PackageRow[];
