@@ -49,6 +49,26 @@ export const verdictLimitQuery = (userId: string) =>
     },
   });
 
+export type PaymentSettings = {
+  momo_number: string;
+  recipient_name: string;
+  network: string;
+  instructions: string;
+};
+
+export const paymentSettingsQuery = () =>
+  queryOptions({
+    queryKey: ["payment-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payment_settings")
+        .select("momo_number, recipient_name, network, instructions")
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as PaymentSettings | null;
+    },
+  });
+
 export const analysesQuery = (userId: string) =>
   queryOptions({
     queryKey: ["analyses", userId],
@@ -166,7 +186,7 @@ export const adminPaymentsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
-        .select("id, user_id, amount_ghs, credits, method, reference, status, admin_note, created_at")
+        .select("id, user_id, amount_ghs, credits, method, reference, sender_name, status, admin_note, created_at")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;

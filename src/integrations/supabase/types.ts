@@ -247,6 +247,33 @@ export type Database = {
           },
         ]
       }
+      payment_settings: {
+        Row: {
+          id: boolean
+          instructions: string
+          momo_number: string
+          network: string
+          recipient_name: string
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          instructions?: string
+          momo_number?: string
+          network?: string
+          recipient_name?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          instructions?: string
+          momo_number?: string
+          network?: string
+          recipient_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           admin_note: string | null
@@ -259,6 +286,7 @@ export type Database = {
           reference: string
           reviewed_at: string | null
           reviewed_by: string | null
+          sender_name: string | null
           status: Database["public"]["Enums"]["payment_status"]
           user_id: string
         }
@@ -273,6 +301,7 @@ export type Database = {
           reference: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          sender_name?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           user_id: string
         }
@@ -287,6 +316,7 @@ export type Database = {
           reference?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          sender_name?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           user_id?: string
         }
@@ -480,6 +510,7 @@ export type Database = {
           reference: string
           reviewed_at: string | null
           reviewed_by: string | null
+          sender_name: string | null
           status: Database["public"]["Enums"]["payment_status"]
           user_id: string
         }
