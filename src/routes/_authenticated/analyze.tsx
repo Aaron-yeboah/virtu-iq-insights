@@ -103,6 +103,9 @@ function AnalyzePage() {
   }, [mutation.isPending]);
 
   const busy = mutation.isPending;
+  const credits = profile?.credits ?? 0;
+  const noCredits = credits < 1;
+  const locked = busy || noCredits;
 
   return (
     <>
@@ -141,7 +144,9 @@ function AnalyzePage() {
             className={cn(
               "relative flex cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed border-border bg-secondary/40 px-4 py-10 text-center transition-colors hover:border-primary",
               busy && "cursor-wait border-primary",
+              noCredits && "pointer-events-none cursor-not-allowed opacity-60 hover:border-border",
             )}
+            aria-disabled={noCredits}
           >
             {preview ? (
               <img src={preview} alt="Selected football screenshot" className="max-h-72 rounded-lg" />
@@ -152,7 +157,7 @@ function AnalyzePage() {
                   <ImageUp className="relative size-6 text-primary" />
                 </span>
                 <span className="text-sm font-semibold text-foreground">
-                  Tap to upload your football screenshot
+                  {noCredits ? "Top up to upload a screenshot" : "Tap to upload your football screenshot"}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   Instant/virtual fixtures, odds or slips · PNG/JPG up to 8MB
@@ -197,7 +202,7 @@ function AnalyzePage() {
             type="file"
             accept="image/*"
             className="sr-only"
-            disabled={busy}
+            disabled={locked}
             onChange={(e) => {
               const selected = e.target.files?.[0] ?? null;
               setFile(selected);
@@ -221,10 +226,21 @@ function AnalyzePage() {
             1 credit per scan · {verdictLimit ?? 1} verdict{(verdictLimit ?? 1) === 1 ? "" : "s"} on your plan ·{" "}
             {profile?.credits ?? 0} credits available
           </p>
-          <Button type="submit" size="lg" disabled={!file || busy} className="sm:min-w-56">
-            {busy ? "Virtu-IQ is deciding…" : "Get my verdict"}
+          <Button type="submit" size="lg" disabled={!file || locked} className="sm:min-w-56">
+            {busy ? "Virtu-IQ is deciding…" : noCredits ? "No credits left" : "Get my verdict"}
           </Button>
         </div>
+
+        {noCredits && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <p className="text-sm font-medium text-foreground">
+              You have 0 credits — top up to unlock scanning.
+            </p>
+            <Button type="button" variant="outline" onClick={() => navigate({ to: "/credits" })}>
+              Top up credits
+            </Button>
+          </div>
+        )}
 
         <p className="text-xs text-muted-foreground">
           Virtu-IQ predicts instant/virtual football only. Real live matches and non-football screenshots still consume 1 credit.
