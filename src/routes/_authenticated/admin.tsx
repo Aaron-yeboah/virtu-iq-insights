@@ -29,6 +29,7 @@ import {
   adminStatsQuery,
   auditLogsQuery,
   ghs,
+  paymentSettingsQuery,
   rolesQuery,
   type PackageRow,
 } from "@/lib/data";
@@ -113,6 +114,7 @@ function AdminPage() {
       <Tabs defaultValue="payments" className="mt-8">
         <TabsList>
           <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="payment-details">Payment details</TabsTrigger>
           <TabsTrigger value="packages">Packages & credits</TabsTrigger>
           <TabsTrigger value="manage-partners">Manage partners</TabsTrigger>
           <TabsTrigger value="partners">Partners</TabsTrigger>
@@ -122,6 +124,10 @@ function AdminPage() {
 
         <TabsContent value="packages" className="mt-4">
           <MonetisationManager />
+        </TabsContent>
+
+        <TabsContent value="payment-details" className="mt-4">
+          <PaymentSettingsManager />
         </TabsContent>
 
         <TabsContent value="manage-partners" className="mt-4">
@@ -137,6 +143,7 @@ function AdminPage() {
                   {ghs(p.amount_ghs)} · {p.credits} credits · {p.method}
                 </p>
                 <p className="text-xs text-muted-foreground">Ref: {p.reference}</p>
+                <p className="text-xs text-muted-foreground">MoMo name: {p.sender_name ?? "—"}</p>
                 <p className="text-xs text-muted-foreground">
                   {new Date(p.created_at).toLocaleString()} · user {p.user_id.slice(0, 8)}
                 </p>
@@ -452,6 +459,107 @@ const emptyDraft: PackageDraft = {
   is_active: true,
   sort_order: "0",
 };
+
+function PaymentSettingsManager() {
+  const queryClient = useQueryClient();
+  const { data: settings } = useQuery(paymentSettingsQuery());
+  const [draft, setDraft] = useState<{
+    momo_number: string;
+    recipient_name: string;
+    network: string;
+    instructions: string;
+  } | null>(null);
+
+  const current = draft ?? {
+    momo_number: settings?.momo_number ?? "",
+    recipient_name: settings?.recipient_name ?? "",
+    network: settings?.network ?? "MTN MoMo",
+    instructions: settings?.instructions ?? "",
+  };
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const number = current.momo_number.trim();
+      const name = current.recipient_name.trim();
+      if (number.length < 6 || number.length > 30) throw new Error("Enter a valid payment number.");
+      if (name.length < 2 || name.length > 80) throw new Error("Enter the recipient name.");
+      const { error } = await supabase
+        .from("payment_settings")
+        .update({
+          momo_number: number,
+          recipient_name: name,
+          network: current.network.trim() || "MTN MoMo",
+          instructions: current.instructions.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", true);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      setDraft(null);
+      await queryClient.invalidateQueries({ queryKey: ["payment-settings"] });
+      toast.success("Payment details updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <form
+      className="grid max-w-xl gap-4 rounded-xl border border-border bg-card p-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        save.mutate();
+      }}
+    >
+      <div>
+        <h3 className="text-lg font-semibold text-foreground">Checkout payment details</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Shown to members on step 2 of the package payment flow.
+        </p>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="momo-number">Payment number</Label>
+        <Input
+          id="momo-number"
+          value={current.momo_number}
+          maxLength={30}
+          onChange={(e) => setDraft({ ...current, momo_number: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="recipient">Recipient name</Label>
+        <Input
+          id="recipient"
+          value={current.recipient_name}
+          maxLength={80}
+          onChange={(e) => setDraft({ ...current, recipient_name: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="network">Network / method label</Label>
+        <Input
+          id="network"
+          value={current.network}
+          maxLength={40}
+          onChange={(e) => setDraft({ ...current, network: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="instructions">Instructions (optional)</Label>
+        <Textarea
+          id="instructions"
+          rows={3}
+          value={current.instructions}
+          maxLength={300}
+          onChange={(e) => setDraft({ ...current, instructions: e.target.value })}
+        />
+      </div>
+      <Button type="submit" disabled={save.isPending}>
+        Save payment details
+      </Button>
+    </form>
+  );
+}
 
 function MonetisationManager() {
   const queryClient = useQueryClient();
