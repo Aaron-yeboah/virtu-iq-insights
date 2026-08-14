@@ -448,6 +448,7 @@ const emptyDraft: PackageDraft = {
   price_ghs: "",
   credits: "",
   perks: "",
+  max_verdicts: "2",
   is_active: true,
   sort_order: "0",
 };
