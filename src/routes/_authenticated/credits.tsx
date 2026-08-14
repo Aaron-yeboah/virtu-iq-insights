@@ -591,19 +591,9 @@ function UpgradeDialog() {
               />
             </dl>
 
-            {rejected ? (
+            {rejected && (
               <Button className="relative mt-6" onClick={() => reset()}>
                 <ArrowLeft className="mr-1 size-4" /> Choose a package again
-              </Button>
-            ) : (
-              <Button
-                className="relative mt-6"
-                onClick={() => {
-                  setOpen(false);
-                  reset();
-                }}
-              >
-                Done
               </Button>
             )}
           </div>
