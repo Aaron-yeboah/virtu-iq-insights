@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogoFull, LogoSymbol } from "@/components/brand/Logo";
+import { LogoFull, LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
 import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
 import { supabase } from "@/integrations/supabase/client";
 import { ghs, paymentSettingsQuery, profileQuery, registrationPaymentQuery } from "@/lib/data";
@@ -92,7 +92,7 @@ function RegistrationFeePage() {
       </div>
 
       <div className="relative mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary to-[#1D4ED8] p-6 text-primary-foreground">
-        <LogoSymbol className="pointer-events-none absolute -right-5 -bottom-8 h-40 w-auto opacity-[0.15]" aria-hidden />
+        <LogoWatermark className="h-52 sm:h-64" />
         <div className="relative">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide">
             <ShieldCheck className="size-3.5" /> One-time activation

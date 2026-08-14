@@ -4,7 +4,7 @@ import { Coins, ScanSearch, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/app/AppShell";
-import { LogoSymbol } from "@/components/brand/Logo";
+import { LogoWatermark } from "@/components/brand/Logo";
 import { analysesQuery, profileQuery, referralsQuery, rolesQuery } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -59,10 +59,7 @@ function DashboardPage() {
       </div>
 
       <div className="relative mt-6 overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary to-[var(--color-primary-deep,var(--color-primary))] p-6 text-primary-foreground sm:p-8">
-        <LogoSymbol
-          className="pointer-events-none absolute -right-4 -bottom-8 h-44 w-auto opacity-[0.13] mix-blend-screen"
-          aria-hidden
-        />
+        <LogoWatermark className="h-56 sm:h-72" />
         <div className="relative">
           <h2 className="text-xl font-bold">Ready for your next verdict?</h2>
           <p className="mt-2 max-w-lg text-sm opacity-90">

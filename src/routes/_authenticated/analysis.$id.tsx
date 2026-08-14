@@ -5,7 +5,7 @@ import { ArrowLeft, ShieldAlert, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/AppShell";
-import { LogoSymbol } from "@/components/brand/Logo";
+import { LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { analysisQuery } from "@/lib/data";
 import type { AnalysisResult } from "@/lib/analysis-prompt";
@@ -100,10 +100,7 @@ function AnalysisDetailPage() {
 
       {!irrelevant && result?.headline && (
         <div className="animate-verdict relative mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary to-brand-deep p-6 text-primary-foreground shadow-lift">
-          <LogoSymbol
-            className="pointer-events-none absolute -right-6 -bottom-8 h-48 w-auto opacity-[0.14] mix-blend-screen"
-            aria-hidden
-          />
+          <LogoWatermark />
           <LogoSymbol
             className="pointer-events-none absolute right-5 top-5 h-7 w-auto opacity-70 mix-blend-screen"
             aria-hidden

@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/app/AppShell";
-import { LogoSymbol } from "@/components/brand/Logo";
+import { LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import {
   creditHistoryQuery,
@@ -114,10 +114,7 @@ function CreditsPage() {
         <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary via-primary to-[#1D4ED8] p-6 text-primary-foreground shadow-[var(--shadow-soft)] sm:p-8 lg:col-span-2">
           <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/10 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-20 -left-10 size-56 rounded-full bg-black/20 blur-3xl" />
-          <LogoSymbol
-            className="pointer-events-none absolute -right-4 -bottom-6 h-52 w-auto opacity-[0.13] sm:h-64"
-            aria-hidden
-          />
+          <LogoWatermark />
           <LogoSymbol
             className="pointer-events-none absolute right-5 top-5 h-7 w-auto opacity-70"
             aria-hidden
@@ -450,10 +447,7 @@ function UpgradeDialog() {
           }}
         >
           <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary to-[#1D4ED8] p-5 text-primary-foreground">
-            <LogoSymbol
-              className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-auto opacity-[0.15]"
-              aria-hidden
-            />
+            <LogoWatermark className="h-52 sm:h-60" />
             <div className="relative flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{pkg.name} plan</p>

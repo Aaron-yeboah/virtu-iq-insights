@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/app/AppShell";
-import { LogoSymbol } from "@/components/brand/Logo";
+import { LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
 import { commissionsQuery, ghs, partnerStatsQuery, profileQuery } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/partner")({
@@ -45,10 +45,7 @@ function PartnerPage() {
       <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary via-primary to-[#1D4ED8] p-6 text-primary-foreground shadow-[var(--shadow-soft)] sm:p-8">
         <div className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-10 size-56 rounded-full bg-black/20 blur-3xl" />
-        <LogoSymbol
-          className="pointer-events-none absolute -right-4 -bottom-8 h-52 w-auto opacity-[0.14] sm:h-60"
-          aria-hidden
-        />
+        <LogoWatermark />
         <div className="relative">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
             <Handshake className="size-3.5" /> Verified partner
