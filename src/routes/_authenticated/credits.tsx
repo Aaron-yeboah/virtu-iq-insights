@@ -244,15 +244,30 @@ function UpgradeDialog() {
   const { user } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const { data: packages } = useQuery(packagesQuery());
+  const { data: settings } = useQuery(paymentSettingsQuery());
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selected, setSelected] = useState<string | null>(null);
   const [method, setMethod] = useState(METHODS[0]!);
+  const [senderName, setSenderName] = useState("");
   const [reference, setReference] = useState("");
+
+  const pkg = (packages ?? []).find((p) => p.id === selected) ?? null;
+
+  const reset = () => {
+    setStep(1);
+    setSelected(null);
+    setSenderName("");
+    setReference("");
+  };
 
   const submit = useMutation({
     mutationFn: async () => {
-      const pkg = (packages ?? []).find((p) => p.id === selected);
       if (!pkg) throw new Error("Choose a package first.");
+      const name = senderName.trim();
+      if (name.length < 2 || name.length > 80) {
+        throw new Error("Enter the MoMo name on the account you paid from (2-80 characters).");
+      }
       const ref = reference.trim();
       if (ref.length < 4 || ref.length > 80) {
         throw new Error("Enter the transaction reference from your payment (4-80 characters).");
@@ -263,22 +278,26 @@ function UpgradeDialog() {
         amount_ghs: pkg.price_ghs,
         credits: pkg.credits,
         method,
+        sender_name: name,
         reference: ref,
       });
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
-      setReference("");
-      setSelected(null);
-      setOpen(false);
+      setStep(3);
       await queryClient.invalidateQueries({ queryKey: ["payments", user.id] });
-      toast.success("Payment submitted — an admin will review it shortly.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) reset();
+      }}
+    >
       <DialogTrigger asChild>
         <Button size="lg" className="bg-white text-primary shadow-sm hover:bg-white/90">
           Upgrade plan
@@ -287,13 +306,31 @@ function UpgradeDialog() {
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Choose your Virtu-IQ package</DialogTitle>
+          <DialogTitle>
+            {step === 1 ? "Choose your Virtu-IQ package" : step === 2 ? "Make your payment" : "Payment pending approval"}
+          </DialogTitle>
           <DialogDescription>
-            Pay with your preferred method, then submit the reference. Credits land once an admin
-            approves the payment.
+            {step === 1
+              ? "Step 1 of 3 — pick the plan that matches how many verdicts you want per screenshot."
+              : step === 2
+                ? "Step 2 of 3 — send the exact amount to the number below, then confirm your details."
+                : "Step 3 of 3 — we have received your submission."}
           </DialogDescription>
         </DialogHeader>
 
+        <div className="mb-1 flex items-center gap-2">
+          {[1, 2, 3].map((s) => (
+            <span
+              key={s}
+              className={cn(
+                "h-1.5 flex-1 rounded-full transition-colors",
+                s <= step ? "bg-primary" : "bg-muted",
+              )}
+            />
+          ))}
+        </div>
+
+        {step === 1 && (
         <div className="grid gap-4 sm:grid-cols-3">
           {(packages ?? []).map((pkg) => {
             const active = selected === pkg.id;
@@ -301,7 +338,10 @@ function UpgradeDialog() {
               <button
                 key={pkg.id}
                 type="button"
-                onClick={() => setSelected(pkg.id)}
+                onClick={() => {
+                  setSelected(pkg.id);
+                  setStep(2);
+                }}
                 className={cn(
                   "rounded-xl border-2 bg-card p-5 text-left transition-all",
                   active
@@ -335,7 +375,9 @@ function UpgradeDialog() {
             <p className="text-sm text-muted-foreground">No packages available right now.</p>
           )}
         </div>
+        )}
 
+        {step === 2 && pkg && (
         <form
           className="mt-2 grid gap-4 rounded-xl border border-border bg-muted/30 p-4"
           onSubmit={(e) => {
@@ -343,6 +385,44 @@ function UpgradeDialog() {
             submit.mutate();
           }}
         >
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+              {pkg.name} · {ghs(pkg.price_ghs)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {pkg.credits} credits · {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
+            </p>
+          </div>
+
+          <div className="grid gap-3 rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Pay to ({settings?.network ?? "MoMo"})</p>
+                <p className="text-lg font-bold tracking-tight text-foreground">
+                  {settings?.momo_number ?? "—"}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(settings?.momo_number ?? "");
+                  toast.success("Number copied");
+                }}
+              >
+                <Copy className="mr-1 size-3.5" /> Copy
+              </Button>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Recipient name</p>
+              <p className="text-sm font-medium text-foreground">{settings?.recipient_name ?? "—"}</p>
+            </div>
+            {settings?.instructions && (
+              <p className="text-xs text-muted-foreground">{settings.instructions}</p>
+            )}
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Payment method</Label>
@@ -360,6 +440,17 @@ function UpgradeDialog() {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="sender">Your MoMo name</Label>
+              <Input
+                id="sender"
+                value={senderName}
+                maxLength={80}
+                onChange={(e) => setSenderName(e.target.value)}
+                placeholder="Name on the account you paid from"
+                required
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="reference">Transaction reference</Label>
               <Input
                 id="reference"
@@ -371,12 +462,63 @@ function UpgradeDialog() {
               />
             </div>
           </div>
-          <Button type="submit" disabled={!selected || submit.isPending}>
-            {submit.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-            {selected ? "Submit payment for review" : "Select a package above"}
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" variant="outline" onClick={() => setStep(1)}>
+              <ArrowLeft className="mr-1 size-4" /> Previous
+            </Button>
+            <Button type="submit" className="flex-1" disabled={submit.isPending}>
+              {submit.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+              I have paid
+            </Button>
+          </div>
         </form>
+        )}
+
+        {step === 3 && (
+          <div className="mt-2 rounded-xl border border-border bg-card p-6 text-center">
+            <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Clock className="size-7" />
+            </span>
+            <h3 className="mt-4 text-lg font-bold text-foreground">Awaiting admin approval</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Your payment is being verified against the MoMo name you provided. Credits land
+              automatically once it is approved.
+            </p>
+
+            <dl className="mx-auto mt-6 grid max-w-md gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
+              <Row label="Package" value={pkg ? `${pkg.name} · ${ghs(pkg.price_ghs)}` : "—"} />
+              <Row label="Credits" value={pkg ? `${pkg.credits} credits` : "—"} />
+              <Row
+                label="Verdicts / scan"
+                value={pkg ? String(pkg.max_verdicts) : "—"}
+              />
+              <Row label="Method" value={method} />
+              <Row label="MoMo name" value={senderName} />
+              <Row label="Reference" value={reference} />
+              <Row label="Status" value="Pending approval" />
+            </dl>
+
+            <Button
+              className="mt-6"
+              onClick={() => {
+                setOpen(false);
+                reset();
+              }}
+            >
+              Done
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="text-right font-medium text-foreground">{value || "—"}</dd>
+    </div>
   );
 }
