@@ -426,23 +426,34 @@ function UpgradeDialog() {
 
         {step === 2 && pkg && (
         <form
-          className="mt-2 grid gap-4 rounded-xl border border-border bg-muted/30 p-4"
+          className="mt-2 grid gap-4"
           onSubmit={(e) => {
             e.preventDefault();
             submit.mutate();
           }}
         >
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-              {pkg.name} · {ghs(pkg.price_ghs)}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {pkg.credits} credits · {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
-            </p>
+          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary to-[#1D4ED8] p-5 text-primary-foreground">
+            <LogoSymbol
+              className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-auto opacity-[0.15] mix-blend-screen"
+              aria-hidden
+            />
+            <div className="relative flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{pkg.name} plan</p>
+                <p className="mt-1 text-3xl font-extrabold tracking-tight">{ghs(pkg.price_ghs)}</p>
+              </div>
+              <p className="text-xs opacity-90">
+                {pkg.credits} credits · {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
+              </p>
+            </div>
           </div>
 
-          <div className="grid gap-3 rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-3">
+          <div className="relative grid gap-3 overflow-hidden rounded-2xl border border-border bg-card p-5">
+            <LogoSymbol
+              className="pointer-events-none absolute -right-4 -bottom-6 h-28 w-auto opacity-[0.06]"
+              aria-hidden
+            />
+            <div className="relative flex items-center justify-between gap-3 rounded-xl bg-secondary/50 p-3">
               <div>
                 <p className="text-xs text-muted-foreground">Pay to ({settings?.network ?? "MoMo"})</p>
                 <p className="text-lg font-bold tracking-tight text-foreground">
@@ -451,7 +462,7 @@ function UpgradeDialog() {
               </div>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={async () => {
                   await navigator.clipboard.writeText(settings?.momo_number ?? "");
@@ -461,16 +472,16 @@ function UpgradeDialog() {
                 <Copy className="mr-1 size-3.5" /> Copy
               </Button>
             </div>
-            <div>
+            <div className="relative">
               <p className="text-xs text-muted-foreground">Recipient name</p>
               <p className="text-sm font-medium text-foreground">{settings?.recipient_name ?? "—"}</p>
             </div>
             {settings?.instructions && (
-              <p className="text-xs text-muted-foreground">{settings.instructions}</p>
+              <p className="relative text-xs text-muted-foreground">{settings.instructions}</p>
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 rounded-2xl border border-border bg-muted/30 p-5 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Payment method</Label>
               <Select value={method} onValueChange={setMethod}>
@@ -522,17 +533,22 @@ function UpgradeDialog() {
         )}
 
         {step === 3 && (
-          <div className="mt-2 rounded-xl border border-border bg-card p-6 text-center">
-            <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Clock className="size-7" />
+          <div className="animate-verdict relative mt-2 overflow-hidden rounded-2xl border border-border bg-card p-6 text-center">
+            <LogoSymbol
+              className="pointer-events-none absolute -right-6 -bottom-8 h-40 w-auto opacity-[0.06]"
+              aria-hidden
+            />
+            <span className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring" aria-hidden />
+              <Clock className="relative size-7" />
             </span>
-            <h3 className="mt-4 text-lg font-bold text-foreground">Awaiting admin approval</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Your payment is being verified against the MoMo name you provided. Credits land
-              automatically once it is approved.
+            <h3 className="relative mt-4 text-lg font-bold text-foreground">Awaiting admin approval</h3>
+            <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Your payment is being verified against the MoMo name you provided. The moment it is
+              approved your credits land and we take you straight to a new analysis.
             </p>
 
-            <dl className="mx-auto mt-6 grid max-w-md gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
+            <dl className="relative mx-auto mt-6 grid max-w-md gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
               <Row label="Package" value={pkg ? `${pkg.name} · ${ghs(pkg.price_ghs)}` : "—"} />
               <Row label="Credits" value={pkg ? `${pkg.credits} credits` : "—"} />
               <Row
@@ -546,7 +562,7 @@ function UpgradeDialog() {
             </dl>
 
             <Button
-              className="mt-6"
+              className="relative mt-6"
               onClick={() => {
                 setOpen(false);
                 reset();
