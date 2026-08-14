@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -63,11 +63,30 @@ const METHODS = ["MTN MoMo", "Telecel Cash", "AirtelTigo Money", "Bank transfer"
 
 function CreditsPage() {
   const { user } = Route.useRouteContext();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user.id));
   const { data: packages } = useQuery(packagesQuery());
-  const { data: payments } = useQuery(paymentsQuery(user.id));
+  const { data: payments } = useQuery({ ...paymentsQuery(user.id), refetchInterval: 10000 });
   const { data: history } = useQuery(creditHistoryQuery(user.id));
   const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
+
+  const seen = useRef<Map<string, string> | null>(null);
+  useEffect(() => {
+    if (!payments) return;
+    const next = new Map(payments.map((p) => [p.id, p.status as string]));
+    const prev = seen.current;
+    seen.current = next;
+    if (!prev) return;
+    const justApproved = payments.find(
+      (p) => p.status === "approved" && prev.get(p.id) === "pending",
+    );
+    if (justApproved) {
+      void queryClient.invalidateQueries();
+      toast.success(`Payment approved — ${justApproved.credits} credits added`);
+      navigate({ to: "/analyze" });
+    }
+  }, [payments, navigate, queryClient]);
 
   const credits = profile?.credits ?? 0;
   const capacity = Math.max(
@@ -139,14 +158,8 @@ function CreditsPage() {
           </div>
         </section>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid gap-5">
           <MiniStat icon={Zap} label="Credits used" value={String(spent)} hint="Verdicts delivered so far" />
-          <MiniStat
-            icon={Sparkles}
-            label="Lifetime top-ups"
-            value={ghs((payments ?? []).filter((p) => p.status === "approved").reduce((s, p) => s + Number(p.amount_ghs), 0))}
-            hint="Approved payments"
-          />
         </div>
       </div>
 
@@ -333,7 +346,7 @@ function UpgradeDialog() {
         {step === 1 && (
         <div className="grid gap-4 sm:grid-cols-3">
           {(packages ?? []).map((pkg) => {
-            const active = selected === pkg.id;
+            const popular = pkg.slug === "plus";
             return (
               <button
                 key={pkg.id}
@@ -343,31 +356,65 @@ function UpgradeDialog() {
                   setStep(2);
                 }}
                 className={cn(
-                  "rounded-xl border-2 bg-card p-5 text-left transition-all",
-                  active
-                    ? "border-primary shadow-[var(--shadow-soft)]"
-                    : "border-border hover:border-primary/50",
+                  "group relative overflow-hidden rounded-2xl border-2 p-5 text-left transition-all duration-300 hover:-translate-y-1",
+                  popular
+                    ? "border-primary/40 bg-gradient-to-br from-primary via-primary to-[#1D4ED8] text-primary-foreground shadow-[var(--shadow-soft)] sm:scale-[1.03]"
+                    : "border-border bg-card hover:border-primary/50 hover:shadow-[var(--shadow-soft)]",
                 )}
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-foreground">{pkg.name}</h3>
-                  {pkg.slug === "plus" && <Badge>Popular</Badge>}
+                {popular && (
+                  <span className="pointer-events-none absolute -right-14 -top-14 size-40 rounded-full bg-white/15 blur-2xl" />
+                )}
+                <LogoSymbol
+                  className={cn(
+                    "pointer-events-none absolute -right-5 -bottom-7 h-36 w-auto transition-transform duration-500 group-hover:scale-110",
+                    popular ? "opacity-[0.16] mix-blend-screen" : "opacity-[0.07]",
+                  )}
+                  aria-hidden
+                />
+                <div className="relative">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className={cn("font-bold", popular ? "" : "text-foreground")}>{pkg.name}</h3>
+                    {popular && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                        <Sparkles className="size-3" /> Popular
+                      </span>
+                    )}
+                  </div>
+                  <p className={cn("mt-2 text-2xl font-extrabold tracking-tight", popular ? "" : "text-foreground")}>
+                    {ghs(pkg.price_ghs)}
+                  </p>
+                  <p className={cn("mt-1 text-sm", popular ? "opacity-85" : "text-muted-foreground")}>
+                    {pkg.credits} scan credits
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
+                      popular ? "bg-white/20" : "bg-primary/10 text-primary",
+                    )}
+                  >
+                    {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
+                  </p>
+                  <ul className="mt-3 space-y-1.5">
+                    {((pkg.perks as string[]) ?? []).map((perk) => (
+                      <li
+                        key={perk}
+                        className={cn("flex gap-2 text-xs", popular ? "opacity-90" : "text-muted-foreground")}
+                      >
+                        <Check className={cn("mt-0.5 size-3.5 shrink-0", popular ? "" : "text-primary")} />
+                        {perk}
+                      </li>
+                    ))}
+                  </ul>
+                  <span
+                    className={cn(
+                      "mt-4 inline-flex items-center gap-1 text-xs font-semibold",
+                      popular ? "" : "text-primary",
+                    )}
+                  >
+                    Choose {pkg.name} <ArrowUpRight className="size-3.5" />
+                  </span>
                 </div>
-                <p className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">
-                  {ghs(pkg.price_ghs)}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">{pkg.credits} scan credits</p>
-                <p className="mt-1 text-xs font-semibold text-primary">
-                  {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
-                </p>
-                <ul className="mt-3 space-y-1.5">
-                  {((pkg.perks as string[]) ?? []).map((perk) => (
-                    <li key={perk} className="flex gap-2 text-xs text-muted-foreground">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-primary" />
-                      {perk}
-                    </li>
-                  ))}
-                </ul>
               </button>
             );
           })}
@@ -379,23 +426,34 @@ function UpgradeDialog() {
 
         {step === 2 && pkg && (
         <form
-          className="mt-2 grid gap-4 rounded-xl border border-border bg-muted/30 p-4"
+          className="mt-2 grid gap-4"
           onSubmit={(e) => {
             e.preventDefault();
             submit.mutate();
           }}
         >
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-              {pkg.name} · {ghs(pkg.price_ghs)}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {pkg.credits} credits · {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
-            </p>
+          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary to-[#1D4ED8] p-5 text-primary-foreground">
+            <LogoSymbol
+              className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-auto opacity-[0.15] mix-blend-screen"
+              aria-hidden
+            />
+            <div className="relative flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{pkg.name} plan</p>
+                <p className="mt-1 text-3xl font-extrabold tracking-tight">{ghs(pkg.price_ghs)}</p>
+              </div>
+              <p className="text-xs opacity-90">
+                {pkg.credits} credits · {pkg.max_verdicts} verdict{pkg.max_verdicts === 1 ? "" : "s"} per screenshot
+              </p>
+            </div>
           </div>
 
-          <div className="grid gap-3 rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-3">
+          <div className="relative grid gap-3 overflow-hidden rounded-2xl border border-border bg-card p-5">
+            <LogoSymbol
+              className="pointer-events-none absolute -right-4 -bottom-6 h-28 w-auto opacity-[0.06]"
+              aria-hidden
+            />
+            <div className="relative flex items-center justify-between gap-3 rounded-xl bg-secondary/50 p-3">
               <div>
                 <p className="text-xs text-muted-foreground">Pay to ({settings?.network ?? "MoMo"})</p>
                 <p className="text-lg font-bold tracking-tight text-foreground">
@@ -404,7 +462,7 @@ function UpgradeDialog() {
               </div>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={async () => {
                   await navigator.clipboard.writeText(settings?.momo_number ?? "");
@@ -414,16 +472,16 @@ function UpgradeDialog() {
                 <Copy className="mr-1 size-3.5" /> Copy
               </Button>
             </div>
-            <div>
+            <div className="relative">
               <p className="text-xs text-muted-foreground">Recipient name</p>
               <p className="text-sm font-medium text-foreground">{settings?.recipient_name ?? "—"}</p>
             </div>
             {settings?.instructions && (
-              <p className="text-xs text-muted-foreground">{settings.instructions}</p>
+              <p className="relative text-xs text-muted-foreground">{settings.instructions}</p>
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 rounded-2xl border border-border bg-muted/30 p-5 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Payment method</Label>
               <Select value={method} onValueChange={setMethod}>
@@ -475,17 +533,22 @@ function UpgradeDialog() {
         )}
 
         {step === 3 && (
-          <div className="mt-2 rounded-xl border border-border bg-card p-6 text-center">
-            <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Clock className="size-7" />
+          <div className="animate-verdict relative mt-2 overflow-hidden rounded-2xl border border-border bg-card p-6 text-center">
+            <LogoSymbol
+              className="pointer-events-none absolute -right-6 -bottom-8 h-40 w-auto opacity-[0.06]"
+              aria-hidden
+            />
+            <span className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring" aria-hidden />
+              <Clock className="relative size-7" />
             </span>
-            <h3 className="mt-4 text-lg font-bold text-foreground">Awaiting admin approval</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Your payment is being verified against the MoMo name you provided. Credits land
-              automatically once it is approved.
+            <h3 className="relative mt-4 text-lg font-bold text-foreground">Awaiting admin approval</h3>
+            <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Your payment is being verified against the MoMo name you provided. The moment it is
+              approved your credits land and we take you straight to a new analysis.
             </p>
 
-            <dl className="mx-auto mt-6 grid max-w-md gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
+            <dl className="relative mx-auto mt-6 grid max-w-md gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
               <Row label="Package" value={pkg ? `${pkg.name} · ${ghs(pkg.price_ghs)}` : "—"} />
               <Row label="Credits" value={pkg ? `${pkg.credits} credits` : "—"} />
               <Row
@@ -499,7 +562,7 @@ function UpgradeDialog() {
             </dl>
 
             <Button
-              className="mt-6"
+              className="relative mt-6"
               onClick={() => {
                 setOpen(false);
                 reset();

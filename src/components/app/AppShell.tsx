@@ -132,16 +132,24 @@ export function AppShell({
       </header>
 
       {open && (
-        <div className="border-b border-border bg-card px-4 py-4 lg:hidden">
-          {navList}
+        <>
           <button
             type="button"
-            onClick={signOut}
-            className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            <LogOut className="size-4" /> Sign out
-          </button>
-        </div>
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 top-16 z-30 bg-background/60 backdrop-blur-sm lg:hidden"
+          />
+          <div className="fixed inset-x-0 top-16 z-40 max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-border bg-card px-4 py-4 shadow-lg lg:hidden">
+            {navList}
+            <button
+              type="button"
+              onClick={signOut}
+              className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <LogOut className="size-4" /> Sign out
+            </button>
+          </div>
+        </>
       )}
 
       <main className="px-4 py-6 sm:px-6 lg:ml-64 lg:px-10 lg:py-10">{children}</main>

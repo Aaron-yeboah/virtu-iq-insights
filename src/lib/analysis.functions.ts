@@ -104,8 +104,16 @@ export const runAnalysis = createServerFn({ method: "POST" })
       return fail("Virtu-IQ could not read this screenshot clearly. Please try again.");
     }
 
-    const matches = Array.isArray(parsed["matches"]) ? (parsed["matches"] as unknown[]) : [];
-    const limited = matches.slice(0, verdictLimit);
+    const matches = Array.isArray(parsed["matches"]) ? (parsed["matches"] as Record<string, unknown>[]) : [];
+    const limited = matches.slice(0, verdictLimit).map((m) => ({
+      fixture: typeof m["fixture"] === "string" ? m["fixture"] : "",
+      competition: typeof m["competition"] === "string" ? m["competition"] : "",
+      kickoff: typeof m["kickoff"] === "string" ? m["kickoff"] : "",
+      pick: typeof m["pick"] === "string" ? m["pick"] : "",
+      market: typeof m["market"] === "string" ? m["market"] : "",
+      odds: typeof m["odds"] === "string" ? m["odds"] : "",
+      confidence: typeof m["confidence"] === "number" ? m["confidence"] : undefined,
+    }));
 
     // Relevance gate: not football => credit stays spent, no refund.
     if (parsed["relevant"] === false || limited.length === 0) {
@@ -129,7 +137,14 @@ export const runAnalysis = createServerFn({ method: "POST" })
         ? String(parsed["title"]).slice(0, 120)
         : "Football prediction";
     const summary = typeof parsed["headline"] === "string" ? String(parsed["headline"]).slice(0, 500) : "";
-    const result = { ...parsed, matches: limited, verdict_limit: verdictLimit };
+    const result = {
+      relevant: true,
+      title,
+      headline: summary,
+      confidence: typeof parsed["confidence"] === "number" ? parsed["confidence"] : undefined,
+      matches: limited,
+      verdict_limit: verdictLimit,
+    };
 
     const { error: saveError } = await supabase
       .from("analyses")

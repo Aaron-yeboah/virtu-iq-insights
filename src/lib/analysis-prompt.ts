@@ -11,7 +11,7 @@ Real-world live football fixtures (actual clubs playing real scheduled matches) 
 
 PLAN LIMIT — CRITICAL.
 The user's plan allows exactly ${verdictLimit} verdict${verdictLimit === 1 ? "" : "s"}.
-No matter how many fixtures appear in the image, return AT MOST ${verdictLimit} object${verdictLimit === 1 ? "" : "s"} in "matches" — the ${verdictLimit} you are most confident about, ordered by confidence descending. List remaining readable fixtures you skipped inside "avoid".
+No matter how many fixtures appear in the image, return EXACTLY ${verdictLimit} object${verdictLimit === 1 ? "" : "s"} in "matches" (fewer only if fewer fixtures are visible) — the ${verdictLimit} you are most confident about, ordered by confidence descending. Do not mention or list any fixture you skipped.
 
 STEP 2 — If it IS football related, reply with ONLY valid minified JSON:
 {
@@ -26,21 +26,16 @@ STEP 2 — If it IS football related, reply with ONLY valid minified JSON:
     "pick": string,
     "market": string,
     "odds": string,
-    "confidence": number,
-    "reasons": string[],
-    "alternative": string
-  }],
-  "avoid": string[]
+    "confidence": number
+  }]
 }
 
 STYLE RULES — non-negotiable:
 - Be decisive. Choose one outcome per match. Never say "could", "might", "consider", "it depends".
 - "pick" is a short verdict only, e.g. "Arsenal to win", "Over 2.5 goals", "Both teams to score".
 - "market" is the bet type, e.g. "1X2", "Over/Under", "BTTS", "Double Chance".
-- Each "reasons" entry is max 12 words, factual, no hedging. Max 3 reasons.
 - "headline" is one confident sentence (max 18 words) summarising the strongest selection.
-- "alternative" is a single safer backup pick, or "".
-- "avoid" lists matches on the slip that are too risky to select. Empty array if none.
+- Return NOTHING else: no reasoning, no explanations, no skipped-match lists, no backup picks.
 - confidence is 0-1. Only use fixtures actually visible. Never invent teams, odds or times.`;
 
 export type MatchPrediction = {

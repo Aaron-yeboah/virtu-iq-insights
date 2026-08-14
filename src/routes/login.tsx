@@ -31,7 +31,7 @@ function LoginPage() {
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) navigate({ to: "/credits", replace: true });
     });
   }, [navigate]);
 
@@ -49,7 +49,7 @@ function LoginPage() {
     });
     setPending(false);
     if (signInError) return setError(signInError.message);
-    navigate({ to: "/dashboard", replace: true });
+    navigate({ to: "/credits", replace: true });
   }
 
   async function handleGoogle() {
@@ -59,7 +59,7 @@ function LoginPage() {
     });
     if (result.error) return setError("Google sign-in failed. Please try again.");
     if (result.redirected) return;
-    navigate({ to: "/dashboard", replace: true });
+    navigate({ to: "/credits", replace: true });
   }
 
   async function handleReset() {
