@@ -126,7 +126,8 @@ function AdminPage() {
             <div key={p.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
-                  {ghs(p.amount_ghs)} · {p.credits} credits · {p.method}
+                  {ghs(p.amount_ghs)} ·{" "}
+                  {p.kind === "registration" ? "Registration fee" : `${p.credits} credits`} · {p.method}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">Ref: {p.reference}</p>
                 <p className="truncate text-xs text-muted-foreground">MoMo name: {p.sender_name ?? "—"}</p>
