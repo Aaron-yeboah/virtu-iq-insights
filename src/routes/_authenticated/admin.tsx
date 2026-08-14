@@ -474,6 +474,7 @@ function MonetisationManager() {
         _perks: perks,
         _is_active: d.is_active,
         _sort_order: Math.trunc(Number(d.sort_order) || 0),
+        _max_verdicts: Math.max(1, Math.trunc(Number(d.max_verdicts) || 1)),
       });
       if (error) throw new Error(error.message);
     },
@@ -496,6 +497,7 @@ function MonetisationManager() {
         _perks: (p.perks as string[]) ?? [],
         _is_active: !p.is_active,
         _sort_order: p.sort_order,
+        _max_verdicts: p.max_verdicts,
       });
       if (error) throw new Error(error.message);
     },
@@ -547,7 +549,8 @@ function MonetisationManager() {
                 {!p.is_active && <Badge variant="secondary">Hidden</Badge>}
               </p>
               <p className="text-xs text-muted-foreground">
-                {ghs(p.price_ghs)} · {p.credits} credits · slug {p.slug} · order {p.sort_order}
+                {ghs(p.price_ghs)} · {p.credits} credits · {p.max_verdicts} verdicts/scan · slug {p.slug} ·
+                order {p.sort_order}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -570,6 +573,7 @@ function MonetisationManager() {
                     price_ghs: String(p.price_ghs),
                     credits: String(p.credits),
                     perks: (((p.perks as string[]) ?? []) as string[]).join("\n"),
+                    max_verdicts: String(p.max_verdicts),
                     is_active: p.is_active,
                     sort_order: String(p.sort_order),
                   })
@@ -655,6 +659,17 @@ function MonetisationManager() {
                     type="number"
                     value={draft.sort_order}
                     onChange={(e) => setDraft({ ...draft, sort_order: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pkg-verdicts">Verdicts per screenshot</Label>
+                  <Input
+                    id="pkg-verdicts"
+                    type="number"
+                    min={1}
+                    value={draft.max_verdicts}
+                    onChange={(e) => setDraft({ ...draft, max_verdicts: e.target.value })}
+                    required
                   />
                 </div>
                 <div className="flex items-end gap-2 pb-2">
