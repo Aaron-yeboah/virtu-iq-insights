@@ -4,7 +4,7 @@ import { ANALYSIS_MODEL, buildAnalysisSystemPrompt, IRRELEVANT_MESSAGE } from ".
 
 export const runAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { analysisId: string }) => {
+  .validator((input: { analysisId: string }) => {
     if (!input?.analysisId || typeof input.analysisId !== "string") {
       throw new Error("analysisId is required");
     }
@@ -80,13 +80,17 @@ export const runAnalysis = createServerFn({ method: "POST" })
       } catch {}
     }
 
+    // Works with GEMINI_API_KEY (direct Google AI Studio API), LOVABLE_API_KEY, AI_GATEWAY_API_KEY, or OPENAI_API_KEY
     const geminiKey =
       process.env["GEMINI_API_KEY"] ||
       (process.env["LOVABLE_API_KEY"]?.startsWith("AQ.") || process.env["LOVABLE_API_KEY"]?.startsWith("AIza")
         ? process.env["LOVABLE_API_KEY"]
         : "");
     const openAiKey = process.env["OPENAI_API_KEY"];
-    const lovableKey = process.env["LOVABLE_API_KEY"];
+    const lovableKey =
+      process.env["LOVABLE_API_KEY"] ||
+      process.env["AI_GATEWAY_API_KEY"] ||
+      process.env["VITE_LOVABLE_API_KEY"];
 
     const { data: limitData } = await supabase.rpc("my_verdict_limit");
     const verdictLimit = Math.max(1, Number(limitData ?? 1));
