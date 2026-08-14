@@ -286,23 +286,13 @@ export const runAnalysis = createServerFn({ method: "POST" })
       verdict_limit: verdictLimit,
     };
 
-    // Charge the remaining credits for the extra verdicts (1 credit per verdict).
-    const extraCredits = limited.length - cost;
-    if (extraCredits > 0) {
-      await supabase.rpc("spend_credits", {
-        _amount: extraCredits,
-        _reason: "Additional verdicts",
-        _ref_id: analysis.id,
-      });
-    }
-
     const { error: saveError } = await supabase
       .from("analyses")
       .update({
         status: "completed",
         title,
         summary,
-        credits_used: Math.max(cost, limited.length),
+        credits_used: cost,
         result: result as never,
         error_message: null,
         completed_at: new Date().toISOString(),
