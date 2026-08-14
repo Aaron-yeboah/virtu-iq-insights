@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/app/AppShell";
+import { LogoSymbol } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteMember } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
@@ -104,8 +105,8 @@ function AdminPage() {
       <PageHeader title="Admin console" description="Review payments, partners and platform activity." />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
-        <Stat label="Revenue" value={ghs(stats?.revenue_ghs ?? 0)} />
-        <Stat label="Commission (65%)" value={ghs((stats?.revenue_ghs ?? 0) * 0.65)} />
+        <Stat label="Revenue" value={ghs(stats?.revenue_ghs ?? 0)} highlight />
+        <Stat label="Commission (65%)" value={ghs((stats?.revenue_ghs ?? 0) * 0.65)} highlight />
         <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
@@ -364,11 +365,34 @@ function ExplodeCard() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/5">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 text-xl font-bold tracking-tight text-foreground">{value}</p>
+    <div
+      className={
+        highlight
+          ? "group relative overflow-hidden rounded-xl border border-primary/40 bg-gradient-to-br from-primary to-[#1D4ED8] p-5 text-primary-foreground shadow-[var(--shadow-soft)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+          : "group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 hover:shadow-md"
+      }
+    >
+      <LogoSymbol
+        aria-hidden
+        className={
+          highlight
+            ? "absolute right-3 top-3 h-5 w-auto opacity-70 brightness-0 invert transition-transform duration-300 group-hover:scale-110"
+            : "absolute right-3 top-3 h-5 w-auto opacity-40 transition-all duration-300 group-hover:scale-110 group-hover:opacity-80"
+        }
+      />
+      <p className={highlight ? "relative pr-8 text-sm opacity-90" : "relative pr-8 text-sm text-muted-foreground"}>
+        {label}
+      </p>
+      <p className="relative mt-2 text-xl font-bold tracking-tight">{value}</p>
+      <span
+        className={
+          highlight
+            ? "pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-white/40"
+            : "pointer-events-none absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-gradient-to-r from-primary to-[#1D4ED8] transition-transform duration-300 group-hover:scale-x-100"
+        }
+      />
     </div>
   );
 }
