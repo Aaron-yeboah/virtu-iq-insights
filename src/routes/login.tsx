@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoFull } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { resolveLoginEmail } from "@/lib/auth.functions";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -68,16 +67,6 @@ function LoginPage() {
     navigate({ to: "/credits", replace: true });
   }
 
-  async function handleGoogle() {
-    setError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) return setError("Google sign-in failed. Please try again.");
-    if (result.redirected) return;
-    navigate({ to: "/credits", replace: true });
-  }
-
   async function handleReset() {
     setError(null);
     if (!identifier.includes("@")) return setError("Enter your email address first.");
@@ -98,16 +87,7 @@ function LoginPage() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">Log in to continue your analysis work.</p>
 
-          <Button type="button" variant="outline" className="mt-6 w-full" onClick={handleGoogle}>
-            Continue with Google
-          </Button>
-          <div className="my-5 flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">Email or phone number</Label>
               <Input
