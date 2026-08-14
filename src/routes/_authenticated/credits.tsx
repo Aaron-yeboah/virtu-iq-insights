@@ -555,13 +555,24 @@ function UpgradeDialog() {
               aria-hidden
             />
             <span className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <span className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring" aria-hidden />
-              <Clock className="relative size-7" />
+              {!approved && !rejected && (
+                <span className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring" aria-hidden />
+              )}
+              {approved ? <Check className="relative size-7" /> : <Clock className="relative size-7" />}
             </span>
-            <h3 className="relative mt-4 text-lg font-bold text-foreground">Awaiting admin approval</h3>
+            <h3 className="relative mt-4 text-lg font-bold text-foreground">
+              {approved
+                ? "Payment approved"
+                : rejected
+                  ? "Payment rejected"
+                  : "Awaiting admin approval"}
+            </h3>
             <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Your payment is being verified against the MoMo name you provided. The moment it is
-              approved your credits land and we take you straight to a new analysis.
+              {approved
+                ? "Your credits have landed. Taking you to a new analysis…"
+                : rejected
+                  ? livePayment?.admin_note || "Please check your payment details and submit again."
+                  : "Your payment is being verified against the MoMo name you provided. This updates live — no need to reload."}
             </p>
 
             <dl className="relative mx-auto mt-6 grid max-w-md gap-2 rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
@@ -574,7 +585,10 @@ function UpgradeDialog() {
               <Row label="Method" value={method} />
               <Row label="MoMo name" value={senderName} />
               <Row label="Reference" value={reference} />
-              <Row label="Status" value="Pending approval" />
+              <Row
+                label="Status"
+                value={approved ? "Approved" : rejected ? "Rejected" : "Pending approval"}
+              />
             </dl>
 
             <Button
