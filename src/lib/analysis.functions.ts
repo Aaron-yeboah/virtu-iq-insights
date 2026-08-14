@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAnalysisAuth } from "./auth-bearer";
 import { ANALYSIS_MODEL, buildAnalysisSystemPrompt, IRRELEVANT_MESSAGE } from "./analysis-prompt";
 
 export const runAnalysis = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAnalysisAuth])
   .inputValidator((input: { analysisId: string }) => {
     if (!input?.analysisId || typeof input.analysisId !== "string") {
       throw new Error("analysisId is required");
