@@ -9,16 +9,17 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { runAnalysis } from "@/lib/analysis.functions";
-import { profileQuery } from "@/lib/data";
+import { profileQuery, verdictLimitQuery } from "@/lib/data";
+import { LogoSymbol } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/analyze")({
   head: () => ({
     meta: [
-      { title: "New Prediction — Virtu-IQ" },
-      { name: "description", content: "Upload a football fixture, slip or stats screenshot and Virtu-IQ picks the most likely outcome with confidence." },
-      { property: "og:title", content: "New Prediction — Virtu-IQ" },
-      { property: "og:description", content: "Virtu-IQ reads your football screenshot and delivers a decisive verdict." },
+      { title: "Virtu-IQ" },
+      { name: "description", content: "Upload an instant/virtual football screenshot and Virtu-IQ picks the most likely outcomes your plan allows." },
+      { property: "og:title", content: "Virtu-IQ" },
+      { property: "og:description", content: "Virtu-IQ reads your instant virtual football screenshot and delivers a decisive verdict." },
     ],
   }),
   component: AnalyzePage,
@@ -39,6 +40,7 @@ function AnalyzePage() {
   const queryClient = useQueryClient();
   const analyze = useServerFn(runAnalysis);
   const { data: profile } = useQuery(profileQuery(user.id));
+  const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -105,8 +107,8 @@ function AnalyzePage() {
   return (
     <>
       <PageHeader
-        title="Virtu-IQ prediction"
-        description="Drop in a football fixture list, bet slip or stats screenshot. We pick the outcome — you place it."
+        title="Virtu-IQ"
+        description="Drop in an instant/virtual football screenshot. We pick the outcomes — you place them."
       />
 
       <form
@@ -117,6 +119,10 @@ function AnalyzePage() {
         }}
       >
         <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft sm:p-6">
+          <LogoSymbol
+            className="pointer-events-none absolute -right-6 -bottom-6 h-40 w-auto opacity-[0.05]"
+            aria-hidden
+          />
           <div
             className={cn(
               "pointer-events-none absolute inset-0 opacity-[0.06]",
@@ -149,7 +155,7 @@ function AnalyzePage() {
                   Tap to upload your football screenshot
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  Fixtures, odds, bet slips or stats · PNG/JPG up to 8MB
+                  Instant/virtual fixtures, odds or slips · PNG/JPG up to 8MB
                 </span>
               </>
             )}
@@ -212,7 +218,8 @@ function AnalyzePage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Coins className="size-4 text-primary" />
-            1 credit per verdict · {profile?.credits ?? 0} available
+            1 credit per scan · {verdictLimit ?? 1} verdict{(verdictLimit ?? 1) === 1 ? "" : "s"} on your plan ·{" "}
+            {profile?.credits ?? 0} credits available
           </p>
           <Button type="submit" size="lg" disabled={!file || busy} className="sm:min-w-56">
             {busy ? "Virtu-IQ is deciding…" : "Get my verdict"}
@@ -220,7 +227,7 @@ function AnalyzePage() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Non-football screenshots still consume 1 credit — Virtu-IQ only predicts football.
+          Virtu-IQ predicts instant/virtual football only. Real live matches and non-football screenshots still consume 1 credit.
         </p>
       </form>
     </>
