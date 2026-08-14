@@ -437,11 +437,10 @@ type PackageDraft = {
   price_ghs: string;
   credits: string;
   perks: string;
+  max_verdicts: string;
   is_active: boolean;
   sort_order: string;
 };
-
-
 const emptyDraft: PackageDraft = {
   id: null,
   name: "",
