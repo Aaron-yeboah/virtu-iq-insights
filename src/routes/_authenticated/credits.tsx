@@ -1,7 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Check, Coins, Loader2, Sparkles, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Check,
+  Clock,
+  Coins,
+  Copy,
+  Loader2,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +40,7 @@ import {
   creditHistoryQuery,
   ghs,
   packagesQuery,
+  paymentSettingsQuery,
   paymentsQuery,
   profileQuery,
   verdictLimitQuery,
