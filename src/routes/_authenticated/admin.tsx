@@ -20,17 +20,17 @@ import {
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  adminApplicationsQuery,
   adminCreditOverviewQuery,
   adminMemberListQuery,
-  adminMembersQuery,
   adminPackagesQuery,
+  adminPartnerListQuery,
   adminPaymentsQuery,
   adminStatsQuery,
   auditLogsQuery,
   ghs,
   paymentSettingsQuery,
   rolesQuery,
+  type AdminPartnerRow,
   type PackageRow,
 } from "@/lib/data";
 
@@ -54,8 +54,7 @@ function AdminPage() {
 
   const { data: stats } = useQuery({ ...adminStatsQuery(), enabled: isAdmin });
   const { data: payments } = useQuery({ ...adminPaymentsQuery(), enabled: isAdmin });
-  const { data: applications } = useQuery({ ...adminApplicationsQuery(), enabled: isAdmin });
-  const { data: members } = useQuery({ ...adminMembersQuery(), enabled: isAdmin });
+  const { data: members } = useQuery({ ...adminMemberListQuery({}), enabled: isAdmin });
   const { data: logs } = useQuery({ ...auditLogsQuery(), enabled: isAdmin });
 
   const reviewPayment = useMutation({
@@ -70,21 +69,6 @@ function AdminPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries();
       toast.success("Payment reviewed");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const reviewApplication = useMutation({
-    mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
-      const { error } = await supabase.rpc("review_partner_application", {
-        _application_id: id,
-        _approve: approve,
-      });
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries();
-      toast.success("Application reviewed");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -107,7 +91,7 @@ function AdminPage() {
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
         <Stat label="Pending payments" value={String(stats?.pending_payments ?? 0)} />
-        <Stat label="Pending partners" value={String(stats?.pending_partners ?? 0)} />
+        <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Revenue" value={ghs(stats?.revenue_ghs ?? 0)} />
       </div>
 
@@ -117,8 +101,8 @@ function AdminPage() {
             <TabsTrigger value="payments" className="whitespace-nowrap">Payments</TabsTrigger>
             <TabsTrigger value="payment-details" className="whitespace-nowrap">Payment details</TabsTrigger>
             <TabsTrigger value="packages" className="whitespace-nowrap">Packages &amp; credits</TabsTrigger>
-            <TabsTrigger value="manage-partners" className="whitespace-nowrap">Partners</TabsTrigger>
-            <TabsTrigger value="partners" className="whitespace-nowrap">Applications</TabsTrigger>
+            <TabsTrigger value="partners" className="whitespace-nowrap">Partners</TabsTrigger>
+            <TabsTrigger value="manage-partners" className="whitespace-nowrap">Manage partners</TabsTrigger>
             <TabsTrigger value="members" className="whitespace-nowrap">Members</TabsTrigger>
             <TabsTrigger value="audit" className="whitespace-nowrap">Audit log</TabsTrigger>
           </TabsList>
