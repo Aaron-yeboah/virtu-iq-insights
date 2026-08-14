@@ -6,17 +6,31 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import {
   adminApplicationsQuery,
+  adminCreditOverviewQuery,
   adminMemberListQuery,
   adminMembersQuery,
+  adminPackagesQuery,
   adminPaymentsQuery,
   adminStatsQuery,
   auditLogsQuery,
   ghs,
   rolesQuery,
+  type PackageRow,
 } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -99,11 +113,16 @@ function AdminPage() {
       <Tabs defaultValue="payments" className="mt-8">
         <TabsList>
           <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="packages">Packages & credits</TabsTrigger>
           <TabsTrigger value="manage-partners">Manage partners</TabsTrigger>
           <TabsTrigger value="partners">Partners</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="audit">Audit log</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="packages" className="mt-4">
+          <MonetisationManager />
+        </TabsContent>
 
         <TabsContent value="manage-partners" className="mt-4">
           <PartnerManager />
@@ -172,7 +191,10 @@ function AdminPage() {
                 <p className="truncate text-sm font-medium text-foreground">{m.full_name ?? m.email}</p>
                 <p className="truncate text-xs text-muted-foreground">{m.email} · {m.referral_code}</p>
               </div>
-              <span className="text-sm font-semibold text-foreground">{m.credits} credits</span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-foreground">{m.credits} credits</span>
+                <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
+              </div>
             </div>
           ))}
         </TabsContent>
