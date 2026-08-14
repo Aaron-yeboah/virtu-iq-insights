@@ -268,6 +268,14 @@ function UpgradeDialog() {
   const [method, setMethod] = useState(METHODS[0]!);
   const [senderName, setSenderName] = useState("");
   const [reference, setReference] = useState("");
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const { data: livePayments } = useQuery({
+    ...paymentsQuery(user.id),
+    refetchInterval: paymentId ? 3000 : false,
+  });
+  const livePayment = paymentId ? (livePayments ?? []).find((p) => p.id === paymentId) : undefined;
+  const approved = livePayment?.status === "approved";
+  const rejected = livePayment?.status === "rejected";
 
   const pkg = (packages ?? []).find((p) => p.id === selected) ?? null;
 
@@ -276,6 +284,7 @@ function UpgradeDialog() {
     setSelected(null);
     setSenderName("");
     setReference("");
+    setPaymentId(null);
   };
 
   const submit = useMutation({
@@ -287,7 +296,9 @@ function UpgradeDialog() {
       }
       const ref = reference.trim();
       if (ref.length > 80) throw new Error("Transaction reference is too long.");
-      const { error } = await supabase.from("payments").insert({
+      const { data, error } = await supabase
+        .from("payments")
+        .insert({
         user_id: user.id,
         package_id: pkg.id,
         amount_ghs: pkg.price_ghs,
@@ -295,10 +306,14 @@ function UpgradeDialog() {
         method,
         sender_name: name,
         reference: ref || "Not provided",
-      });
+        })
+        .select("id")
+        .single();
       if (error) throw new Error(error.message);
+      return data.id as string;
     },
-    onSuccess: async () => {
+    onSuccess: async (id: string) => {
+      setPaymentId(id);
       setStep(3);
       await queryClient.invalidateQueries({ queryKey: ["payments", user.id] });
     },
