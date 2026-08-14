@@ -88,11 +88,11 @@ function AdminPage() {
       <PageHeader title="Admin console" description="Review payments, partners and platform activity." />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
+        <Stat label="Revenue" value={ghs(stats?.revenue_ghs ?? 0)} />
+        <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
         <Stat label="Pending payments" value={String(stats?.pending_payments ?? 0)} />
-        <Stat label="Partners" value={String(stats?.partners ?? 0)} />
-        <Stat label="Revenue" value={ghs(stats?.revenue_ghs ?? 0)} />
       </div>
 
       <Tabs defaultValue="payments" className="mt-8">
@@ -711,8 +711,8 @@ function MonetisationManager() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Credits sold" value={String(overview?.credits_sold ?? 0)} />
         <Stat label="Revenue" value={ghs(overview?.revenue_ghs ?? 0)} />
+        <Stat label="Credits sold" value={String(overview?.credits_sold ?? 0)} />
         <Stat label="Active packages" value={String(overview?.active_packages ?? 0)} />
       </div>
 
