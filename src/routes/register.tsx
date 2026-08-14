@@ -47,7 +47,7 @@ function RegisterPage() {
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) navigate({ to: "/credits", replace: true });
     });
   }, [navigate]);
 
@@ -80,7 +80,7 @@ function RegisterPage() {
     if (!data.session) {
       return setNotice("Almost there — check your email to confirm your account.");
     }
-    navigate({ to: "/dashboard", replace: true });
+    navigate({ to: "/credits", replace: true });
   }
 
   async function handleGoogle() {
@@ -90,7 +90,7 @@ function RegisterPage() {
     });
     if (result.error) return setError("Google sign-up failed. Please try again.");
     if (result.redirected) return;
-    navigate({ to: "/dashboard", replace: true });
+    navigate({ to: "/credits", replace: true });
   }
 
   return (
