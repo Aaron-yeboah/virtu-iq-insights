@@ -232,9 +232,9 @@ export const adminMemberListQuery = (args: {
     queryKey: ["admin-member-list", args.search ?? "", args.onlyPartners ?? false, args.partnerId ?? null],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_member_list", {
-        _search: args.search?.trim() || null,
+        _search: args.search?.trim() || undefined,
         _only_partners: args.onlyPartners ?? false,
-        _partner_id: args.partnerId ?? null,
+        _partner_id: args.partnerId ?? undefined,
       });
       if (error) throw error;
       return data ?? [];
