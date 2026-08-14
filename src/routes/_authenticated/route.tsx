@@ -1,6 +1,7 @@
-import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useRouterState, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app/AppShell";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated")({
     if (!isAdmin) {
       if (isPartner && !path.startsWith("/partner")) throw redirect({ to: "/partner" });
       if (!isPartner && path.startsWith("/partner")) throw redirect({ to: "/dashboard" });
+      if (path.startsWith("/admin")) throw redirect({ to: isPartner ? "/partner" : "/dashboard" });
     }
 
     let registrationPaid = true;
@@ -37,7 +39,22 @@ export const Route = createFileRoute("/_authenticated")({
     return { user: data.user, roles, isAdmin, isPartner, registrationPaid };
   },
   component: AuthenticatedLayout,
+  errorComponent: AuthenticatedError,
 });
+
+function AuthenticatedError({ error }: { error: Error }) {
+  const router = useRouter();
+  console.error(error);
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+      <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
+      <p className="max-w-md text-sm text-muted-foreground">
+        {error?.message || "We could not load this page. Please try again."}
+      </p>
+      <Button onClick={() => void router.invalidate()}>Try again</Button>
+    </div>
+  );
+}
 
 function AuthenticatedLayout() {
   const { user, isAdmin, isPartner } = Route.useRouteContext();
