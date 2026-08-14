@@ -150,31 +150,8 @@ function AdminPage() {
           ))}
         </TabsContent>
 
-        <TabsContent value="partners" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-          {(applications ?? []).length === 0 && <p className="p-5 text-sm text-muted-foreground">No applications yet.</p>}
-          {(applications ?? []).map((a) => (
-            <div key={a.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">user {a.user_id.slice(0, 8)}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{a.audience}</p>
-                <p className="mt-1 break-words text-xs text-muted-foreground">
-                  Payout: {a.payout_method} · {a.payout_details}
-                </p>
-              </div>
-              {a.status === "pending" ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" className="flex-1 sm:flex-none" disabled={reviewApplication.isPending} onClick={() => reviewApplication.mutate({ id: a.id, approve: true })}>
-                    Approve
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={reviewApplication.isPending} onClick={() => reviewApplication.mutate({ id: a.id, approve: false })}>
-                    Reject
-                  </Button>
-                </div>
-              ) : (
-                <Badge className="w-fit" variant={a.status === "approved" ? "default" : "destructive"}>{a.status}</Badge>
-              )}
-            </div>
-          ))}
+        <TabsContent value="partners" className="mt-4">
+          <PartnerPayouts />
         </TabsContent>
 
         <TabsContent value="members" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
@@ -185,7 +162,7 @@ function AdminPage() {
                 <p className="truncate text-xs text-muted-foreground">{m.email} · {m.referral_code}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{m.credits}</span>
+                <span className="text-sm font-semibold text-foreground">{ghs(m.spent_ghs)}</span>
                 <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
               </div>
             </div>
