@@ -210,7 +210,12 @@ export const runAnalysis = createServerFn({ method: "POST" })
       );
     }
 
-    const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    let cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    if (!cleaned.startsWith("{")) {
+      const first = cleaned.indexOf("{");
+      const last = cleaned.lastIndexOf("}");
+      if (first !== -1 && last > first) cleaned = cleaned.slice(first, last + 1);
+    }
 
     let parsed: Record<string, unknown>;
     try {
