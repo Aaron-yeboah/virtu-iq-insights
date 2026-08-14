@@ -174,7 +174,8 @@ export const adminStatsQuery = () =>
         members: number;
         analyses: number;
         pending_payments: number;
-        pending_partners: number;
+        pending_partners?: number;
+        partners: number;
         revenue_ghs: number;
       };
     },
