@@ -23,6 +23,7 @@ import {
   adminCreditOverviewQuery,
   adminMemberListQuery,
   adminPackagesQuery,
+  adminPartnerApplicationsQuery,
   adminPartnerListQuery,
   adminPaymentsQuery,
   adminStatsQuery,
@@ -30,6 +31,7 @@ import {
   ghs,
   paymentSettingsQuery,
   rolesQuery,
+  type AdminApplicationRow,
   type AdminPartnerRow,
   type PackageRow,
 } from "@/lib/data";
@@ -352,6 +354,9 @@ function PartnerManager() {
 
   return (
     <div className="space-y-4">
+      <PartnerInviteLink />
+      <PartnerApplications />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           value={search}
@@ -447,6 +452,114 @@ function PartnerManager() {
 }
 
 function CreditAdjuster({ userId, label }: { userId: string; label: string }) {
+  return <CreditAdjusterInner userId={userId} label={label} />;
+}
+
+function PartnerInviteLink() {
+  const link =
+    typeof window !== "undefined" ? `${window.location.origin}/register?partner=1` : "";
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+      <p className="text-sm font-semibold text-foreground">Partner&apos;s registration link</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Send this to potential partners. They register, apply, and skip the registration fee — you
+        approve or reject the application below.
+      </p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <Input readOnly value={link} aria-label="Partner registration link" />
+        <Button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard.writeText(link);
+            toast.success("Partner link copied");
+          }}
+        >
+          Copy link
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PartnerApplications() {
+  const queryClient = useQueryClient();
+  const { data, isFetching } = useQuery({
+    ...adminPartnerApplicationsQuery(),
+    refetchInterval: 8000,
+  });
+  const rows = (data ?? []) as AdminApplicationRow[];
+
+  const review = useMutation({
+    mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
+      const { error } = await supabase.rpc("review_partner_application", {
+        _application_id: id,
+        _approve: approve,
+        _note: approve ? "Approved as partner" : "Application rejected",
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async (_d, vars) => {
+      await queryClient.invalidateQueries();
+      toast.success(vars.approve ? "Partner approved" : "Application rejected");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-semibold text-foreground">Partner applications</p>
+      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        {rows.length === 0 && (
+          <p className="p-5 text-sm text-muted-foreground">
+            {isFetching ? "Loading applications…" : "No partner applications yet."}
+          </p>
+        )}
+        {rows.map((a) => (
+          <div key={a.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
+                <span className="truncate">{a.full_name ?? a.email ?? "Applicant"}</span>
+                {a.status !== "pending" && (
+                  <Badge variant={a.status === "approved" ? "default" : "destructive"}>{a.status}</Badge>
+                )}
+              </div>
+              <p className="truncate text-xs text-muted-foreground">
+                {a.email} · {a.phone ?? "no phone"} · {new Date(a.created_at).toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground">Audience: {a.audience}</p>
+              <p className="text-xs text-muted-foreground">
+                Payout: {a.payout_method} · {a.payout_details}
+              </p>
+            </div>
+            {a.status === "pending" && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                  disabled={review.isPending}
+                  onClick={() => review.mutate({ id: a.id, approve: true })}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="flex-1 sm:flex-none"
+                  disabled={review.isPending}
+                  onClick={() => review.mutate({ id: a.id, approve: false })}
+                >
+                  Reject
+                </Button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CreditAdjusterInner({ userId, label }: { userId: string; label: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("5");

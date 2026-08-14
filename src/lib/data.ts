@@ -229,6 +229,31 @@ export const adminApplicationsQuery = () =>
     },
   });
 
+export type AdminApplicationRow = {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  audience: string;
+  motivation: string;
+  payout_method: string;
+  payout_details: string;
+  status: "pending" | "approved" | "rejected";
+  admin_note: string | null;
+  created_at: string;
+};
+
+export const adminPartnerApplicationsQuery = () =>
+  queryOptions({
+    queryKey: ["admin-partner-applications"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_partner_applications");
+      if (error) throw error;
+      return (data ?? []) as AdminApplicationRow[];
+    },
+  });
+
 export const adminMembersQuery = () =>
   queryOptions({
     queryKey: ["admin-members"],
