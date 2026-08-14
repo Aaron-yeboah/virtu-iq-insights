@@ -80,17 +80,10 @@ export const runAnalysis = createServerFn({ method: "POST" })
       } catch {}
     }
 
-    // Works with GEMINI_API_KEY (direct Google AI Studio API), LOVABLE_API_KEY, AI_GATEWAY_API_KEY, or OPENAI_API_KEY
-    const geminiKey =
-      process.env["GEMINI_API_KEY"] ||
-      (process.env["LOVABLE_API_KEY"]?.startsWith("AQ.") || process.env["LOVABLE_API_KEY"]?.startsWith("AIza")
-        ? process.env["LOVABLE_API_KEY"]
-        : "");
+    // Preferred: Lovable AI gateway (LOVABLE_API_KEY). Fallbacks: direct Gemini, then OpenAI.
+    const lovableKey = process.env["LOVABLE_API_KEY"] || process.env["AI_GATEWAY_API_KEY"];
+    const geminiKey = process.env["GEMINI_API_KEY"];
     const openAiKey = process.env["OPENAI_API_KEY"];
-    const lovableKey =
-      process.env["LOVABLE_API_KEY"] ||
-      process.env["AI_GATEWAY_API_KEY"] ||
-      process.env["VITE_LOVABLE_API_KEY"];
 
     const { data: limitData } = await supabase.rpc("my_verdict_limit");
     const verdictLimit = Math.max(1, Number(limitData ?? 1));
@@ -99,7 +92,44 @@ export const runAnalysis = createServerFn({ method: "POST" })
 
     let raw = "";
 
-    if (geminiKey) {
+    if (lovableKey) {
+      // Lovable AI Gateway (OpenAI-compatible chat completions)
+      const imageUrl = base64Image ? `data:${mimeType};base64,${base64Image}` : signed.signedUrl;
+      let response: Response;
+      try {
+        response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Lovable-API-Key": lovableKey,
+          },
+          body: JSON.stringify({
+            model: ANALYSIS_MODEL,
+            messages: [
+              { role: "system", content: promptText },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: userPrompt },
+                  { type: "image_url", image_url: { url: imageUrl } },
+                ],
+              },
+            ],
+          }),
+        });
+      } catch {
+        return fail("The AI service could not be reached. Please try again.");
+      }
+
+      if (response.status === 429) return fail("Rate limit reached. Please try again in a moment.");
+      if (response.status === 402) return fail("AI credits are exhausted. Please top up Lovable AI credits.");
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        return fail(`AI service error (${response.status}): ${errText.slice(0, 150)}`);
+      }
+      const payload = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+      raw = payload.choices?.[0]?.message?.content ?? "";
+    } else if (geminiKey) {
       // Use Google Gemini API directly
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`;
       const contentsParts: Record<string, unknown>[] = [
@@ -140,20 +170,14 @@ export const runAnalysis = createServerFn({ method: "POST" })
         candidates?: { content?: { parts?: { text?: string }[] } }[];
       };
       raw = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    } else if (openAiKey || lovableKey) {
-      const endpoint = openAiKey
-        ? "https://api.openai.com/v1/chat/completions"
-        : "https://ai.gateway.lovable.dev/v1/chat/completions";
-      const key = openAiKey || lovableKey;
-      const model = openAiKey ? "gpt-4o-mini" : ANALYSIS_MODEL;
-
+    } else if (openAiKey) {
       let response: Response;
       try {
-        response = await fetch(endpoint, {
+        response = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${openAiKey}` },
           body: JSON.stringify({
-            model,
+            model: "gpt-4o-mini",
             messages: [
               { role: "system", content: promptText },
               {
@@ -182,7 +206,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
       raw = payload.choices?.[0]?.message?.content ?? "";
     } else {
       return fail(
-        "AI service is not configured. Please set GEMINI_API_KEY, LOVABLE_API_KEY, or OPENAI_API_KEY in your environment variables."
+        "AI service is not configured. Set LOVABLE_API_KEY (or GEMINI_API_KEY / OPENAI_API_KEY) in the deployment environment variables."
       );
     }
 
