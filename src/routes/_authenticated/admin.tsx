@@ -371,7 +371,7 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
       className={
         highlight
           ? "group relative overflow-hidden rounded-xl border border-primary/40 bg-gradient-to-br from-primary to-[#1D4ED8] p-5 text-primary-foreground shadow-[var(--shadow-soft)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-          : "group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 hover:shadow-md"
+          : "group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.08] hover:shadow-md"
       }
     >
       <LogoSymbol
@@ -379,10 +379,10 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
         className={
           highlight
             ? "absolute right-3 top-3 h-5 w-auto opacity-70 brightness-0 invert transition-transform duration-300 group-hover:scale-110"
-            : "absolute right-3 top-3 h-5 w-auto opacity-40 transition-all duration-300 group-hover:scale-110 group-hover:opacity-80"
+            : "absolute right-3 top-3 h-5 w-auto text-primary/40 transition-all duration-300 group-hover:scale-110 group-hover:text-primary/80"
         }
       />
-      <p className={highlight ? "relative pr-8 text-sm opacity-90" : "relative pr-8 text-sm text-muted-foreground"}>
+      <p className={highlight ? "relative pr-8 text-sm opacity-90" : "relative pr-8 text-sm text-muted-foreground transition-colors duration-300 group-hover:text-primary/90"}>
         {label}
       </p>
       <p className="relative mt-2 text-xl font-bold tracking-tight">{value}</p>
@@ -393,6 +393,9 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
             : "pointer-events-none absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-gradient-to-r from-primary to-[#1D4ED8] transition-transform duration-300 group-hover:scale-x-100"
         }
       />
+      {highlight && (
+        <span className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-15deg] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-all duration-300 group-hover:animate-shine group-hover:opacity-100" />
+      )}
     </div>
   );
 }
