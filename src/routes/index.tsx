@@ -47,6 +47,50 @@ export const Route = createFileRoute("/")({
           "Upload your virtual football screenshot and receive certified verdicts — no guesswork, just results.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://virtu-iq.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Virtu-IQ packages",
+          itemListElement: [
+            {
+              name: "Starter",
+              description: "50 scan credits, 2 verdicts per screenshot.",
+              price: "250",
+            },
+            {
+              name: "Plus",
+              description: "100 scan credits, 4 verdicts per screenshot.",
+              price: "350",
+            },
+            {
+              name: "Premium",
+              description: "200 scan credits, 8 verdicts per screenshot.",
+              price: "500",
+            },
+          ].map((p, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            item: {
+              "@type": "Product",
+              name: `Virtu-IQ ${p.name}`,
+              description: p.description,
+              brand: { "@type": "Brand", name: "Virtu-IQ" },
+              offers: {
+                "@type": "Offer",
+                price: p.price,
+                priceCurrency: "GHS",
+                availability: "https://schema.org/InStock",
+                url: "https://virtu-iq.lovable.app/#packages",
+              },
+            },
+          })),
+        }),
+      },
+    ],
   }),
   component: Index,
 });
