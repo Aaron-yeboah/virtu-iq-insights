@@ -186,7 +186,7 @@ export const adminPaymentsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
-        .select("id, user_id, amount_ghs, credits, method, reference, status, admin_note, created_at")
+        .select("id, user_id, amount_ghs, credits, method, reference, sender_name, status, admin_note, created_at")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
