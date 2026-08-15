@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAnalysisAuth } from "@/lib/auth-bearer";
 
 /**
  * Permanently removes a member account (auth user + all cascading data).
@@ -8,7 +8,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  * regain access once an admin approves it.
  */
 export const deleteMember = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAnalysisAuth])
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -56,7 +56,7 @@ const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
  * payment settings are kept. Every delete carries an explicit filter.
  */
 export const explodePlatformData = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAnalysisAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
