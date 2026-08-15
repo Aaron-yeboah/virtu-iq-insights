@@ -20,7 +20,7 @@ import {
 import { PageHeader } from "@/components/app/AppShell";
 import { LogoSymbol } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { deleteMember } from "@/lib/admin.functions";
+import { deleteMember, explodePlatformData } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { Trash2 } from "lucide-react";
 import {
@@ -302,11 +302,11 @@ function ExplodeCard() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState("");
+  const explodeFn = useServerFn(explodePlatformData);
 
   const explode = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("admin_explode_data");
-      if (error) throw new Error(error.message);
+      await explodeFn({ data: undefined });
     },
     onSuccess: async () => {
       setOpen(false);
