@@ -16,7 +16,7 @@ export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
       { title: "Create Account — Virtu-IQ" },
-      { name: "description", content: "Create your Virtu-IQ account and get 3 free screenshot analyses to start turning visuals into insight." },
+      { name: "description", content: "Create your Virtu-IQ account, complete registration and get instant virtual verdicts from Virtu-IQ." },
       { property: "og:title", content: "Create Account — Virtu-IQ" },
       { property: "og:description", content: "Join Virtu-IQ and start analyzing screenshots with AI." },
     ],
@@ -84,17 +84,26 @@ function RegisterPage() {
 
     if (isPartnerInvite) {
       if (!data.session) {
-        return setNotice("Almost there — check your email to confirm your account.");
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (signInError) return setError(signInError.message);
       }
       navigate({ to: "/partner-apply", replace: true });
       return;
     }
 
-    // Members finish registration first, then log in — the registration fee
-    // screen appears only after that first sign-in.
-    if (data.session) await supabase.auth.signOut();
-    setNotice("Account created — log in to continue and complete your registration fee.");
-    window.setTimeout(() => navigate({ to: "/login", replace: true }), 1200);
+    // Log the new member straight in — the registration fee screen follows.
+    if (!data.session) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (signInError) return setError(signInError.message);
+    }
+    setNotice("Account created — continuing to your registration…");
+    navigate({ to: "/registration", replace: true });
   }
 
   return (
@@ -110,7 +119,7 @@ function RegisterPage() {
           <p className="mt-1.5 text-sm text-muted-foreground">
             {isPartnerInvite
               ? "Create your account, then apply to become a Virtu-IQ partner — no registration fee."
-              : "Start with 3 free analyses — no card required."}
+              : "Create your account to continue to registration."}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
