@@ -64,4 +64,4 @@ export type AnalysisResult = {
 };
 
 export const IRRELEVANT_MESSAGE =
-  "This screenshot isn't a football fixture, slip or stats view — 1 credit was used. Upload a football screenshot next time.";
+  "This screenshot isn't an instant virtuals screenshot. I cannot give a verdict. Your credit has been refunded. Please upload a valid instant/virtual football screenshot.";

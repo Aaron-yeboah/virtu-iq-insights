@@ -135,7 +135,7 @@ function RegistrationFeePage() {
             {approved ? <Check className="relative size-7" /> : <Clock className="relative size-7" />}
           </span>
           <h2 className="relative mt-4 text-lg font-bold text-foreground">
-            {approved ? "Registration approved" : "Awaiting admin approval"}
+            {approved ? "Registration approved" : "Waiting approval"}
           </h2>
           <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
             {approved

@@ -559,7 +559,7 @@ function UpgradeDialog() {
                 ? "Payment approved"
                 : rejected
                   ? "Payment declined"
-                  : "Awaiting admin approval"}
+                  : "Waiting approval"}
             </h3>
             <p className="relative mx-auto mt-2 max-w-md text-sm text-muted-foreground">
               {approved

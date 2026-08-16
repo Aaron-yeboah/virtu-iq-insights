@@ -255,14 +255,22 @@ export const runAnalysis = createServerFn({ method: "POST" })
       confidence: typeof m["confidence"] === "number" ? m["confidence"] : undefined,
     }));
 
-    // Relevance gate: not football => credit stays spent, no refund.
+    // Relevance gate: not instant virtuals => refund the credit.
     if (parsed["relevant"] === false || limited.length === 0) {
       const reason = typeof parsed["reason"] === "string" ? String(parsed["reason"]).slice(0, 200) : "";
+      
+      // Refund the credit since they didn't get a verdict
+      await supabase.rpc("refund_credits", {
+        _amount: cost,
+        _reason: "Refund: irrelevant screenshot",
+        _ref_id: analysis.id,
+      });
+
       await supabase
         .from("analyses")
         .update({
           status: "failed",
-          title: "Not a football screenshot",
+          title: "Not an instant virtuals screenshot",
           summary: reason,
           result: { relevant: false, reason } as never,
           error_message: IRRELEVANT_MESSAGE,

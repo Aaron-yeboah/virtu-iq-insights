@@ -67,17 +67,17 @@ export const Route = createFileRoute("/")({
           itemListElement: [
             {
               name: "Starter",
-              description: "50 scan credits, 2 outcomes per screenshot.",
+              description: "2 scan credits, 2 outcomes per screenshot.",
               price: "250",
             },
             {
               name: "Plus",
-              description: "100 scan credits, 4 outcomes per screenshot.",
+              description: "3 scan credits, 4 outcomes per screenshot.",
               price: "350",
             },
             {
               name: "Premium",
-              description: "200 scan credits, 8 outcomes per screenshot.",
+              description: "5 scan credits, 8 outcomes per screenshot.",
               price: "500",
             },
           ].map((p, i) => ({
@@ -151,7 +151,7 @@ const packages = [
     name: "Starter",
     price: "GH₵250",
     credits: "2 outcomes per screenshot",
-    perks: ["50 scan credits", "Instant Virtual Football only", "Outcome history", "Email support"],
+    perks: ["2 scan credits", "Instant Virtual Football only", "Outcome history", "Email support"],
     popular: false,
     badge: null,
   },
@@ -159,7 +159,7 @@ const packages = [
     name: "Plus",
     price: "GH₵350",
     credits: "4 outcomes per screenshot",
-    perks: ["100 scan credits", "Instant Virtual Football only", "Outcome history", "Priority email support"],
+    perks: ["3 scan credits", "Instant Virtual Football only", "Outcome history", "Priority email support"],
     popular: false,
     badge: "🔥 Best Value",
   },
@@ -167,7 +167,7 @@ const packages = [
     name: "Premium",
     price: "GH₵500",
     credits: "8 outcomes per screenshot",
-    perks: ["200 scan credits", "Instant Virtual Football only", "Outcome history", "Priority support"],
+    perks: ["5 scan credits", "Instant Virtual Football only", "Outcome history", "Priority support"],
     popular: true,
     badge: "⚡ Most Popular",
   },
