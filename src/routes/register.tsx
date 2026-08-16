@@ -112,7 +112,7 @@ function RegisterPage() {
         <Link to="/" className="flex justify-center" aria-label="Virtu-IQ home">
           <LogoFull className="h-10" />
         </Link>
-        <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
+        <div className="mt-8 rounded-xl border border-border/60 bg-card/95 p-6 shadow-[var(--shadow-lift)] ring-1 ring-white/5 backdrop-blur-sm sm:p-8">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {isPartnerInvite ? "Partner registration" : "Create your account"}
           </h1>
