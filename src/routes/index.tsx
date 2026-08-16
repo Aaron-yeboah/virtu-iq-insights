@@ -13,6 +13,13 @@ import {
   TrendingUp,
   CheckCircle2,
   Sparkles,
+  Terminal,
+  Cpu,
+  Activity,
+  Eye,
+  Wifi,
+  Database,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +33,8 @@ import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { LiveTicker } from "@/components/site/LiveTicker";
 import { FloatingParticles } from "@/components/site/FloatingParticles";
+import { MatrixRain } from "@/components/site/MatrixRain";
+import { GlitchText } from "@/components/site/GlitchText";
 import { AnimatedCounter } from "@/components/site/AnimatedCounter";
 import { LogoSymbol } from "@/components/brand/Logo";
 import symbolLogo from "@/assets/virtu-iq-symbol.png";
@@ -34,17 +43,17 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Virtu-IQ — Verified Verdicts You Can Trust" },
+      { title: "Virtu-IQ — Instant Virtuals Outcome Exposed" },
       {
         name: "description",
         content:
-          "Virtu-IQ delivers expert-grade verdicts on virtual football screenshots. Upload, get your locked-in results, and play with confidence.",
+          "Virtu-IQ exposes the next SportyBet instant virtual outcome before the game loads. Upload your screenshot, hack the result, play with certainty.",
       },
-      { property: "og:title", content: "Virtu-IQ — Verified Verdicts You Can Trust" },
+      { property: "og:title", content: "Virtu-IQ — Instant Virtuals Outcome Exposed" },
       {
         property: "og:description",
         content:
-          "Upload your virtual football screenshot and receive certified verdicts — no guesswork, just results.",
+          "Our algorithm penetrates the SportyBet instant virtual engine and delivers the next outcome — no guesswork, just exposed results.",
       },
     ],
     links: [{ rel: "canonical", href: "https://virtu-iq.lovable.app/" }],
@@ -58,17 +67,17 @@ export const Route = createFileRoute("/")({
           itemListElement: [
             {
               name: "Starter",
-              description: "50 scan credits, 2 verdicts per screenshot.",
+              description: "50 scan credits, 2 outcomes per screenshot.",
               price: "250",
             },
             {
               name: "Plus",
-              description: "100 scan credits, 4 verdicts per screenshot.",
+              description: "100 scan credits, 4 outcomes per screenshot.",
               price: "350",
             },
             {
               name: "Premium",
-              description: "200 scan credits, 8 verdicts per screenshot.",
+              description: "200 scan credits, 8 outcomes per screenshot.",
               price: "500",
             },
           ].map((p, i) => ({
@@ -96,99 +105,112 @@ export const Route = createFileRoute("/")({
 });
 
 const features = [
+
   {
-    icon: Target,
-    title: "Precision Verdicts",
-    body: "Every screenshot is decoded with expert-level accuracy. Your verdicts are locked in — no second-guessing.",
+    icon: Cpu,
+    title: "Algorithm Precision",
+    body: "Our proprietary breach engine decodes each virtual match frame with machine-level accuracy. Results are locked — zero second-guessing.",
   },
   {
     icon: Trophy,
-    title: "Proven Track Record",
-    body: "Thousands of users trust our platform daily. Results speak louder than promises.",
+    title: "Proven Strikes",
+    body: "Thousands of users have already exposed outcomes daily. Numbers don't lie — our track record proves it.",
   },
   {
     icon: ShieldCheck,
-    title: "Bankroll Protection",
-    body: "Your account, uploads, and verdicts are secured with enterprise-grade access controls.",
+    title: "Zero Traces",
+    body: "All breach operations are encrypted end-to-end. Your account, uploads, and exposed outcomes leave no trail.",
   },
   {
     icon: Zap,
     title: "Instant Delivery",
-    body: "Upload your screenshot and receive your locked verdicts within moments. No delays, no waiting.",
+    body: "Upload your screenshot. Our system penetrates the virtual feed and returns the exposed outcome in seconds.",
   },
 ];
 
 const steps = [
-  { n: "01", title: "Upload", body: "Drop your virtual football screenshot — any supported format." },
-  { n: "02", title: "Lock In", body: "Our system processes the image and locks in your verdicts with precision." },
-  { n: "03", title: "Collect", body: "Receive your certified verdicts — ready to use, ready to trust." },
+  {
+    n: "01",
+    title: "Upload",
+    body: "Drop your SportyBet instant virtual screenshot — PNG, JPG or WEBP. Our system reads the game identifier.",
+  },
+  {
+    n: "02",
+    title: "Penetrate",
+    body: "The algorithm breaches the virtual engine feed, cross-references the match ID, and locks the next outcome.",
+  },
+  {
+    n: "03",
+    title: "Expose",
+    body: "Receive your certified outcome — confirmed before the game loads. Bet with certainty, not chance.",
+  },
 ];
 
 const packages = [
   {
     name: "Starter",
     price: "GH₵250",
-    credits: "2 verdicts per screenshot",
-    perks: ["50 scan credits", "Instant virtual football only", "Verdict history", "Email support"],
+    credits: "2 outcomes per screenshot",
+    perks: ["50 scan credits", "Instant Virtual Football only", "Outcome history", "Email support"],
     popular: false,
     badge: null,
   },
   {
     name: "Plus",
     price: "GH₵350",
-    credits: "4 verdicts per screenshot",
-    perks: ["100 scan credits", "Instant virtual football only", "Verdict history", "Priority email support"],
+    credits: "4 outcomes per screenshot",
+    perks: ["100 scan credits", "Instant Virtual Football only", "Outcome history", "Priority email support"],
     popular: false,
     badge: "🔥 Best Value",
   },
   {
     name: "Premium",
     price: "GH₵500",
-    credits: "8 verdicts per screenshot",
-    perks: ["200 scan credits", "Instant virtual football only", "Verdict history", "Priority support"],
+    credits: "8 outcomes per screenshot",
+    perks: ["200 scan credits", "Instant Virtual Football only", "Outcome history", "Priority support"],
     popular: true,
     badge: "⚡ Most Popular",
   },
 ];
 
 const trust = [
-  { icon: Lock, title: "Secure & private", body: "Your account and data are protected at every level." },
-  { icon: ShieldCheck, title: "Verified results", body: "Every verdict goes through our proven verification engine." },
-  { icon: TrendingUp, title: "Consistent delivery", body: "Thousands of verdicts delivered with industry-leading reliability." },
-  { icon: Receipt, title: "Transparent pricing", body: "Clear packages, visible history — no hidden fees ever." },
+  { icon: Lock, title: "Fully encrypted", body: "Every breach operation runs over 256-bit encrypted tunnels. Nothing leaks." },
+  { icon: ShieldCheck, title: "Verified outcomes", body: "Every exposed result passes through our multi-layer verification engine." },
+  { icon: TrendingUp, title: "Consistent delivery", body: "Tens of thousands of outcomes delivered with zero downtime." },
+  { icon: Receipt, title: "Transparent pricing", body: "Clear credit packages, visible history — no hidden fees, ever." },
 ];
 
 const faqs = [
   {
-    q: "How does the verdict system work?",
-    a: "You upload a virtual football screenshot and Virtu-IQ's system processes the image, extracts the relevant match data, and delivers locked-in verdicts you can trust.",
+    q: "How does the outcome exposure system work?",
+    a: "You upload a SportyBet instant virtual screenshot. Virtu-IQ's algorithm reads the game ID, penetrates the virtual engine's outcome feed, and delivers the result before the match is rendered.",
   },
   {
-    q: "Which images are supported?",
-    a: "PNG, JPG, JPEG and WEBP screenshots. Clear, high-resolution images produce the most accurate verdicts.",
+    q: "Which image formats are supported?",
+    a: "PNG, JPG, JPEG and WEBP screenshots. Clear, high-resolution images produce the most accurate outcome exposures.",
   },
   {
-    q: "What are verdict credits?",
-    a: "Each package includes verdict credits. One credit processes one screenshot and delivers your locked verdicts. Credits are consumed per scan.",
+    q: "What are scan credits?",
+    a: "Each package includes scan credits. One credit processes one screenshot and delivers your exposed instant virtual outcome. Credits are consumed per scan.",
   },
   {
-    q: "How is my account secured?",
-    a: "Accounts use managed authentication, and database access is restricted so you can only ever read your own profile, payments, verdicts and notifications.",
+    q: "Is my account secure?",
+    a: "Accounts use managed authentication with enterprise-grade access controls. Your profile, payments, outcomes and notifications are only visible to you.",
   },
   {
     q: "How is payment verified?",
-    a: "You submit your payment with its reference. It is recorded as pending, reviewed server-side by an administrator, and credits are added only once the payment is approved.",
+    a: "Submit your payment with its reference. It is recorded as pending, reviewed by an administrator, and credits are added only once the payment is approved.",
   },
   {
-    q: "Can I review past verdicts?",
-    a: "Yes. Every completed verdict is saved to your history with its ID, date, image and status, and can be reopened or downloaded at any time.",
+    q: "Can I review past exposed outcomes?",
+    a: "Yes. Every completed exposure is saved to your history with its ID, date, image and status — and can be reopened or downloaded at any time.",
   },
 ];
 
 /* ── Logo Watermark Background ── */
 function LogoWatermark() {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.03]" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.025]" aria-hidden="true">
       <div className="absolute inset-0 animate-logo-drift" style={{ transformOrigin: "center center" }}>
         {Array.from({ length: 35 }, (_, i) => (
           <img
@@ -201,6 +223,7 @@ function LogoWatermark() {
               top: `${(i * 23 + 8) % 90}%`,
               transform: `rotate(${(i * 37) % 360}deg)`,
               animationDelay: `${(i * 0.3) % 4}s`,
+              filter: "hue-rotate(120deg) brightness(2)",
             }}
           />
         ))}
@@ -209,66 +232,153 @@ function LogoWatermark() {
   );
 }
 
-/* ── Hero Verdict Card ── */
-function HeroVerdictCard() {
-  const verdicts = [
-    { match: "Man City vs Arsenal", verdict: "Over 2.5", status: "LOCKED", confidence: "High" },
-    { match: "Barcelona vs Real Madrid", verdict: "BTTS — Yes", status: "LOCKED", confidence: "High" },
-    { match: "Liverpool vs Chelsea", verdict: "Home Win", status: "LOCKED", confidence: "High" },
+/* ── Terminal Hack Card ── */
+function TerminalHackCard() {
+  const outcomes = [
+    { game: "SPBET-VIRT #3291", match: "Lions FC vs Eagles Utd", result: "HOME WIN", odds: "1.85", status: "EXPOSED" },
+    { game: "SPBET-VIRT #3292", match: "Storm City vs Thunder FC", result: "OVER 2.5 GOALS", odds: "1.72", status: "EXPOSED" },
+    { game: "SPBET-VIRT #3293", match: "Phoenix FC vs Red Devils", result: "BTTS — YES", odds: "1.90", status: "EXPOSED" },
   ];
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-lift)] sm:p-6 relative overflow-hidden">
-      {/* Shine sweep effect */}
+    <div
+      className="rounded-xl p-3 sm:p-6 relative overflow-hidden font-mono animate-border-bleed"
+      style={{
+        background: "oklch(0.08 0.005 27)",
+        border: "1px solid oklch(0.53 0.22 27 / 0.4)",
+        boxShadow: "0 0 30px oklch(0.53 0.22 27 / 0.12), 0 20px 60px oklch(0 0 0 / 0.6)",
+      }}
+    >
+      {/* Scan line */}
+      <div className="animate-scan-line" />
+
+      {/* Shine sweep */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 w-[30%] bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-shine" />
+        <div
+          className="absolute inset-0 w-[30%] animate-shine"
+          style={{ background: "linear-gradient(90deg, transparent, oklch(0.53 0.22 27 / 0.04), transparent)" }}
+        />
       </div>
 
-      <div className="flex items-center justify-between relative">
-        <div className="flex items-center gap-2">
-          <span className="size-2.5 rounded-full bg-green-500 animate-status-blink" />
-          <span className="text-xs font-semibold text-green-600 dark:text-green-400">LIVE</span>
+      {/* Terminal header bar */}
+      <div
+        className="flex items-center gap-1.5 mb-3 sm:mb-4 pb-3 border-b min-w-0"
+        style={{ borderColor: "oklch(0.18 0.012 27)" }}
+      >
+        <span className="size-2.5 shrink-0 rounded-full bg-red-500" />
+        <span className="size-2.5 shrink-0 rounded-full bg-yellow-500" />
+        <span className="size-2.5 shrink-0 rounded-full bg-green-500" />
+        <span className="ml-2 text-[9px] sm:text-[10px] tracking-wider truncate flex-1 min-w-0" style={{ color: "oklch(0.72 0.22 142)" }}>
+          root@virtu-iq:~$ ./breach_sportybet.sh
+        </span>
+        <span
+          className="shrink-0 inline-block w-1.5 h-3 animate-terminal-cursor"
+          style={{ background: "oklch(0.72 0.22 142)" }}
+        />
+      </div>
+
+      {/* Status row */}
+      <div className="flex items-center justify-between gap-2 flex-wrap mb-3 sm:mb-4 relative">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="size-2 shrink-0 rounded-full animate-status-blink"
+            style={{ background: "oklch(0.72 0.22 142)" }}
+          />
+          <span className="text-[10px] sm:text-xs font-bold tracking-widest" style={{ color: "oklch(0.72 0.22 142)" }}>
+            BREACH ACTIVE
+          </span>
         </div>
-        <Badge variant="secondary" className="text-[11px] gap-1">
-          <CheckCircle2 className="size-3 text-green-500" />
-          Verdicts Locked
+        <Badge
+          className="text-[9px] sm:text-[10px] gap-1 font-mono border shrink-0"
+          style={{
+            background: "oklch(0.53 0.22 27 / 0.12)",
+            borderColor: "oklch(0.53 0.22 27 / 0.35)",
+            color: "oklch(0.53 0.22 27)",
+          }}
+        >
+          <AlertTriangle className="size-3" />
+          3 OUTCOMES EXPOSED
         </Badge>
       </div>
 
-      <div className="mt-5 space-y-3 relative">
-        {verdicts.map((v, i) => (
+      {/* Outcome rows */}
+      <div className="space-y-2 sm:space-y-3 relative">
+        {outcomes.map((v, i) => (
           <div
-            key={v.match}
-            className="rounded-xl border border-border bg-background p-3 transition-all hover:border-primary/30 hover:shadow-sm"
-            style={{ animation: `slide-up-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${0.1 + i * 0.15}s both` }}
+            key={v.game}
+            className="rounded-lg p-2.5 sm:p-3 transition-all"
+            style={{
+              background: "oklch(0.05 0 0)",
+              border: "1px solid oklch(0.18 0.012 27)",
+              animation: `slide-up-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${0.1 + i * 0.15}s both`,
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "oklch(0.53 0.22 27 / 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "oklch(0.18 0.012 27)";
+            }}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">{v.match}</p>
-                <p className="mt-1 text-sm font-bold text-foreground">{v.verdict}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[8px] sm:text-[9px] tracking-wider truncate" style={{ color: "oklch(0.40 0.01 0)" }}>
+                  {v.game} · {v.match}
+                </p>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold" style={{ color: "oklch(0.95 0 0)" }}>
+                  {v.result}
+                </p>
               </div>
-              <div className="text-right">
-                <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2.5 py-1 text-[10px] font-bold text-green-600 dark:text-green-400">
-                  <Check className="size-3" />
+              <div className="text-right shrink-0">
+                <span
+                  className="inline-flex items-center gap-1 rounded px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold border"
+                  style={{
+                    background: "oklch(0.53 0.22 27 / 0.1)",
+                    borderColor: "oklch(0.53 0.22 27 / 0.3)",
+                    color: "oklch(0.53 0.22 27)",
+                  }}
+                >
+                  <Check className="size-2.5" />
                   {v.status}
                 </span>
+                <p className="mt-0.5 text-[9px] sm:text-[10px] font-bold" style={{ color: "oklch(0.72 0.22 142)" }}>
+                  @{v.odds}
+                </p>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 rounded-lg bg-primary/8 p-3 relative">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-            <Trophy className="size-4" />
-            3/3 Verdicts Delivered
+      {/* Summary bar */}
+      <div
+        className="mt-3 sm:mt-4 rounded-lg p-2.5 sm:p-3 border"
+        style={{
+          background: "oklch(0.53 0.22 27 / 0.08)",
+          borderColor: "oklch(0.53 0.22 27 / 0.25)",
+        }}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold" style={{ color: "oklch(0.53 0.22 27)" }}>
+            <Cpu className="size-3.5 shrink-0" />
+            <span className="truncate">SYSTEM ACCESS: GRANTED</span>
           </div>
-          <span className="text-[10px] font-bold text-green-600 dark:text-green-400">✓ ALL LOCKED</span>
+          <span className="text-[9px] sm:text-[10px] font-bold shrink-0" style={{ color: "oklch(0.72 0.22 142)" }}>
+            ✓ EXPOSED
+          </span>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-primary/20">
-          <div className="h-full w-full rounded-full bg-primary transition-all duration-1000" />
+        <div
+          className="mt-2 h-1 sm:h-1.5 overflow-hidden rounded-full"
+          style={{ background: "oklch(0.53 0.22 27 / 0.15)" }}
+        >
+          <div
+            className="h-full rounded-full animate-hack-bar"
+            style={{ background: "linear-gradient(90deg, oklch(0.53 0.22 27), oklch(0.72 0.22 142))" }}
+          />
         </div>
+        <p className="mt-1.5 text-[9px] sm:text-[10px]" style={{ color: "oklch(0.40 0.01 0)" }}>
+          Next breach cycle:{" "}
+          <span style={{ color: "oklch(0.72 0.22 142)" }}>00:03:47</span>
+        </p>
       </div>
     </div>
   );
@@ -276,220 +386,372 @@ function HeroVerdictCard() {
 
 function Index() {
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen relative overflow-x-hidden" style={{ background: "oklch(0.05 0 0)" }}>
       {/* Global logo watermark */}
       <LogoWatermark />
 
       <SiteNavbar />
-
-      {/* Live ticker */}
       <LiveTicker />
 
       <main className="relative">
-        {/* Hero */}
-        <section className="relative overflow-hidden border-b border-border">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_70%_0%,var(--color-accent),transparent_70%)]" />
+        {/* ── HERO ── */}
+        <section className="relative overflow-hidden border-b" style={{ borderColor: "oklch(0.18 0.012 27)" }}>
+          {/* Matrix rain */}
+          <MatrixRain opacity={0.09} />
+
+          {/* Red radial glow top-right */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: "radial-gradient(60% 60% at 75% 0%, oklch(0.53 0.22 27 / 0.12), transparent 70%)",
+            }}
+          />
+          {/* Green radial glow bottom-left */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: "radial-gradient(40% 40% at 5% 100%, oklch(0.72 0.22 142 / 0.07), transparent 70%)",
+            }}
+          />
+
           <FloatingParticles />
 
-          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
+          <div className="relative mx-auto grid max-w-6xl items-center gap-8 sm:gap-12 px-4 py-10 sm:py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
+            {/* Left column */}
             <div className="animate-rise relative">
-              {/* Mobile top-right watermark logo with left/right tilting animation */}
-              <div
-                className="pointer-events-none absolute -top-3 right-0 lg:hidden select-none"
-                aria-hidden="true"
-              >
-                <LogoSymbol className="h-24 sm:h-28 w-auto opacity-[0.16] dark:opacity-[0.22] animate-logo-tilt origin-center" />
+              {/* Mobile watermark */}
+              <div className="pointer-events-none absolute -top-3 right-0 lg:hidden select-none" aria-hidden="true">
+                <LogoSymbol
+                  className="h-24 sm:h-28 w-auto animate-logo-tilt origin-center"
+                  style={{ opacity: 0.12, filter: "hue-rotate(120deg) brightness(1.5)" }}
+                />
               </div>
 
-              <div>
-                <Badge variant="secondary" className="mb-5 gap-1.5 rounded-full px-3 py-1">
-                  <Lock className="size-3.5 text-primary" />
-                  Verified Verdicts Platform
-                </Badge>
+              {/* Breach badge */}
+              <div className="mb-5">
+                <span
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-xs font-bold tracking-widest animate-border-bleed"
+                  style={{
+                    borderColor: "oklch(0.53 0.22 27 / 0.5)",
+                    background: "oklch(0.53 0.22 27 / 0.08)",
+                    color: "oklch(0.53 0.22 27)",
+                  }}
+                >
+                  <span className="size-2 rounded-full animate-status-blink" style={{ background: "oklch(0.53 0.22 27)" }} />
+                  SYSTEM BREACH ACTIVE
+                </span>
               </div>
-              <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Your Verdicts.{" "}
-                <span className="text-primary">Locked In.</span>
+
+              {/* Main headline with glitch */}
+              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-6xl leading-tight" style={{ color: "oklch(0.95 0 0)" }}>
+                Instant Virtuals.{" "}
+                <GlitchText className="text-primary">
+                  Outcome Exposed.
+                </GlitchText>
               </h1>
-              <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Upload your virtual football screenshot. Get expert-grade verdicts
-                you can trust — no guesswork, just results.
+
+              <p className="mt-5 max-w-xl text-base leading-relaxed sm:text-lg" style={{ color: "oklch(0.50 0.01 0)" }}>
+                Our proprietary algorithm penetrates the{" "}
+                <span className="font-semibold" style={{ color: "oklch(0.72 0.22 142)" }}>
+                  SportyBet instant virtual engine
+                </span>{" "}
+                — delivering the next match outcome before the game even loads. No guesswork. Just exposed results.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" className="relative overflow-hidden group" asChild>
+
+              <div className="mt-6 sm:mt-8 flex flex-col gap-3 sm:flex-row">
+                <Button
+                  size="lg"
+                  className="relative overflow-hidden group font-mono font-bold tracking-widest animate-red-glow"
+                  asChild
+                >
                   <Link to="/register">
                     <span className="relative z-10 flex items-center gap-2">
-                      Start Winning <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                      HACK THE OUTCOME{" "}
+                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                     </span>
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <a href="#how-it-works">See How It Works</a>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  asChild
+                  className="font-mono border-opacity-40"
+                  style={{ borderColor: "oklch(0.72 0.22 142 / 0.4)", color: "oklch(0.72 0.22 142)" }}
+                >
+                  <a href="#how-it-works">
+                    <Terminal className="mr-2 size-4" />
+                    ENTER THE SYSTEM
+                  </a>
                 </Button>
               </div>
 
               {/* Animated stats */}
-              <dl className="mt-10 grid max-w-md grid-cols-3 gap-6">
+              <dl className="mt-6 sm:mt-10 grid grid-cols-3 gap-3 sm:gap-6">
                 <div>
-                  <dt className="text-lg font-bold text-foreground">
-                    <AnimatedCounter end={98} suffix="%" className="tabular-nums" />
+                  <dt className="text-base sm:text-lg font-bold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                    <AnimatedCounter end={99} suffix="%" className="tabular-nums" />
                   </dt>
-                  <dd className="text-xs text-muted-foreground">Verified rate</dd>
+                  <dd className="text-[10px] sm:text-xs font-mono leading-tight mt-0.5" style={{ color: "oklch(0.45 0.01 0)" }}>Accuracy rate</dd>
                 </div>
                 <div>
-                  <dt className="text-lg font-bold text-foreground">
-                    <AnimatedCounter end={10} suffix="K+" className="tabular-nums" />
+                  <dt className="text-base sm:text-lg font-bold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                    <AnimatedCounter end={14} suffix="K+" className="tabular-nums" />
                   </dt>
-                  <dd className="text-xs text-muted-foreground">Verdicts delivered</dd>
+                  <dd className="text-[10px] sm:text-xs font-mono leading-tight mt-0.5" style={{ color: "oklch(0.45 0.01 0)" }}>Exposed</dd>
                 </div>
                 <div>
-                  <dt className="flex items-center gap-1.5 text-lg font-bold text-foreground">
-                    <span className="size-2 rounded-full bg-green-500 animate-status-blink" />
+                  <dt className="flex items-center gap-1 text-base sm:text-lg font-bold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                    <span
+                      className="size-2 shrink-0 rounded-full animate-status-blink"
+                      style={{ background: "oklch(0.72 0.22 142)" }}
+                    />
                     24/7
                   </dt>
-                  <dd className="text-xs text-muted-foreground">Always live</dd>
+                  <dd className="text-[10px] sm:text-xs font-mono leading-tight mt-0.5" style={{ color: "oklch(0.45 0.01 0)" }}>Always live</dd>
                 </div>
               </dl>
             </div>
+
+            {/* Right column — terminal card */}
             <div className="animate-rise">
-              <HeroVerdictCard />
+              <TerminalHackCard />
             </div>
           </div>
         </section>
 
-        {/* Features */}
+        {/* ── FEATURES ── */}
         <section id="features" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24 relative">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Why Thousands Trust Virtu-IQ
+          <MatrixRain opacity={0.03} />
+          <div className="max-w-2xl relative">
+            <span
+              className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest"
+              style={{ color: "oklch(0.53 0.22 27)" }}
+            >
+              <Activity className="size-3.5" />
+              WHY OUR ALGORITHM NEVER FAILS
+            </span>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.95 0 0)" }}>
+              Built to Expose, Not Guess
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              Built for those who demand certainty — every feature is designed to deliver.
+            <p className="mt-3" style={{ color: "oklch(0.48 0.01 0)" }}>
+              Every component is engineered to deliver certainty — not predictions.
             </p>
           </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 sm:mt-10 grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 relative">
             {features.map((f) => (
               <div
                 key={f.title}
-                className="group rounded-xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] hover:border-primary/20"
+                className="group rounded-xl p-5 sm:p-6 transition-all hover:-translate-y-1 cursor-default"
+                style={{
+                  background: "oklch(0.09 0.004 27)",
+                  border: "1px solid oklch(0.18 0.012 27)",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "oklch(0.53 0.22 27 / 0.5)";
+                  el.style.boxShadow = "0 0 20px oklch(0.53 0.22 27 / 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "oklch(0.18 0.012 27)";
+                  el.style.boxShadow = "none";
+                }}
               >
-                <span className="inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                <span
+                  className="inline-flex size-10 items-center justify-center rounded-lg transition-colors"
+                  style={{
+                    background: "oklch(0.53 0.22 27 / 0.12)",
+                    color: "oklch(0.53 0.22 27)",
+                  }}
+                >
                   <f.icon className="size-5" />
                 </span>
-                <h3 className="mt-4 text-base font-semibold text-foreground">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+                <h3 className="mt-4 text-base font-semibold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                  {f.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: "oklch(0.48 0.01 0)" }}>
+                  {f.body}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* How it works */}
-        <section id="how-it-works" className="border-y border-border bg-secondary/40 relative">
+        {/* ── HOW IT WORKS ── */}
+        <section id="how-it-works" className="border-y relative" style={{ borderColor: "oklch(0.18 0.012 27)", background: "oklch(0.08 0.003 0)" }}>
           <FloatingParticles />
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24 relative">
+          <MatrixRain opacity={0.04} />
+          <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16 sm:px-6 lg:py-24 relative">
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                How It Works
+              <span
+                className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest"
+                style={{ color: "oklch(0.72 0.22 142)" }}
+              >
+                <Wifi className="size-3.5" />
+                BREACH PROTOCOL
+              </span>
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.95 0 0)" }}>
+                How The System Works
               </h2>
-              <p className="mt-3 text-muted-foreground">
-                Three steps from screenshot to certified verdict.
+              <p className="mt-3" style={{ color: "oklch(0.48 0.01 0)" }}>
+                Three steps from screenshot to exposed instant virtual outcome.
               </p>
             </div>
-            <ol className="mt-10 grid gap-5 md:grid-cols-3">
-              {steps.map((s) => (
-                <li key={s.n} className="group rounded-xl border border-border bg-card p-6 transition-all hover:border-primary/30">
-                  <span className="inline-flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold tracking-widest text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+            <ol className="mt-8 sm:mt-10 grid gap-4 sm:gap-5 sm:grid-cols-3">
+              {steps.map((s, idx) => (
+                <li
+                  key={s.n}
+                  className="group rounded-xl p-5 sm:p-6 transition-all"
+                  style={{
+                    background: "oklch(0.09 0.004 27)",
+                    border: "1px solid oklch(0.18 0.012 27)",
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.borderColor = "oklch(0.72 0.22 142 / 0.4)";
+                    el.style.boxShadow = "0 0 16px oklch(0.72 0.22 142 / 0.08)";
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.borderColor = "oklch(0.18 0.012 27)";
+                    el.style.boxShadow = "none";
+                  }}
+                >
+                  <span
+                    className="inline-flex size-10 items-center justify-center rounded-full text-sm font-bold tracking-widest font-mono transition-colors"
+                    style={{
+                      background: idx === 1 ? "oklch(0.72 0.22 142 / 0.15)" : "oklch(0.53 0.22 27 / 0.12)",
+                      color: idx === 1 ? "oklch(0.72 0.22 142)" : "oklch(0.53 0.22 27)",
+                    }}
+                  >
                     {s.n}
                   </span>
-                  <h3 className="mt-3 text-lg font-semibold text-foreground">{s.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+                  <h3 className="mt-3 text-lg font-semibold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                    {s.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "oklch(0.48 0.01 0)" }}>
+                    {s.body}
+                  </p>
                 </li>
               ))}
             </ol>
           </div>
         </section>
 
-        {/* Packages */}
-        <section id="packages" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Choose Your Package
+        {/* ── PACKAGES ── */}
+        <section id="packages" className="mx-auto max-w-6xl px-4 py-10 sm:py-16 sm:px-6 lg:py-24 relative">
+          <MatrixRain opacity={0.03} />
+          <div className="max-w-2xl relative">
+            <span
+              className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest"
+              style={{ color: "oklch(0.53 0.22 27)" }}
+            >
+              <Database className="size-3.5" />
+              ACCESS TIERS
+            </span>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.95 0 0)" }}>
+              Choose Your Access Level
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              Every package is a bundle of verdict credits. One credit processes one
-              screenshot and delivers your locked verdicts.
+            <p className="mt-3" style={{ color: "oklch(0.48 0.01 0)" }}>
+              Each tier is a bundle of scan credits. One credit processes one screenshot and exposes your instant virtual outcome.
             </p>
           </div>
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+          <div className="mt-8 sm:mt-10 grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 relative">
             {packages.map((p) => (
               <div
                 key={p.name}
                 className={cn(
-                  "group relative flex flex-col rounded-3xl border bg-card p-6 sm:p-8 transition-all duration-300 overflow-hidden",
-                  p.popular
-                    ? "border-primary/50 bg-gradient-to-b from-primary/[0.04] via-card to-card shadow-xl shadow-primary/10 ring-1 ring-primary/20 scale-[1.02]"
-                    : "border-border/80 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1"
+                  "group relative flex flex-col rounded-2xl p-5 sm:p-8 transition-all duration-300 overflow-hidden",
+                  p.popular ? "scale-[1.01] sm:scale-[1.02]" : "hover:-translate-y-1"
                 )}
+                style={{
+                  background: p.popular
+                    ? "linear-gradient(135deg, oklch(0.13 0.008 27), oklch(0.09 0.004 27))"
+                    : "oklch(0.09 0.004 27)",
+                  border: p.popular
+                    ? "1px solid oklch(0.53 0.22 27 / 0.6)"
+                    : "1px solid oklch(0.18 0.012 27)",
+                  boxShadow: p.popular
+                    ? "0 0 30px oklch(0.53 0.22 27 / 0.15), 0 20px 60px oklch(0 0 0 / 0.5)"
+                    : "none",
+                }}
               >
-                {/* Popular card top accent border */}
+                {/* Popular top accent */}
                 {p.popular && (
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-primary/80 to-primary/40" />
+                  <div
+                    className="absolute inset-x-0 top-0 h-0.5"
+                    style={{ background: "linear-gradient(90deg, oklch(0.53 0.22 27), oklch(0.72 0.22 142), oklch(0.53 0.22 27))" }}
+                  />
                 )}
 
-                {/* Branded Logo Watermark Background */}
-                <div
-                  className="pointer-events-none absolute -bottom-6 -right-6 select-none overflow-hidden"
-                  aria-hidden="true"
-                >
+                {/* Logo watermark */}
+                <div className="pointer-events-none absolute -bottom-6 -right-6 select-none overflow-hidden" aria-hidden="true">
                   <LogoSymbol
                     className={cn(
                       "h-44 w-auto transition-all duration-500 ease-out group-hover:scale-110 group-hover:-rotate-3",
-                      p.popular
-                        ? "opacity-[0.14] dark:opacity-[0.18]"
-                        : "opacity-[0.06] dark:opacity-[0.08] group-hover:opacity-[0.11] dark:group-hover:opacity-[0.14]"
+                      p.popular ? "opacity-[0.08]" : "opacity-[0.04] group-hover:opacity-[0.07]"
                     )}
+                    style={{ filter: "hue-rotate(120deg) brightness(1.5)" }}
                   />
                 </div>
 
-                {/* Card Header */}
+                {/* Header */}
                 <div className="relative flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="text-xl font-bold tracking-tight text-foreground">{p.name}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">Instant Virtual Football</p>
+                    <h3 className="text-xl font-bold tracking-tight font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                      {p.name}
+                    </h3>
+                    <p className="mt-1 text-xs font-mono" style={{ color: "oklch(0.45 0.01 0)" }}>
+                      Instant Virtual Football
+                    </p>
                   </div>
                   {p.badge && (
                     <Badge
-                      className={cn(
-                        "rounded-full text-xs font-semibold px-3 py-1 shadow-sm shrink-0",
+                      className="rounded font-mono text-xs font-semibold px-2.5 py-1 shrink-0 border"
+                      style={
                         p.popular
-                          ? "bg-primary text-primary-foreground border-transparent"
-                          : "bg-primary/10 text-primary border-primary/20"
-                      )}
+                          ? { background: "oklch(0.53 0.22 27)", color: "oklch(0.97 0 0)", borderColor: "transparent" }
+                          : { background: "oklch(0.53 0.22 27 / 0.1)", color: "oklch(0.53 0.22 27)", borderColor: "oklch(0.53 0.22 27 / 0.25)" }
+                      }
                     >
                       {p.badge}
                     </Badge>
                   )}
                 </div>
 
-                {/* Pricing & Credits */}
+                {/* Price */}
                 <div className="relative mt-5">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-mono">
+                    <span className="text-3xl sm:text-4xl font-extrabold tracking-tight font-mono" style={{ color: "oklch(0.95 0 0)" }}>
                       {p.price}
                     </span>
-                    <span className="text-xs font-medium text-muted-foreground">one-time</span>
+                    <span className="text-xs font-medium font-mono" style={{ color: "oklch(0.45 0.01 0)" }}>one-time</span>
                   </div>
-                  <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                  <div
+                    className="mt-2.5 inline-flex items-center gap-1.5 rounded px-2.5 py-1 font-mono text-xs font-semibold border"
+                    style={{
+                      background: "oklch(0.72 0.22 142 / 0.08)",
+                      borderColor: "oklch(0.72 0.22 142 / 0.25)",
+                      color: "oklch(0.72 0.22 142)",
+                    }}
+                  >
                     <Sparkles className="size-3.5" />
                     <span>{p.credits}</span>
                   </div>
                 </div>
 
-                {/* Perks List */}
+                {/* Perks */}
                 <ul className="relative mt-6 flex-1 space-y-3">
                   {p.perks.map((perk) => (
-                    <li key={perk} className="flex items-start gap-2.5 text-sm text-muted-foreground group-hover:text-foreground/90 transition-colors">
-                      <span className="inline-flex size-4.5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary mt-0.5">
+                    <li key={perk} className="flex items-start gap-2.5 text-sm transition-colors font-mono" style={{ color: "oklch(0.50 0.01 0)" }}>
+                      <span
+                        className="inline-flex size-4 shrink-0 items-center justify-center rounded mt-0.5 border"
+                        style={{
+                          background: "oklch(0.53 0.22 27 / 0.1)",
+                          borderColor: "oklch(0.53 0.22 27 / 0.25)",
+                          color: "oklch(0.53 0.22 27)",
+                        }}
+                      >
                         <Check className="size-3 stroke-[2.5]" />
                       </span>
                       <span>{perk}</span>
@@ -497,16 +759,21 @@ function Index() {
                   ))}
                 </ul>
 
-                {/* CTA Button */}
+                {/* CTA */}
                 <div className="relative mt-8">
                   <Button
-                    className="w-full group/btn relative overflow-hidden font-semibold shadow-sm"
+                    className="w-full group/btn relative overflow-hidden font-semibold font-mono tracking-widest"
                     variant={p.popular ? "default" : "outline"}
                     size="lg"
                     asChild
+                    style={
+                      p.popular
+                        ? { boxShadow: "0 0 16px oklch(0.53 0.22 27 / 0.4)" }
+                        : { borderColor: "oklch(0.53 0.22 27 / 0.4)", color: "oklch(0.53 0.22 27)" }
+                    }
                   >
                     <Link to="/register" className="flex items-center justify-center gap-2">
-                      <span>Choose {p.name}</span>
+                      <span>GET {p.name.toUpperCase()} ACCESS</span>
                       <ArrowRight className="size-4 transition-transform group-hover/btn:translate-x-1" />
                     </Link>
                   </Button>
@@ -516,18 +783,28 @@ function Index() {
           </div>
         </section>
 
-        {/* Trust */}
-        <section className="border-y border-border bg-secondary/40">
+        {/* ── TRUST ── */}
+        <section
+          className="border-y"
+          style={{ borderColor: "oklch(0.18 0.012 27)", background: "oklch(0.08 0.003 0)" }}
+        >
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {trust.map((t) => (
                 <div key={t.title} className="flex gap-3 group">
-                  <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-primary transition-colors group-hover:bg-primary/10">
+                  <span
+                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors"
+                    style={{ background: "oklch(0.09 0.004 27)", color: "oklch(0.53 0.22 27)" }}
+                  >
                     <t.icon className="size-4.5" />
                   </span>
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground">{t.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{t.body}</p>
+                    <h3 className="text-sm font-semibold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                      {t.title}
+                    </h3>
+                    <p className="mt-1 text-sm" style={{ color: "oklch(0.48 0.01 0)" }}>
+                      {t.body}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -535,18 +812,32 @@ function Index() {
           </div>
         </section>
 
-        {/* FAQ */}
-        <section id="faq" className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-24">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Frequently asked questions
+        {/* ── FAQ ── */}
+        <section id="faq" className="mx-auto max-w-3xl px-4 py-10 sm:py-16 sm:px-6 lg:py-24">
+          <span
+            className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest"
+            style={{ color: "oklch(0.72 0.22 142)" }}
+          >
+            <Eye className="size-3.5" />
+            FREQUENTLY ASKED
+          </span>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.95 0 0)" }}>
+            Questions &amp; Intel
           </h2>
           <Accordion type="single" collapsible className="mt-8">
             {faqs.map((f) => (
-              <AccordionItem key={f.q} value={f.q}>
-                <AccordionTrigger className="text-left text-base font-semibold text-foreground">
+              <AccordionItem
+                key={f.q}
+                value={f.q}
+                style={{ borderColor: "oklch(0.18 0.012 27)" }}
+              >
+                <AccordionTrigger
+                  className="text-left text-base font-semibold font-mono"
+                  style={{ color: "oklch(0.85 0 0)" }}
+                >
                   {f.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                <AccordionContent className="text-sm leading-relaxed" style={{ color: "oklch(0.50 0.01 0)" }}>
                   {f.a}
                 </AccordionContent>
               </AccordionItem>
@@ -554,19 +845,43 @@ function Index() {
           </Accordion>
         </section>
 
-        {/* CTA */}
-        <section className="border-t border-border bg-primary relative overflow-hidden">
+        {/* ── CTA BANNER ── */}
+        <section
+          className="border-t relative overflow-hidden"
+          style={{
+            borderColor: "oklch(0.53 0.22 27 / 0.4)",
+            background: "linear-gradient(135deg, oklch(0.40 0.22 27 / 0.95), oklch(0.30 0.20 27))",
+          }}
+        >
+          <MatrixRain opacity={0.08} />
           <FloatingParticles />
-          <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 relative">
-            <h2 className="text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
-              Ready to Lock In Your First Verdict?
+          <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center sm:px-6 relative">
+            <div
+              className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] sm:text-xs font-bold tracking-widest"
+              style={{ borderColor: "oklch(0.97 0 0 / 0.3)", color: "oklch(0.97 0 0 / 0.9)" }}
+            >
+              <span className="size-2 shrink-0 rounded-full bg-white animate-status-blink" />
+              <span>SYSTEM ONLINE — READY TO BREACH</span>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.97 0 0)" }}>
+              Ready to Expose Your First Instant Virtual?
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-primary-foreground/80">
-              Create your Virtu-IQ account and start receiving certified verdicts in minutes.
+            <p className="mx-auto mt-3 max-w-xl text-sm sm:text-base" style={{ color: "oklch(0.97 0 0 / 0.75)" }}>
+              Create your Virtu-IQ account and start receiving exposed instant virtual outcomes in minutes.
             </p>
-            <Button size="lg" variant="secondary" className="mt-8 group" asChild>
+            <Button
+              size="lg"
+              className="mt-6 sm:mt-8 group font-mono font-bold tracking-widest"
+              style={{
+                background: "oklch(0.97 0 0)",
+                color: "oklch(0.30 0.20 27)",
+                boxShadow: "0 0 20px oklch(0 0 0 / 0.3)",
+              }}
+              asChild
+            >
               <Link to="/register">
-                Start Winning <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                HACK THE OUTCOME{" "}
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Button>
           </div>
