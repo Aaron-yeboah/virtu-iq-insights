@@ -90,6 +90,11 @@ function AdminPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayRevenue = (payments ?? [])
+    .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === todayStr)
+    .reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
+
   if (rolesLoading) return <p className="text-sm text-muted-foreground">Checking access…</p>;
   if (!isAdmin) {
     return (
@@ -104,8 +109,9 @@ function AdminPage() {
     <>
       <PageHeader title="Admin console" description="Review payments, partners and platform activity." />
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
-        <Stat label="Revenue" value={ghs(stats?.revenue_ghs ?? 0)} highlight />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-7">
+        <Stat label="Total Revenue" value={ghs(stats?.revenue_ghs ?? 0)} highlight />
+        <Stat label="Today's Revenue" value={ghs(todayRevenue)} highlight />
         <Stat label="Commission (65%)" value={ghs((stats?.revenue_ghs ?? 0) * 0.65)} highlight />
         <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Members" value={String(stats?.members ?? 0)} />

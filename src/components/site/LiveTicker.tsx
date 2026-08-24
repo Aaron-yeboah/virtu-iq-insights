@@ -15,10 +15,10 @@ export function LiveTicker() {
   const items = [...tickerItems, ...tickerItems];
 
   return (
-    <div className="relative overflow-hidden border-b border-border bg-black py-2">
+    <div className="relative overflow-hidden border-b border-border/40 bg-secondary/80 py-2">
       {/* Fade edges */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-black to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-black to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-secondary to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-secondary to-transparent" />
 
       {/* Red left accent */}
       <div className="pointer-events-none absolute inset-y-0 left-0 z-20 flex items-center pl-2">
@@ -31,12 +31,10 @@ export function LiveTicker() {
         {items.map((item, i) => (
           <span
             key={i}
-            className="flex shrink-0 items-center gap-2 text-xs font-medium whitespace-nowrap font-mono"
-            style={{ color: "oklch(0.72 0.22 142)" }}
+            className="flex shrink-0 items-center gap-2 text-xs font-semibold whitespace-nowrap font-mono text-foreground"
           >
             <span
-              className="size-1.5 rounded-full animate-status-blink"
-              style={{ background: i % 3 === 0 ? "oklch(0.53 0.22 27)" : "oklch(0.72 0.22 142)" }}
+              className={`size-1.5 rounded-full animate-status-blink ${i % 3 === 0 ? "bg-primary" : "bg-emerald-600"}`}
             />
             {item}
           </span>

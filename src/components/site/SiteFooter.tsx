@@ -11,32 +11,23 @@ const groups = [
 export function SiteFooter() {
   return (
     <footer
-      className="border-t"
-      style={{
-        background: "oklch(0.06 0 0)",
-        borderColor: "oklch(0.53 0.22 27 / 0.3)",
-      }}
+      className="border-t bg-[#EDEFF3] border-primary/40 text-foreground"
     >
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14 sm:px-6">
         {/* Logo + tagline */}
         <div className="mb-8 sm:mb-10">
           <LogoFull className="h-8 sm:h-9" />
-          <p className="mt-3 max-w-xs text-sm font-mono" style={{ color: "oklch(0.45 0.01 0)" }}>
+          <p className="mt-3 max-w-xs text-sm text-muted-foreground">
             Our proprietary algorithm penetrates the SportyBet instant virtual engine — exposing the next outcome before the game loads.
           </p>
           {/* System status */}
           <div
-            className="mt-4 inline-flex items-center gap-2 rounded border px-3 py-1.5"
-            style={{
-              borderColor: "oklch(0.72 0.22 142 / 0.3)",
-              background: "oklch(0.72 0.22 142 / 0.05)",
-            }}
+            className="mt-4 inline-flex items-center gap-2 rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5"
           >
             <span
-              className="size-2 rounded-full animate-status-blink"
-              style={{ background: "oklch(0.72 0.22 142)" }}
+              className="size-2 rounded-full bg-emerald-600 animate-status-blink"
             />
-            <span className="font-mono text-xs font-bold" style={{ color: "oklch(0.72 0.22 142)" }}>
+            <span className="font-mono text-xs font-bold text-emerald-700">
               SYSTEM ONLINE
             </span>
           </div>
@@ -47,8 +38,7 @@ export function SiteFooter() {
           {groups.map((g) => (
             <div key={g.title}>
               <h3
-                className="text-sm font-semibold font-mono tracking-wider"
-                style={{ color: "oklch(0.95 0 0)" }}
+                className="text-sm font-semibold tracking-wider text-foreground uppercase"
               >
                 {g.title}
               </h3>
@@ -57,14 +47,7 @@ export function SiteFooter() {
                   <li key={item}>
                     <a
                       href="#"
-                      className="text-sm font-mono transition-colors"
-                      style={{ color: "oklch(0.42 0.01 0)" }}
-                      onMouseEnter={(e) => {
-                        (e.target as HTMLElement).style.color = "oklch(0.53 0.22 27)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.target as HTMLElement).style.color = "oklch(0.42 0.01 0)";
-                      }}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       {item}
                     </a>
@@ -77,22 +60,21 @@ export function SiteFooter() {
 
         {/* Bottom bar */}
         <div
-          className="mt-10 flex flex-col gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"
-          style={{ borderColor: "oklch(0.18 0.012 27)" }}
+          className="mt-10 flex flex-col gap-3 border-t border-border/40 pt-6 sm:flex-row sm:items-center sm:justify-between"
         >
-          <p className="text-xs font-mono" style={{ color: "oklch(0.38 0.01 0)" }}>
+          <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Virtu-IQ. All rights reserved. For entertainment purposes only.
           </p>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <Shield className="size-3.5" style={{ color: "oklch(0.53 0.22 27)" }} />
-              <span className="font-mono text-xs font-semibold" style={{ color: "oklch(0.53 0.22 27)" }}>
+              <Shield className="size-3.5 text-primary" />
+              <span className="font-mono text-xs font-semibold text-primary">
                 256-BIT ENCRYPTED
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Terminal className="size-3.5" style={{ color: "oklch(0.72 0.22 142)" }} />
-              <span className="font-mono text-xs font-semibold" style={{ color: "oklch(0.72 0.22 142)" }}>
+              <Terminal className="size-3.5 text-emerald-600" />
+              <span className="font-mono text-xs font-semibold text-emerald-700">
                 BREACH ACTIVE
               </span>
             </div>
