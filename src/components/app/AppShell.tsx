@@ -88,7 +88,7 @@ export function AppShell({
     <div className="min-h-screen bg-secondary/30">
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-border bg-card px-4 py-5 lg:flex">
         <Link to="/" aria-label="Virtu-IQ home">
-          <LogoFull className="h-8" />
+          <LogoFull className="h-9 w-auto object-contain" />
         </Link>
         <div className="mt-8 flex-1">{navList}</div>
         {!partnerOnly && (

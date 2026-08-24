@@ -27,9 +27,9 @@ export function SiteNavbar() {
     >
       <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
-        <Link to="/" aria-label="Virtu-IQ home" className="flex items-center gap-2 group shrink-0">
-          <LogoFull className="hidden h-7 sm:h-8 md:block filter brightness-200" />
-          <LogoSymbol className="h-7 sm:h-8 md:hidden filter brightness-200" />
+        <Link to="/" aria-label="Virtu-IQ home" className="flex items-center gap-2.5 group shrink-0">
+          <LogoFull className="hidden h-8 sm:h-9 md:block object-contain brightness-200 drop-shadow-md transition-transform group-hover:scale-[1.02]" />
+          <LogoSymbol className="h-8 sm:h-9 md:hidden object-contain brightness-200 drop-shadow-md transition-transform group-hover:scale-[1.02]" />
           <span
             className="hidden sm:flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white border-white/40 bg-white/10"
           >
