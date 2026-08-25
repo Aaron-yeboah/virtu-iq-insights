@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoFull } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthBackground } from "@/components/brand/AuthBackground";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -39,36 +40,34 @@ function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12" style={{ background: "linear-gradient(160deg, #C50F1F 0%, #E41827 40%, #9B0D17 100%)" }}>
-      <div className="w-full max-w-md">
-        <Link to="/" className="flex justify-center" aria-label="Virtu-IQ home">
-          <div className="inline-flex items-center rounded-xl bg-white px-5 py-2.5 shadow-lg">
-            <LogoFull className="h-7" />
-          </div>
-        </Link>
-        <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Set a new password</h1>
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
-              <Input id="password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm">Confirm password</Label>
-              <Input id="confirm" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-            </div>
-            {error && (
-              <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </p>
-            )}
-            <Button type="submit" className="w-full" disabled={pending}>
-              {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Update password
-            </Button>
-          </form>
+    <AuthBackground>
+      <Link to="/" className="flex justify-center" aria-label="Virtu-IQ home">
+        <div className="inline-flex items-center rounded-xl bg-white px-5 py-2.5 shadow-lg">
+          <LogoFull className="h-7" />
         </div>
+      </Link>
+      <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Set a new password</h1>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="password">New password</Label>
+            <Input id="password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm">Confirm password</Label>
+            <Input id="confirm" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+          </div>
+          {error && (
+            <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <Button type="submit" className="w-full" disabled={pending}>
+            {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
+            Update password
+          </Button>
+        </form>
       </div>
-    </main>
+    </AuthBackground>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoFull } from "@/components/brand/Logo";
+import { AuthBackground } from "@/components/brand/AuthBackground";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -107,100 +108,98 @@ function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12" style={{ background: "linear-gradient(160deg, #C50F1F 0%, #E41827 40%, #9B0D17 100%)" }}>
-      <div className="w-full max-w-md">
-        <Link to="/" className="flex justify-center" aria-label="Virtu-IQ home">
-          <div className="inline-flex items-center rounded-xl bg-white px-5 py-2.5 shadow-lg">
-            <LogoFull className="h-7" />
-          </div>
-        </Link>
-        <div className="mt-8 rounded-xl border border-primary/30 bg-card p-6 shadow-xl ring-1 ring-primary/10 sm:p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            {isPartnerInvite ? "Partner registration" : "Create your account"}
-          </h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            {isPartnerInvite
-              ? "Create your account, then apply to become a Virtu-IQ partner — no registration fee."
-              : "Create your account to continue to registration."}
-          </p>
-
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
-              <Input id="name" value={fullName} maxLength={80} onChange={(e) => setFullName(e.target.value)} placeholder="Ama Mensah" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone number</Label>
-              <Input id="phone" type="tel" autoComplete="tel" value={phone} maxLength={24} onChange={(e) => setPhone(e.target.value)} placeholder="024 000 0000" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pr-11"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-              {password && (
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-1 gap-1">
-                    {[0, 1, 2, 3].map((i) => (
-                      <span
-                        key={i}
-                        className={cn(
-                          "h-1 flex-1 rounded-full",
-                          i < score ? "bg-primary" : "bg-border",
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs text-muted-foreground">{labels[score]}</span>
-                </div>
-              )}
-            </div>
-            {!isPartnerInvite && (
-              <div className="space-y-2">
-                <Label htmlFor="referral">Referral code (optional)</Label>
-                <Input id="referral" value={referral} maxLength={16} onChange={(e) => setReferral(e.target.value)} placeholder="ABCD1234" />
-              </div>
-            )}
-            {error && (
-              <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </p>
-            )}
-            {notice && <p className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">{notice}</p>}
-            <Button type="submit" className="w-full" disabled={pending}>
-              {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Create account
-            </Button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link to="/login" className="font-medium text-primary hover:underline">
-              Log in
-            </Link>
-          </p>
+    <AuthBackground>
+      <Link to="/" className="flex justify-center" aria-label="Virtu-IQ home">
+        <div className="inline-flex items-center rounded-xl bg-white px-5 py-2.5 shadow-lg">
+          <LogoFull className="h-7" />
         </div>
+      </Link>
+      <div className="mt-8 rounded-xl border border-primary/30 bg-card p-6 shadow-xl ring-1 ring-primary/10 sm:p-8">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          {isPartnerInvite ? "Partner registration" : "Create your account"}
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          {isPartnerInvite
+            ? "Create your account, then apply to become a Virtu-IQ partner — no registration fee."
+            : "Create your account to continue to registration."}
+        </p>
+
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="name">Full name</Label>
+            <Input id="name" value={fullName} maxLength={80} onChange={(e) => setFullName(e.target.value)} placeholder="Ama Mensah" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone number</Label>
+            <Input id="phone" type="tel" autoComplete="tel" value={phone} maxLength={24} onChange={(e) => setPhone(e.target.value)} placeholder="024 000 0000" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pr-11"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            {password.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="flex gap-1.5">
+                  {[0, 1, 2, 3].map((idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "h-1 flex-1 rounded-full transition-colors",
+                        idx <= score ? colors[score] : "bg-muted",
+                      )}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">{labels[score]}</span>
+              </div>
+            )}
+          </div>
+          {!isPartnerInvite && (
+            <div className="space-y-2">
+              <Label htmlFor="referral">Referral code (optional)</Label>
+              <Input id="referral" value={referral} maxLength={16} onChange={(e) => setReferral(e.target.value)} placeholder="ABCD1234" />
+            </div>
+          )}
+          {error && (
+            <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          {notice && <p className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">{notice}</p>}
+          <Button type="submit" className="w-full" disabled={pending}>
+            {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
+            Create account
+          </Button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link to="/login" className="font-medium text-primary hover:underline">
+            Log in
+          </Link>
+        </p>
       </div>
-    </main>
+    </AuthBackground>
   );
 }
