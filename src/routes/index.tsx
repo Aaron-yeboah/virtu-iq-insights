@@ -242,12 +242,7 @@ function TerminalHackCard() {
 
   return (
     <div
-      className="rounded-xl p-3 sm:p-6 relative overflow-hidden font-mono animate-border-bleed"
-      style={{
-        background: "oklch(0.08 0.005 27)",
-        border: "1px solid oklch(0.53 0.22 27 / 0.4)",
-        boxShadow: "0 0 30px oklch(0.53 0.22 27 / 0.12), 0 20px 60px oklch(0 0 0 / 0.6)",
-      }}
+      className="rounded-xl p-3 sm:p-6 relative overflow-hidden font-mono bg-slate-950 border border-emerald-500/40 shadow-2xl text-slate-100"
     >
       {/* Scan line */}
       <div className="animate-scan-line" />
@@ -256,46 +251,30 @@ function TerminalHackCard() {
       <div className="absolute inset-0 pointer-events-none">
         <div
           className="absolute inset-0 w-[30%] animate-shine"
-          style={{ background: "linear-gradient(90deg, transparent, oklch(0.53 0.22 27 / 0.04), transparent)" }}
+          style={{ background: "linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.08), transparent)" }}
         />
       </div>
 
       {/* Terminal header bar */}
-      <div
-        className="flex items-center gap-1.5 mb-3 sm:mb-4 pb-3 border-b min-w-0"
-        style={{ borderColor: "oklch(0.18 0.012 27)" }}
-      >
+      <div className="flex items-center gap-1.5 mb-3 sm:mb-4 pb-3 border-b border-slate-800 min-w-0">
         <span className="size-2.5 shrink-0 rounded-full bg-red-500" />
         <span className="size-2.5 shrink-0 rounded-full bg-yellow-500" />
-        <span className="size-2.5 shrink-0 rounded-full bg-green-500" />
-        <span className="ml-2 text-[9px] sm:text-[10px] tracking-wider truncate flex-1 min-w-0" style={{ color: "oklch(0.72 0.22 142)" }}>
+        <span className="size-2.5 shrink-0 rounded-full bg-emerald-500" />
+        <span className="ml-2 text-[9px] sm:text-[10px] tracking-wider truncate flex-1 min-w-0 text-emerald-400">
           root@virtu-iq:~$ ./breach_sportybet.sh
         </span>
-        <span
-          className="shrink-0 inline-block w-1.5 h-3 animate-terminal-cursor"
-          style={{ background: "oklch(0.72 0.22 142)" }}
-        />
+        <span className="shrink-0 inline-block w-1.5 h-3 bg-emerald-400 animate-terminal-cursor" />
       </div>
 
       {/* Status row */}
       <div className="flex items-center justify-between gap-2 flex-wrap mb-3 sm:mb-4 relative">
         <div className="flex items-center gap-1.5">
-          <span
-            className="size-2 shrink-0 rounded-full animate-status-blink"
-            style={{ background: "oklch(0.72 0.22 142)" }}
-          />
-          <span className="text-[10px] sm:text-xs font-bold tracking-widest" style={{ color: "oklch(0.72 0.22 142)" }}>
+          <span className="size-2 shrink-0 rounded-full bg-emerald-500 animate-status-blink" />
+          <span className="text-[10px] sm:text-xs font-bold tracking-widest text-emerald-400">
             BREACH ACTIVE
           </span>
         </div>
-        <Badge
-          className="text-[9px] sm:text-[10px] gap-1 font-mono border shrink-0"
-          style={{
-            background: "oklch(0.53 0.22 27 / 0.12)",
-            borderColor: "oklch(0.53 0.22 27 / 0.35)",
-            color: "oklch(0.53 0.22 27)",
-          }}
-        >
+        <Badge className="text-[9px] sm:text-[10px] gap-1 font-mono bg-red-500/15 border-red-500/40 text-red-400 shrink-0">
           <AlertTriangle className="size-3" />
           3 OUTCOMES EXPOSED
         </Badge>
@@ -306,41 +285,26 @@ function TerminalHackCard() {
         {outcomes.map((v, i) => (
           <div
             key={v.game}
-            className="rounded-lg p-2.5 sm:p-3 transition-all"
+            className="rounded-lg p-2.5 sm:p-3 transition-all bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50"
             style={{
-              background: "oklch(0.05 0 0)",
-              border: "1px solid oklch(0.18 0.012 27)",
               animation: `slide-up-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${0.1 + i * 0.15}s both`,
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "oklch(0.53 0.22 27 / 0.5)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "oklch(0.18 0.012 27)";
             }}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <p className="text-[8px] sm:text-[9px] tracking-wider truncate" style={{ color: "oklch(0.40 0.01 0)" }}>
+                <p className="text-[8px] sm:text-[9px] tracking-wider truncate text-slate-400">
                   {v.game} · {v.match}
                 </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold" style={{ color: "oklch(0.95 0 0)" }}>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-white">
                   {v.result}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <span
-                  className="inline-flex items-center gap-1 rounded px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold border"
-                  style={{
-                    background: "oklch(0.53 0.22 27 / 0.1)",
-                    borderColor: "oklch(0.53 0.22 27 / 0.3)",
-                    color: "oklch(0.53 0.22 27)",
-                  }}
-                >
+                <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/40 text-emerald-300">
                   <Check className="size-2.5" />
                   {v.status}
                 </span>
-                <p className="mt-0.5 text-[9px] sm:text-[10px] font-bold" style={{ color: "oklch(0.72 0.22 142)" }}>
+                <p className="mt-0.5 text-[9px] sm:text-[10px] font-bold text-emerald-400">
                   @{v.odds}
                 </p>
               </div>
@@ -350,34 +314,23 @@ function TerminalHackCard() {
       </div>
 
       {/* Summary bar */}
-      <div
-        className="mt-3 sm:mt-4 rounded-lg p-2.5 sm:p-3 border"
-        style={{
-          background: "oklch(0.53 0.22 27 / 0.08)",
-          borderColor: "oklch(0.53 0.22 27 / 0.25)",
-        }}
-      >
+      <div className="mt-3 sm:mt-4 rounded-lg p-2.5 sm:p-3 border bg-red-950/20 border-red-500/30">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold" style={{ color: "oklch(0.53 0.22 27)" }}>
+          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-red-400">
             <Cpu className="size-3.5 shrink-0" />
             <span className="truncate">SYSTEM ACCESS: GRANTED</span>
           </div>
-          <span className="text-[9px] sm:text-[10px] font-bold shrink-0" style={{ color: "oklch(0.72 0.22 142)" }}>
+          <span className="text-[9px] sm:text-[10px] font-bold shrink-0 text-emerald-400">
             ✓ EXPOSED
           </span>
         </div>
-        <div
-          className="mt-2 h-1 sm:h-1.5 overflow-hidden rounded-full"
-          style={{ background: "oklch(0.53 0.22 27 / 0.15)" }}
-        >
+        <div className="mt-2 h-1 sm:h-1.5 overflow-hidden rounded-full bg-red-950/50">
           <div
-            className="h-full rounded-full animate-hack-bar"
-            style={{ background: "linear-gradient(90deg, oklch(0.53 0.22 27), oklch(0.72 0.22 142))" }}
+            className="h-full rounded-full animate-hack-bar bg-gradient-to-r from-red-500 to-emerald-400"
           />
         </div>
-        <p className="mt-1.5 text-[9px] sm:text-[10px]" style={{ color: "oklch(0.40 0.01 0)" }}>
-          Next breach cycle:{" "}
-          <span style={{ color: "oklch(0.72 0.22 142)" }}>00:03:47</span>
+        <p className="mt-1.5 text-[9px] sm:text-[10px] text-slate-400">
+          Next breach cycle: <span className="text-emerald-400">00:03:47</span>
         </p>
       </div>
     </div>
@@ -386,7 +339,7 @@ function TerminalHackCard() {
 
 function Index() {
   return (
-    <div className="min-h-screen relative overflow-x-hidden" style={{ background: "oklch(0.05 0 0)" }}>
+    <div className="min-h-screen relative overflow-x-hidden bg-background text-foreground">
       {/* Global logo watermark */}
       <LogoWatermark />
 
@@ -395,22 +348,22 @@ function Index() {
 
       <main className="relative">
         {/* ── HERO ── */}
-        <section className="relative overflow-hidden border-b" style={{ borderColor: "oklch(0.18 0.012 27)" }}>
-          {/* Matrix rain */}
-          <MatrixRain opacity={0.09} />
+        <section className="relative overflow-hidden border-b border-border/60 bg-white">
+          {/* Vertical Matrix binary rain (green binary streams on white) */}
+          <MatrixRain opacity={0.20} />
 
-          {/* Red radial glow top-right */}
+          {/* Red radial ambient glow */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
-              background: "radial-gradient(60% 60% at 75% 0%, oklch(0.53 0.22 27 / 0.12), transparent 70%)",
+              background: "radial-gradient(60% 60% at 75% 0%, rgba(228, 24, 39, 0.08), transparent 70%)",
             }}
           />
-          {/* Green radial glow bottom-left */}
+          {/* Green radial ambient glow */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
-              background: "radial-gradient(40% 40% at 5% 100%, oklch(0.72 0.22 142 / 0.07), transparent 70%)",
+              background: "radial-gradient(40% 40% at 5% 100%, rgba(16, 185, 129, 0.08), transparent 70%)",
             }}
           />
 
@@ -419,40 +372,25 @@ function Index() {
           <div className="relative mx-auto grid max-w-6xl items-center gap-8 sm:gap-12 px-4 py-10 sm:py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
             {/* Left column */}
             <div className="animate-rise relative">
-              {/* Mobile watermark */}
-              <div className="pointer-events-none absolute -top-3 right-0 lg:hidden select-none" aria-hidden="true">
-                <LogoSymbol
-                  className="h-24 sm:h-28 w-auto animate-logo-tilt origin-center"
-                  style={{ opacity: 0.12, filter: "hue-rotate(120deg) brightness(1.5)" }}
-                />
-              </div>
-
               {/* Breach badge */}
               <div className="mb-5">
-                <span
-                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-xs font-bold tracking-widest animate-border-bleed"
-                  style={{
-                    borderColor: "oklch(0.53 0.22 27 / 0.5)",
-                    background: "oklch(0.53 0.22 27 / 0.08)",
-                    color: "oklch(0.53 0.22 27)",
-                  }}
-                >
-                  <span className="size-2 rounded-full animate-status-blink" style={{ background: "oklch(0.53 0.22 27)" }} />
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1.5 font-mono text-xs font-bold tracking-widest text-primary shadow-sm">
+                  <span className="size-2 rounded-full bg-primary animate-status-blink" />
                   SYSTEM BREACH ACTIVE
                 </span>
               </div>
 
               {/* Main headline with glitch */}
-              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-6xl leading-tight" style={{ color: "oklch(0.95 0 0)" }}>
+              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-6xl leading-tight text-slate-950">
                 Instant Virtuals.{" "}
                 <GlitchText className="text-primary">
                   Outcome Exposed.
                 </GlitchText>
               </h1>
 
-              <p className="mt-5 max-w-xl text-base leading-relaxed sm:text-lg" style={{ color: "oklch(0.50 0.01 0)" }}>
+              <p className="mt-5 max-w-xl text-base leading-relaxed sm:text-lg text-slate-700 font-medium">
                 Our proprietary algorithm penetrates the{" "}
-                <span className="font-semibold" style={{ color: "oklch(0.72 0.22 142)" }}>
+                <span className="font-bold text-emerald-700">
                   SportyBet instant virtual engine
                 </span>{" "}
                 — delivering the next match outcome before the game even loads. No guesswork. Just exposed results.
@@ -461,7 +399,7 @@ function Index() {
               <div className="mt-6 sm:mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button
                   size="lg"
-                  className="relative overflow-hidden group font-mono font-bold tracking-widest animate-red-glow"
+                  className="relative overflow-hidden group font-mono font-bold tracking-widest bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25"
                   asChild
                 >
                   <Link to="/register">
@@ -475,39 +413,35 @@ function Index() {
                   size="lg"
                   variant="outline"
                   asChild
-                  className="font-mono border-opacity-40"
-                  style={{ borderColor: "oklch(0.72 0.22 142 / 0.4)", color: "oklch(0.72 0.22 142)" }}
+                  className="font-mono border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold"
                 >
                   <a href="#how-it-works">
-                    <Terminal className="mr-2 size-4" />
+                    <Terminal className="mr-2 size-4 text-emerald-600" />
                     ENTER THE SYSTEM
                   </a>
                 </Button>
               </div>
 
               {/* Animated stats */}
-              <dl className="mt-6 sm:mt-10 grid grid-cols-3 gap-3 sm:gap-6">
+              <dl className="mt-6 sm:mt-10 grid grid-cols-3 gap-3 sm:gap-6 border-t border-slate-200 pt-6">
                 <div>
-                  <dt className="text-base sm:text-lg font-bold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                  <dt className="text-xl sm:text-2xl font-extrabold font-mono text-slate-950">
                     <AnimatedCounter end={99} suffix="%" className="tabular-nums" />
                   </dt>
-                  <dd className="text-[10px] sm:text-xs font-mono leading-tight mt-0.5" style={{ color: "oklch(0.45 0.01 0)" }}>Accuracy rate</dd>
+                  <dd className="text-[11px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Accuracy rate</dd>
                 </div>
                 <div>
-                  <dt className="text-base sm:text-lg font-bold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                  <dt className="text-xl sm:text-2xl font-extrabold font-mono text-slate-950">
                     <AnimatedCounter end={14} suffix="K+" className="tabular-nums" />
                   </dt>
-                  <dd className="text-[10px] sm:text-xs font-mono leading-tight mt-0.5" style={{ color: "oklch(0.45 0.01 0)" }}>Exposed</dd>
+                  <dd className="text-[11px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Exposed</dd>
                 </div>
                 <div>
-                  <dt className="flex items-center gap-1 text-base sm:text-lg font-bold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
-                    <span
-                      className="size-2 shrink-0 rounded-full animate-status-blink"
-                      style={{ background: "oklch(0.72 0.22 142)" }}
-                    />
+                  <dt className="flex items-center gap-1.5 text-xl sm:text-2xl font-extrabold font-mono text-slate-950">
+                    <span className="size-2.5 shrink-0 rounded-full bg-emerald-600 animate-status-blink" />
                     24/7
                   </dt>
-                  <dd className="text-[10px] sm:text-xs font-mono leading-tight mt-0.5" style={{ color: "oklch(0.45 0.01 0)" }}>Always live</dd>
+                  <dd className="text-[11px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Always live</dd>
                 </div>
               </dl>
             </div>
@@ -521,19 +455,16 @@ function Index() {
 
         {/* ── FEATURES ── */}
         <section id="features" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24 relative">
-          <MatrixRain opacity={0.03} />
+          <MatrixRain opacity={0.12} />
           <div className="max-w-2xl relative">
-            <span
-              className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest"
-              style={{ color: "oklch(0.53 0.22 27)" }}
-            >
+            <span className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest text-primary">
               <Activity className="size-3.5" />
               WHY OUR ALGORITHM NEVER FAILS
             </span>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.95 0 0)" }}>
+            <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl text-slate-950">
               Built to Expose, Not Guess
             </h2>
-            <p className="mt-3" style={{ color: "oklch(0.48 0.01 0)" }}>
+            <p className="mt-3 text-slate-600 font-medium">
               Every component is engineered to deliver certainty — not predictions.
             </p>
           </div>
@@ -541,35 +472,15 @@ function Index() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="group rounded-xl p-5 sm:p-6 transition-all hover:-translate-y-1 cursor-default"
-                style={{
-                  background: "oklch(0.09 0.004 27)",
-                  border: "1px solid oklch(0.18 0.012 27)",
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.borderColor = "oklch(0.53 0.22 27 / 0.5)";
-                  el.style.boxShadow = "0 0 20px oklch(0.53 0.22 27 / 0.1)";
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.borderColor = "oklch(0.18 0.012 27)";
-                  el.style.boxShadow = "none";
-                }}
+                className="group rounded-xl p-5 sm:p-6 transition-all hover:-translate-y-1 cursor-default bg-white border border-slate-200/80 shadow-md hover:shadow-xl hover:border-primary/40"
               >
-                <span
-                  className="inline-flex size-10 items-center justify-center rounded-lg transition-colors"
-                  style={{
-                    background: "oklch(0.53 0.22 27 / 0.12)",
-                    color: "oklch(0.53 0.22 27)",
-                  }}
-                >
+                <span className="inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                   <f.icon className="size-5" />
                 </span>
-                <h3 className="mt-4 text-base font-semibold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                <h3 className="mt-4 text-base font-bold font-mono text-slate-950">
                   {f.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed" style={{ color: "oklch(0.48 0.01 0)" }}>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 font-medium">
                   {f.body}
                 </p>
               </div>
@@ -578,22 +489,19 @@ function Index() {
         </section>
 
         {/* ── HOW IT WORKS ── */}
-        <section id="how-it-works" className="border-y relative" style={{ borderColor: "oklch(0.18 0.012 27)", background: "oklch(0.08 0.003 0)" }}>
+        <section id="how-it-works" className="border-y border-slate-200 relative bg-slate-50/80">
           <FloatingParticles />
-          <MatrixRain opacity={0.04} />
+          <MatrixRain opacity={0.15} />
           <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16 sm:px-6 lg:py-24 relative">
             <div className="max-w-2xl">
-              <span
-                className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest"
-                style={{ color: "oklch(0.72 0.22 142)" }}
-              >
+              <span className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest text-emerald-700">
                 <Wifi className="size-3.5" />
                 BREACH PROTOCOL
               </span>
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.95 0 0)" }}>
+              <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl text-slate-950">
                 How The System Works
               </h2>
-              <p className="mt-3" style={{ color: "oklch(0.48 0.01 0)" }}>
+              <p className="mt-3 text-slate-600 font-medium">
                 Three steps from screenshot to exposed instant virtual outcome.
               </p>
             </div>
@@ -601,35 +509,22 @@ function Index() {
               {steps.map((s, idx) => (
                 <li
                   key={s.n}
-                  className="group rounded-xl p-5 sm:p-6 transition-all"
-                  style={{
-                    background: "oklch(0.09 0.004 27)",
-                    border: "1px solid oklch(0.18 0.012 27)",
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.borderColor = "oklch(0.72 0.22 142 / 0.4)";
-                    el.style.boxShadow = "0 0 16px oklch(0.72 0.22 142 / 0.08)";
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.borderColor = "oklch(0.18 0.012 27)";
-                    el.style.boxShadow = "none";
-                  }}
+                  className="group rounded-xl p-5 sm:p-6 transition-all bg-white border border-slate-200/90 shadow-md hover:shadow-xl hover:border-emerald-500/50"
                 >
                   <span
-                    className="inline-flex size-10 items-center justify-center rounded-full text-sm font-bold tracking-widest font-mono transition-colors"
-                    style={{
-                      background: idx === 1 ? "oklch(0.72 0.22 142 / 0.15)" : "oklch(0.53 0.22 27 / 0.12)",
-                      color: idx === 1 ? "oklch(0.72 0.22 142)" : "oklch(0.53 0.22 27)",
-                    }}
+                    className={cn(
+                      "inline-flex size-10 items-center justify-center rounded-full text-sm font-extrabold tracking-widest font-mono transition-colors",
+                      idx === 1
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-primary/10 text-primary"
+                    )}
                   >
                     {s.n}
                   </span>
-                  <h3 className="mt-3 text-lg font-semibold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                  <h3 className="mt-3 text-lg font-bold font-mono text-slate-950">
                     {s.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "oklch(0.48 0.01 0)" }}>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600 font-medium">
                     {s.body}
                   </p>
                 </li>
@@ -640,19 +535,16 @@ function Index() {
 
         {/* ── PACKAGES ── */}
         <section id="packages" className="mx-auto max-w-6xl px-4 py-10 sm:py-16 sm:px-6 lg:py-24 relative">
-          <MatrixRain opacity={0.03} />
+          <MatrixRain opacity={0.14} />
           <div className="max-w-2xl relative">
-            <span
-              className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest"
-              style={{ color: "oklch(0.53 0.22 27)" }}
-            >
+            <span className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest text-primary">
               <Database className="size-3.5" />
               ACCESS TIERS
             </span>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.95 0 0)" }}>
+            <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl text-slate-950">
               Choose Your Access Level
             </h2>
-            <p className="mt-3" style={{ color: "oklch(0.48 0.01 0)" }}>
+            <p className="mt-3 text-slate-600 font-medium">
               Each tier is a bundle of scan credits. One credit processes one screenshot and exposes your instant virtual outcome.
             </p>
           </div>
@@ -661,58 +553,35 @@ function Index() {
               <div
                 key={p.name}
                 className={cn(
-                  "group relative flex flex-col rounded-2xl p-5 sm:p-8 transition-all duration-300 overflow-hidden",
-                  p.popular ? "scale-[1.01] sm:scale-[1.02]" : "hover:-translate-y-1"
+                  "group relative flex flex-col rounded-2xl p-5 sm:p-8 transition-all duration-300 overflow-hidden bg-white border shadow-lg hover:shadow-2xl",
+                  p.popular
+                    ? "border-primary/80 ring-2 ring-primary/20 scale-[1.01] sm:scale-[1.02]"
+                    : "border-slate-200 hover:-translate-y-1 hover:border-slate-300"
                 )}
-                style={{
-                  background: p.popular
-                    ? "linear-gradient(135deg, oklch(0.13 0.008 27), oklch(0.09 0.004 27))"
-                    : "oklch(0.09 0.004 27)",
-                  border: p.popular
-                    ? "1px solid oklch(0.53 0.22 27 / 0.6)"
-                    : "1px solid oklch(0.18 0.012 27)",
-                  boxShadow: p.popular
-                    ? "0 0 30px oklch(0.53 0.22 27 / 0.15), 0 20px 60px oklch(0 0 0 / 0.5)"
-                    : "none",
-                }}
               >
                 {/* Popular top accent */}
                 {p.popular && (
-                  <div
-                    className="absolute inset-x-0 top-0 h-0.5"
-                    style={{ background: "linear-gradient(90deg, oklch(0.53 0.22 27), oklch(0.72 0.22 142), oklch(0.53 0.22 27))" }}
-                  />
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-emerald-500 to-primary" />
                 )}
-
-                {/* Logo watermark */}
-                <div className="pointer-events-none absolute -bottom-6 -right-6 select-none overflow-hidden" aria-hidden="true">
-                  <LogoSymbol
-                    className={cn(
-                      "h-44 w-auto transition-all duration-500 ease-out group-hover:scale-110 group-hover:-rotate-3",
-                      p.popular ? "opacity-[0.08]" : "opacity-[0.04] group-hover:opacity-[0.07]"
-                    )}
-                    style={{ filter: "hue-rotate(120deg) brightness(1.5)" }}
-                  />
-                </div>
 
                 {/* Header */}
                 <div className="relative flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="text-xl font-bold tracking-tight font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                    <h3 className="text-xl font-extrabold tracking-tight font-mono text-slate-950">
                       {p.name}
                     </h3>
-                    <p className="mt-1 text-xs font-mono" style={{ color: "oklch(0.45 0.01 0)" }}>
+                    <p className="mt-1 text-xs font-mono font-medium text-slate-500">
                       Instant Virtual Football
                     </p>
                   </div>
                   {p.badge && (
                     <Badge
-                      className="rounded font-mono text-xs font-semibold px-2.5 py-1 shrink-0 border"
-                      style={
+                      className={cn(
+                        "rounded font-mono text-xs font-bold px-2.5 py-1 shrink-0 border",
                         p.popular
-                          ? { background: "oklch(0.53 0.22 27)", color: "oklch(0.97 0 0)", borderColor: "transparent" }
-                          : { background: "oklch(0.53 0.22 27 / 0.1)", color: "oklch(0.53 0.22 27)", borderColor: "oklch(0.53 0.22 27 / 0.25)" }
-                      }
+                          ? "bg-primary text-white border-transparent"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-300"
+                      )}
                     >
                       {p.badge}
                     </Badge>
@@ -722,20 +591,13 @@ function Index() {
                 {/* Price */}
                 <div className="relative mt-5">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-3xl sm:text-4xl font-extrabold tracking-tight font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                    <span className="text-3xl sm:text-4xl font-black tracking-tight font-mono text-slate-950">
                       {p.price}
                     </span>
-                    <span className="text-xs font-medium font-mono" style={{ color: "oklch(0.45 0.01 0)" }}>one-time</span>
+                    <span className="text-xs font-medium font-mono text-slate-500">one-time</span>
                   </div>
-                  <div
-                    className="mt-2.5 inline-flex items-center gap-1.5 rounded px-2.5 py-1 font-mono text-xs font-semibold border"
-                    style={{
-                      background: "oklch(0.72 0.22 142 / 0.08)",
-                      borderColor: "oklch(0.72 0.22 142 / 0.25)",
-                      color: "oklch(0.72 0.22 142)",
-                    }}
-                  >
-                    <Sparkles className="size-3.5" />
+                  <div className="mt-2.5 inline-flex items-center gap-1.5 rounded px-2.5 py-1 font-mono text-xs font-bold bg-emerald-50 border border-emerald-300 text-emerald-800">
+                    <Sparkles className="size-3.5 text-emerald-600" />
                     <span>{p.credits}</span>
                   </div>
                 </div>
@@ -743,15 +605,8 @@ function Index() {
                 {/* Perks */}
                 <ul className="relative mt-6 flex-1 space-y-3">
                   {p.perks.map((perk) => (
-                    <li key={perk} className="flex items-start gap-2.5 text-sm transition-colors font-mono" style={{ color: "oklch(0.50 0.01 0)" }}>
-                      <span
-                        className="inline-flex size-4 shrink-0 items-center justify-center rounded mt-0.5 border"
-                        style={{
-                          background: "oklch(0.53 0.22 27 / 0.1)",
-                          borderColor: "oklch(0.53 0.22 27 / 0.25)",
-                          color: "oklch(0.53 0.22 27)",
-                        }}
-                      >
+                    <li key={perk} className="flex items-start gap-2.5 text-sm font-medium font-mono text-slate-700">
+                      <span className="inline-flex size-4 shrink-0 items-center justify-center rounded mt-0.5 bg-primary/10 border border-primary/30 text-primary">
                         <Check className="size-3 stroke-[2.5]" />
                       </span>
                       <span>{perk}</span>
@@ -762,15 +617,14 @@ function Index() {
                 {/* CTA */}
                 <div className="relative mt-8">
                   <Button
-                    className="w-full group/btn relative overflow-hidden font-semibold font-mono tracking-widest"
-                    variant={p.popular ? "default" : "outline"}
+                    className={cn(
+                      "w-full group/btn relative overflow-hidden font-bold font-mono tracking-widest shadow-md",
+                      p.popular
+                        ? "bg-primary hover:bg-primary/90 text-white"
+                        : "bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                    )}
                     size="lg"
                     asChild
-                    style={
-                      p.popular
-                        ? { boxShadow: "0 0 16px oklch(0.53 0.22 27 / 0.4)" }
-                        : { borderColor: "oklch(0.53 0.22 27 / 0.4)", color: "oklch(0.53 0.22 27)" }
-                    }
                   >
                     <Link to="/register" className="flex items-center justify-center gap-2">
                       <span>GET {p.name.toUpperCase()} ACCESS</span>
@@ -784,25 +638,19 @@ function Index() {
         </section>
 
         {/* ── TRUST ── */}
-        <section
-          className="border-y"
-          style={{ borderColor: "oklch(0.18 0.012 27)", background: "oklch(0.08 0.003 0)" }}
-        >
+        <section className="border-y border-slate-200 bg-slate-50">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {trust.map((t) => (
                 <div key={t.title} className="flex gap-3 group">
-                  <span
-                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors"
-                    style={{ background: "oklch(0.09 0.004 27)", color: "oklch(0.53 0.22 27)" }}
-                  >
-                    <t.icon className="size-4.5" />
+                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-primary shadow-sm">
+                    <t.icon className="size-5" />
                   </span>
                   <div>
-                    <h3 className="text-sm font-semibold font-mono" style={{ color: "oklch(0.95 0 0)" }}>
+                    <h3 className="text-sm font-bold font-mono text-slate-950">
                       {t.title}
                     </h3>
-                    <p className="mt-1 text-sm" style={{ color: "oklch(0.48 0.01 0)" }}>
+                    <p className="mt-1 text-sm text-slate-600 font-medium">
                       {t.body}
                     </p>
                   </div>
@@ -814,14 +662,11 @@ function Index() {
 
         {/* ── FAQ ── */}
         <section id="faq" className="mx-auto max-w-3xl px-4 py-10 sm:py-16 sm:px-6 lg:py-24">
-          <span
-            className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest"
-            style={{ color: "oklch(0.72 0.22 142)" }}
-          >
+          <span className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest text-emerald-700">
             <Eye className="size-3.5" />
             FREQUENTLY ASKED
           </span>
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.95 0 0)" }}>
+          <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl text-slate-950">
             Questions &amp; Intel
           </h2>
           <Accordion type="single" collapsible className="mt-8">
@@ -829,15 +674,12 @@ function Index() {
               <AccordionItem
                 key={f.q}
                 value={f.q}
-                style={{ borderColor: "oklch(0.18 0.012 27)" }}
+                className="border-slate-200"
               >
-                <AccordionTrigger
-                  className="text-left text-base font-semibold font-mono"
-                  style={{ color: "oklch(0.85 0 0)" }}
-                >
+                <AccordionTrigger className="text-left text-base font-bold font-mono text-slate-900 hover:text-primary">
                   {f.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm leading-relaxed" style={{ color: "oklch(0.50 0.01 0)" }}>
+                <AccordionContent className="text-sm leading-relaxed text-slate-600 font-medium">
                   {f.a}
                 </AccordionContent>
               </AccordionItem>
@@ -846,37 +688,23 @@ function Index() {
         </section>
 
         {/* ── CTA BANNER ── */}
-        <section
-          className="border-t relative overflow-hidden"
-          style={{
-            borderColor: "oklch(0.53 0.22 27 / 0.4)",
-            background: "linear-gradient(135deg, oklch(0.40 0.22 27 / 0.95), oklch(0.30 0.20 27))",
-          }}
-        >
-          <MatrixRain opacity={0.08} />
+        <section className="border-t border-primary/30 relative overflow-hidden bg-gradient-to-r from-red-600 via-primary to-red-700 text-white">
+          <MatrixRain opacity={0.18} />
           <FloatingParticles />
           <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center sm:px-6 relative">
-            <div
-              className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] sm:text-xs font-bold tracking-widest"
-              style={{ borderColor: "oklch(0.97 0 0 / 0.3)", color: "oklch(0.97 0 0 / 0.9)" }}
-            >
-              <span className="size-2 shrink-0 rounded-full bg-white animate-status-blink" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 font-mono text-[10px] sm:text-xs font-bold tracking-widest text-white">
+              <span className="size-2 shrink-0 rounded-full bg-emerald-400 animate-status-blink" />
               <span>SYSTEM ONLINE — READY TO BREACH</span>
             </div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: "oklch(0.97 0 0)" }}>
+            <h2 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl text-white">
               Ready to Expose Your First Instant Virtual?
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm sm:text-base" style={{ color: "oklch(0.97 0 0 / 0.75)" }}>
+            <p className="mx-auto mt-3 max-w-xl text-sm sm:text-base text-white/90 font-medium">
               Create your Virtu-IQ account and start receiving exposed instant virtual outcomes in minutes.
             </p>
             <Button
               size="lg"
-              className="mt-6 sm:mt-8 group font-mono font-bold tracking-widest"
-              style={{
-                background: "oklch(0.97 0 0)",
-                color: "oklch(0.30 0.20 27)",
-                boxShadow: "0 0 20px oklch(0 0 0 / 0.3)",
-              }}
+              className="mt-6 sm:mt-8 group font-mono font-bold tracking-widest bg-white text-primary hover:bg-slate-100 shadow-xl"
               asChild
             >
               <Link to="/register">

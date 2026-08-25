@@ -18,17 +18,17 @@ export function FloatingParticles() {
       {particles.map((p) => (
         <span
           key={p.id}
-          className="absolute font-mono text-[oklch(0.72_0.22_142)] select-none"
+          className="absolute font-mono text-emerald-600 select-none font-bold"
           style={{
             left: p.left,
             bottom: "-10px",
-            fontSize: p.isChar ? "10px" : `${p.size}px`,
+            fontSize: p.isChar ? "11px" : `${p.size}px`,
             width: p.isChar ? "auto" : p.size,
             height: p.isChar ? "auto" : p.size,
             borderRadius: p.isChar ? 0 : "50%",
-            background: p.isChar ? "transparent" : "oklch(0.72 0.22 142 / 0.4)",
+            background: p.isChar ? "transparent" : "#059669",
             animation: `float-particle ${p.duration} ease-in-out ${p.delay} infinite`,
-            opacity: 0.5 + (p.id % 3) * 0.15,
+            opacity: 0.6 + (p.id % 3) * 0.15,
           }}
         >
           {p.isChar ? p.char : null}

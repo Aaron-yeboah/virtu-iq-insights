@@ -40,8 +40,8 @@ export function MatrixRain({ opacity = 0.06 }: { opacity?: number }) {
     let animId: number;
 
     const draw = () => {
-      // Faint black overlay creates the trailing fade
-      ctx.fillStyle = "rgba(5, 5, 5, 0.06)";
+      // Faint white overlay creates the trailing fade on light background
+      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
       ctx.fillRect(0, 0, width, height);
 
       ctx.font = `${FONT_SIZE}px "JetBrains Mono", monospace`;
@@ -56,13 +56,13 @@ export function MatrixRain({ opacity = 0.06 }: { opacity?: number }) {
         const char = CHARS[Math.floor(Math.random() * CHARS.length)];
         const x = i * FONT_SIZE;
 
-        // Leading character — bright white-green
-        ctx.fillStyle = "#ccffcc";
+        // Leading character — deep emerald green
+        ctx.fillStyle = "#047857";
         ctx.fillText(char, x, y);
 
-        // One step behind — full green
+        // One step behind — vibrant matrix green
         if (drops[i] > 1) {
-          ctx.fillStyle = "#00cc44";
+          ctx.fillStyle = "#059669";
           ctx.fillText(
             CHARS[Math.floor(Math.random() * CHARS.length)],
             x,
@@ -70,9 +70,9 @@ export function MatrixRain({ opacity = 0.06 }: { opacity?: number }) {
           );
         }
 
-        // Rest of trail — dimmer green
+        // Rest of trail — softer green
         if (drops[i] > 2) {
-          ctx.fillStyle = "rgba(0, 170, 50, 0.45)";
+          ctx.fillStyle = "rgba(16, 185, 129, 0.6)";
           ctx.fillText(
             CHARS[Math.floor(Math.random() * CHARS.length)],
             x,
