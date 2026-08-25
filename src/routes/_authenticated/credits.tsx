@@ -66,11 +66,11 @@ function CreditsPage() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: profile } = useQuery(profileQuery(user.id));
+  const { data: profile } = useQuery({ ...profileQuery(user.id), refetchInterval: 3000 });
   const { data: packages } = useQuery(packagesQuery());
   const { data: payments } = useQuery({ ...paymentsQuery(user.id), refetchInterval: 3000 });
-  const { data: history } = useQuery(creditHistoryQuery(user.id));
-  const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
+  const { data: history } = useQuery({ ...creditHistoryQuery(user.id), refetchInterval: 3000 });
+  const { data: verdictLimit } = useQuery({ ...verdictLimitQuery(user.id), refetchInterval: 3000 });
   usePaymentRealtime(user.id);
 
   const seen = useRef<Map<string, string> | null>(null);
