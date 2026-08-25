@@ -60,9 +60,9 @@ export const requireAnalysisAuth = createMiddleware({ type: "function" })
     if (token.split(".").length !== 3) throw new Error("Your session has expired. Please sign in again.");
 
     const issuerUrl = readTokenIssuer(token);
-    const configuredUrl = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"] || "";
+    const configuredUrl = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"] || "https://oesclyulzjybnsnvbmax.supabase.co";
     const configuredKey =
-      process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || "";
+      process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lc2NseXVsemp5Ym5zbnZibWF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MTY1MzYsImV4cCI6MjEwMjI5MjUzNn0.CnlqKksSNZR3CqGmfVAldn6PT-2VXidy995ADRMzpBk";
     const backendUrl = issuerUrl === LEGACY_BACKEND_URL ? LEGACY_BACKEND_URL : configuredUrl;
     const publishableKey = issuerUrl === LEGACY_BACKEND_URL ? LEGACY_PUBLISHABLE_KEY : configuredKey;
 
