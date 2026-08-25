@@ -21,12 +21,12 @@ BEGIN
   SELECT count(*) INTO _analyses_count FROM public.analyses;
   SELECT count(*) INTO _payments_count FROM public.payments;
 
-  DELETE FROM public.partner_commissions;
-  DELETE FROM public.credit_transactions;
-  DELETE FROM public.analyses;
-  DELETE FROM public.payments;
-  DELETE FROM public.partner_applications;
-  DELETE FROM public.audit_logs;
+  DELETE FROM public.partner_commissions WHERE id IS NOT NULL;
+  DELETE FROM public.credit_transactions WHERE id IS NOT NULL;
+  DELETE FROM public.analyses WHERE id IS NOT NULL;
+  DELETE FROM public.payments WHERE id IS NOT NULL;
+  DELETE FROM public.partner_applications WHERE id IS NOT NULL;
+  DELETE FROM public.audit_logs WHERE id IS NOT NULL;
 
   PERFORM set_config('app.credit_ctx', 'trusted', true);
   UPDATE public.profiles
@@ -34,7 +34,8 @@ BEGIN
          registration_paid = false,
          registration_paid_at = null,
          payout_cleared_at = now(),
-         updated_at = now();
+         updated_at = now()
+   WHERE id IS NOT NULL;
   PERFORM set_config('app.credit_ctx', '', true);
 
   _result := jsonb_build_object(
