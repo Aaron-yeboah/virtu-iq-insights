@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 const links = [
   { label: "How It Works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
-  { label: "Packages", href: "#packages" },
   { label: "FAQ", href: "#faq" },
 ];
 
