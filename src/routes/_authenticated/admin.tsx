@@ -110,6 +110,9 @@ function AdminPage() {
   const devRate = Number(settings?.developer_commission_rate ?? 65);
   const devCommission = ((stats?.revenue_ghs ?? 0) * devRate) / 100;
 
+  const adminRate = Number(settings?.admin_commission_rate ?? 25);
+  const adminCommission = ((stats?.revenue_ghs ?? 0) * adminRate) / 100;
+
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayRevenue = (payments ?? [])
     .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === todayStr)
@@ -129,10 +132,11 @@ function AdminPage() {
     <>
       <PageHeader title="Admin console" description="Review payments, partners, commission settings and platform activity." />
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-7">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4 2xl:grid-cols-8">
         <Stat label="Total Revenue" value={ghs(stats?.revenue_ghs ?? 0)} highlight />
         <Stat label="Today's Revenue" value={ghs(todayRevenue)} highlight />
         <Stat label={`Dev Commission (${devRate}%)`} value={ghs(devCommission)} highlight />
+        <Stat label={`Admin Commission (${adminRate}%)`} value={ghs(adminCommission)} highlight />
         <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
@@ -1250,6 +1254,7 @@ function AdminSettingsManager() {
     instructions: string;
     registration_fee_ghs: string;
     developer_commission_rate: string;
+    admin_commission_rate: string;
     default_partner_commission_rate: string;
   } | null>(null);
 
@@ -1260,6 +1265,7 @@ function AdminSettingsManager() {
     instructions: settings?.instructions ?? "",
     registration_fee_ghs: String(settings?.registration_fee_ghs ?? 50),
     developer_commission_rate: String(settings?.developer_commission_rate ?? 65),
+    admin_commission_rate: String(settings?.admin_commission_rate ?? 25),
     default_partner_commission_rate: String(settings?.default_partner_commission_rate ?? 10),
   };
 
@@ -1269,6 +1275,7 @@ function AdminSettingsManager() {
       const name = current.recipient_name.trim();
       const fee = Number(current.registration_fee_ghs) || 50;
       const devRate = Math.min(100, Math.max(0, Number(current.developer_commission_rate) || 65));
+      const adminRate = Math.min(100, Math.max(0, Number(current.admin_commission_rate) || 25));
       const partnerRate = Math.min(100, Math.max(0, Number(current.default_partner_commission_rate) || 10));
 
       if (number.length < 6 || number.length > 30) throw new Error("Enter a valid payment number.");
@@ -1283,6 +1290,7 @@ function AdminSettingsManager() {
           instructions: current.instructions.trim(),
           registration_fee_ghs: fee,
           developer_commission_rate: devRate,
+          admin_commission_rate: adminRate,
           default_partner_commission_rate: partnerRate,
           updated_at: new Date().toISOString(),
         })
@@ -1314,9 +1322,9 @@ function AdminSettingsManager() {
 
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-4">
         <h4 className="text-sm font-semibold text-primary">System Commissions</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="dev-rate">Developer Commission Rate (%)</Label>
+            <Label htmlFor="dev-rate">Dev Commission (%)</Label>
             <Input
               id="dev-rate"
               type="number"
@@ -1326,10 +1334,23 @@ function AdminSettingsManager() {
               value={current.developer_commission_rate}
               onChange={(e) => setDraft({ ...current, developer_commission_rate: e.target.value })}
             />
-            <p className="text-xs text-muted-foreground">Calculated on the dashboard overview.</p>
+            <p className="text-[11px] text-muted-foreground">Dashboard dev card.</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="partner-rate">Default Partner Commission Rate (%)</Label>
+            <Label htmlFor="admin-rate">Admin Commission (%)</Label>
+            <Input
+              id="admin-rate"
+              type="number"
+              min={0}
+              max={100}
+              step="0.5"
+              value={current.admin_commission_rate}
+              onChange={(e) => setDraft({ ...current, admin_commission_rate: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground">Dashboard admin card.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="partner-rate">Partner Default (%)</Label>
             <Input
               id="partner-rate"
               type="number"
@@ -1339,7 +1360,7 @@ function AdminSettingsManager() {
               value={current.default_partner_commission_rate}
               onChange={(e) => setDraft({ ...current, default_partner_commission_rate: e.target.value })}
             />
-            <p className="text-xs text-muted-foreground">Base rate awarded on referred purchases.</p>
+            <p className="text-[11px] text-muted-foreground">Base referral rate.</p>
           </div>
         </div>
       </div>

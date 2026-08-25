@@ -58,6 +58,7 @@ export type PaymentSettings = {
   instructions: string;
   registration_fee_ghs: number;
   developer_commission_rate?: number;
+  admin_commission_rate?: number;
   default_partner_commission_rate?: number;
 };
 
@@ -67,7 +68,7 @@ export const paymentSettingsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payment_settings")
-        .select("momo_number, recipient_name, network, instructions, registration_fee_ghs, developer_commission_rate, default_partner_commission_rate")
+        .select("momo_number, recipient_name, network, instructions, registration_fee_ghs, developer_commission_rate, admin_commission_rate, default_partner_commission_rate")
         .maybeSingle();
       if (error) throw error;
       return (data ?? null) as PaymentSettings | null;
