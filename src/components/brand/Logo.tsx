@@ -1,13 +1,16 @@
-import fullLogo from "@/assets/virtu-iq-full.png";
-import symbolLogo from "@/assets/virtu-iq-symbol.png";
 import { cn } from "@/lib/utils";
+
+// Logos are served from /public so they work on any host (Vercel, Lovable, etc.)
+// without depending on the Lovable-specific /__l5e/assets-v1/ CDN path.
+const FULL_LOGO = "/virtu-iq-full.png";
+const SYMBOL_LOGO = "/virtu-iq-symbol.png";
 
 type LogoProps = { className?: string } & Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src" | "alt">;
 
 export function LogoFull({ className, ...rest }: LogoProps) {
   return (
     <img
-      src={fullLogo}
+      src={FULL_LOGO}
       alt="Virtu-IQ"
       className={cn("h-7 w-auto select-none", className)}
       {...rest}
@@ -18,7 +21,7 @@ export function LogoFull({ className, ...rest }: LogoProps) {
 export function LogoSymbol({ className, ...rest }: LogoProps) {
   return (
     <img
-      src={symbolLogo}
+      src={SYMBOL_LOGO}
       alt="Virtu-IQ"
       className={cn("h-9 w-auto select-none", className)}
       {...rest}
@@ -34,7 +37,7 @@ export function LogoSymbol({ className, ...rest }: LogoProps) {
 export function LogoWatermark({ className, ...rest }: LogoProps) {
   return (
     <img
-      src={symbolLogo}
+      src={SYMBOL_LOGO}
       alt=""
       aria-hidden
       className={cn(
@@ -45,4 +48,4 @@ export function LogoWatermark({ className, ...rest }: LogoProps) {
       {...rest}
     />
   );
-}
+}

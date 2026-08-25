@@ -37,8 +37,9 @@ import { MatrixRain } from "@/components/site/MatrixRain";
 import { GlitchText } from "@/components/site/GlitchText";
 import { AnimatedCounter } from "@/components/site/AnimatedCounter";
 import { LogoSymbol } from "@/components/brand/Logo";
-import symbolLogo from "@/assets/virtu-iq-symbol.png";
 import { cn } from "@/lib/utils";
+
+const symbolLogo = "/virtu-iq-symbol.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
