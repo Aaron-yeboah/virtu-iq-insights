@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Copy, Handshake, Link2, TrendingUp, Users, Wallet } from "lucide-react";
+import { createFileRoute } from '@tanstack/react-router'
+import { useState } from "react";
+import { Check, Copy, Handshake, Link2, TrendingUp, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/partner")({
 
 function PartnerPage() {
   const { user } = Route.useRouteContext();
+  const [copied, setCopied] = useState(false);
   const { data: profile } = useQuery(profileQuery(user.id));
   const { data: stats } = useQuery({ ...partnerStatsQuery(user.id), refetchInterval: 15000 });
   const { data: commissions } = useQuery(commissionsQuery(user.id));
@@ -34,6 +35,14 @@ function PartnerPage() {
     typeof window !== "undefined" && profile?.referral_code
       ? `${window.location.origin}/register?ref=${profile.referral_code}`
       : "";
+
+  const handleCopy = () => {
+    if (!referralLink) return;
+    void navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    toast.success("Referral link copied to clipboard");
+    setTimeout(() => setCopied(false), 2200);
+  };
 
   return (
     <>
@@ -72,13 +81,18 @@ function PartnerPage() {
               />
               <Button
                 type="button"
-                className="bg-white text-primary hover:bg-white/90"
-                onClick={() => {
-                  void navigator.clipboard.writeText(referralLink);
-                  toast.success("Referral link copied");
-                }}
+                className="min-w-[105px] bg-white text-primary transition-all hover:bg-white/90"
+                onClick={handleCopy}
               >
-                <Copy className="mr-2 size-4" /> Copy
+                {copied ? (
+                  <span className="flex items-center gap-1.5 font-bold text-emerald-600 animate-in zoom-in-75 duration-200">
+                    <Check className="size-4 stroke-[3]" /> Copied!
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <Copy className="size-4" /> Copy
+                  </span>
+                )}
               </Button>
             </div>
             <p className="mt-2 text-xs opacity-85">

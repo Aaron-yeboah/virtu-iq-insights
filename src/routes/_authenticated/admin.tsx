@@ -22,7 +22,7 @@ import { LogoSymbol } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteMember, explodePlatformData } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Trash2 } from "lucide-react";
+import { Check, Copy, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -571,15 +571,17 @@ function PartnerManager() {
     },
     onSuccess: async (_d, vars) => {
       await queryClient.invalidateQueries();
-      toast.success(vars.make ? "Admin added" : "Admin removed");
+      toast.success(vars.make ? "Admin role granted" : "Admin role removed");
     },
     onError: (e: Error) =>
       toast.error(
         e.message === "FORBIDDEN"
-          ? "Only the default admin can manage admins"
+          ? "Admin access required"
           : e.message === "CANNOT_REMOVE_DEFAULT_ADMIN"
-            ? "The default admin cannot be removed"
-            : e.message,
+            ? "The default root admin cannot be removed"
+            : e.message === "CANNOT_REMOVE_SELF"
+              ? "You cannot remove your own admin role"
+              : e.message,
       ),
   });
 
@@ -664,7 +666,7 @@ function PartnerManager() {
                     : "Direct signup"}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {m.is_partner && (
                 <Button
                   size="sm"
@@ -687,16 +689,15 @@ function PartnerManager() {
               >
                 {m.is_partner ? "Remove partner" : "Add partner"}
               </Button>
-              {isDefaultAdmin && (
-                <Button
-                  size="sm"
-                  variant={m.is_admin ? "outline" : "secondary"}
-                  disabled={setAdmin.isPending}
-                  onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
-                >
-                  {m.is_admin ? "Remove admin" : "Add admin"}
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant={m.is_admin ? "outline" : "secondary"}
+                disabled={setAdmin.isPending || (m.id === user.id && m.is_admin)}
+                onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
+                title={m.id === user.id ? "Cannot remove your own admin role" : undefined}
+              >
+                {m.is_admin ? "Remove admin" : "Add admin"}
+              </Button>
             </div>
           </div>
         ))}
@@ -710,8 +711,18 @@ function CreditAdjuster({ userId, label }: { userId: string; label: string }) {
 }
 
 function PartnerInviteLink() {
+  const [copied, setCopied] = useState(false);
   const link =
     typeof window !== "undefined" ? `${window.location.origin}/register?partner=1` : "";
+
+  const handleCopy = () => {
+    if (!link) return;
+    void navigator.clipboard.writeText(link);
+    setCopied(true);
+    toast.success("Partner link copied to clipboard");
+    setTimeout(() => setCopied(false), 2200);
+  };
+
   return (
     <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
       <p className="text-sm font-semibold text-foreground">Partner&apos;s registration link</p>
@@ -723,12 +734,18 @@ function PartnerInviteLink() {
         <Input readOnly value={link} aria-label="Partner registration link" />
         <Button
           type="button"
-          onClick={() => {
-            void navigator.clipboard.writeText(link);
-            toast.success("Partner link copied");
-          }}
+          className="min-w-[120px] transition-all"
+          onClick={handleCopy}
         >
-          Copy link
+          {copied ? (
+            <span className="flex items-center gap-1.5 font-bold text-emerald-400 animate-in zoom-in-75 duration-200">
+              <Check className="size-4 stroke-[3]" /> Copied!
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5">
+              <Copy className="size-4" /> Copy link
+            </span>
+          )}
         </Button>
       </div>
     </div>
