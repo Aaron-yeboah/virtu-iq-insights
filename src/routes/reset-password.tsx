@@ -42,7 +42,7 @@ function ResetPasswordPage() {
     <main className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
       <div className="w-full max-w-md">
         <Link to="/" className="flex justify-center" aria-label="Virtu-IQ home">
-          <LogoFull className="h-10" />
+          <LogoFull className="h-7" />
         </Link>
         <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Set a new password</h1>

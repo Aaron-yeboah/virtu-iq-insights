@@ -9,7 +9,7 @@ export function LogoFull({ className, ...rest }: LogoProps) {
     <img
       src={fullLogo}
       alt="Virtu-IQ"
-      className={cn("h-9 w-auto select-none", className)}
+      className={cn("h-7 w-auto select-none", className)}
       {...rest}
     />
   );

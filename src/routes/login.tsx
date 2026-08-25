@@ -81,7 +81,7 @@ function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
       <div className="w-full max-w-md">
         <Link to="/" className="flex justify-center" aria-label="Virtu-IQ home">
-          <LogoFull className="h-10" />
+          <LogoFull className="h-7" />
         </Link>
         <div className="mt-8 rounded-xl border border-primary/30 bg-card p-6 shadow-xl ring-1 ring-primary/10 sm:p-8">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>

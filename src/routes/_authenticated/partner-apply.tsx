@@ -93,7 +93,7 @@ function PartnerApplyPage() {
   return (
     <main className="mx-auto w-full max-w-xl">
       <div className="flex justify-center">
-        <LogoFull className="h-9" />
+        <LogoFull className="h-7" />
       </div>
 
       {status === "rejected" ? (

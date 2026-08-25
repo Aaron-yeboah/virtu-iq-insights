@@ -16,7 +16,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14 sm:px-6">
         {/* Logo + tagline */}
         <div className="mb-8 sm:mb-10">
-          <LogoFull className="h-8 sm:h-9" />
+          <LogoFull className="h-6 sm:h-7" />
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
             Our proprietary algorithm penetrates the SportyBet instant virtual engine — exposing the next outcome before the game loads.
           </p>

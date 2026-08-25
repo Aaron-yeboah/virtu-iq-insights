@@ -88,7 +88,7 @@ function RegistrationFeePage() {
   return (
     <main className="mx-auto w-full max-w-2xl">
       <div className="flex justify-center">
-        <LogoFull className="h-9" />
+        <LogoFull className="h-7" />
       </div>
 
       <div className="relative mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary to-[#1D4ED8] p-6 text-primary-foreground">
