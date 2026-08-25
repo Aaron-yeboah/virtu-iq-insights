@@ -67,56 +67,68 @@ export const explodePlatformData = createServerFn({ method: "POST" })
     if (roleError) throw new Error(roleError.message);
     if (!isAdmin) throw new Error("FORBIDDEN");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const counts = {
-      analyses: 0,
-      payments: 0,
-      commissions: 0,
-      applications: 0,
-    };
-    for (const [key, table] of [
-      ["commissions", "partner_commissions"],
-      ["applications", "partner_applications"],
-      ["analyses", "analyses"],
-      ["payments", "payments"],
-    ] as const) {
-      const { count } = await supabaseAdmin
-        .from(table)
-        .select("id", { count: "exact", head: true });
-      counts[key] = count ?? 0;
+    // Primary method: Database RPC (executes securely with DB admin privileges without service role key)
+    const { data: rpcResult, error: rpcError } = await supabase.rpc("explode_platform_data");
+    if (!rpcError && rpcResult) {
+      return rpcResult as { analyses: number; payments: number; commissions: number; applications: number };
     }
 
-    for (const table of [
-      "partner_commissions",
-      "credit_transactions",
-      "analyses",
-      "payments",
-      "partner_applications",
-      "audit_logs",
-    ] as const) {
-      const { error } = await supabaseAdmin.from(table).delete().neq("id", ZERO_UUID);
-      if (error) throw new Error(`${table}: ${error.message}`);
+    // Fallback: Admin client if SUPABASE_SERVICE_ROLE_KEY is configured
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+      const counts = {
+        analyses: 0,
+        payments: 0,
+        commissions: 0,
+        applications: 0,
+      };
+      for (const [key, table] of [
+        ["commissions", "partner_commissions"],
+        ["applications", "partner_applications"],
+        ["analyses", "analyses"],
+        ["payments", "payments"],
+      ] as const) {
+        const { count } = await supabaseAdmin
+          .from(table)
+          .select("id", { count: "exact", head: true });
+        counts[key] = count ?? 0;
+      }
+
+      for (const table of [
+        "partner_commissions",
+        "credit_transactions",
+        "analyses",
+        "payments",
+        "partner_applications",
+        "audit_logs",
+      ] as const) {
+        const { error } = await supabaseAdmin.from(table).delete().neq("id", ZERO_UUID);
+        if (error) throw new Error(`${table}: ${error.message}`);
+      }
+
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .update({
+          credits: 0,
+          registration_paid: false,
+          registration_paid_at: null,
+          payout_cleared_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .neq("id", ZERO_UUID);
+      if (profileError) throw new Error(profileError.message);
+
+      await supabaseAdmin.from("audit_logs").insert({
+        actor_id: userId,
+        action: "platform.exploded",
+        entity: "platform",
+        meta: counts,
+      });
+
+      return counts;
+    } catch (fallbackError) {
+      if (rpcError) throw new Error(rpcError.message);
+      throw fallbackError;
     }
-
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        credits: 0,
-        registration_paid: false,
-        registration_paid_at: null,
-        payout_cleared_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .neq("id", ZERO_UUID);
-    if (profileError) throw new Error(profileError.message);
-
-    await supabaseAdmin.from("audit_logs").insert({
-      actor_id: userId,
-      action: "platform.exploded",
-      entity: "platform",
-      meta: counts,
-    });
-
-    return counts;
   });
