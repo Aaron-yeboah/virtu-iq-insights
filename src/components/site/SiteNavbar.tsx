@@ -28,9 +28,8 @@ export function SiteNavbar() {
       <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Logo with white background badge in navbar */}
         <Link to="/" aria-label="Virtu-IQ home" className="flex items-center gap-2.5 group shrink-0">
-          <div className="flex items-center rounded-lg bg-white px-2.5 py-1 shadow-sm transition-transform group-hover:scale-[1.02]">
-            <LogoFull className="hidden h-7 sm:h-8 md:block object-contain" />
-            <LogoSymbol className="h-7 sm:h-8 md:hidden object-contain" />
+        <div className="flex items-center rounded-lg bg-white px-2.5 py-1 shadow-sm transition-transform group-hover:scale-[1.02]">
+            <LogoSymbol className="h-7 sm:h-8 object-contain" />
           </div>
           <span
             className="hidden sm:flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white border-white/40 bg-white/10"
