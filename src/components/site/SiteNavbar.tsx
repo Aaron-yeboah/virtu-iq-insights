@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, X, Terminal } from "lucide-react";
+import { Menu, X, Terminal, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LogoFull, LogoSymbol } from "@/components/brand/Logo";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,14 +26,12 @@ export function SiteNavbar() {
       }}
     >
       <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        {/* Logo with white background badge in navbar */}
+        {/* Logo with white background badge */}
         <Link to="/" aria-label="Virtu-IQ home" className="flex items-center gap-2.5 group shrink-0">
-        <div className="flex items-center rounded-lg bg-white px-2.5 py-1 shadow-sm transition-transform group-hover:scale-[1.02]">
+          <div className="flex items-center rounded-lg bg-white px-2.5 py-1 shadow-sm transition-transform group-hover:scale-[1.02]">
             <LogoSymbol className="h-7 sm:h-8 object-contain" />
           </div>
-          <span
-            className="hidden sm:flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white border-white/40 bg-white/10"
-          >
+          <span className="hidden sm:flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white border-white/40 bg-white/10">
             <Terminal className="size-2.5 text-white" />
             ONLINE
           </span>
@@ -99,39 +97,81 @@ export function SiteNavbar() {
         </div>
       </div>
 
-      {/* Mobile drawer */}
+      {/* ── Mobile drawer — redesigned ── */}
       {open && (
         <div
-          className="border-t px-4 pb-5 pt-3 lg:hidden text-white"
-          style={{ background: "#C50F1F", borderColor: "rgba(255, 255, 255, 0.2)" }}
+          className="lg:hidden"
+          style={{
+            background: "linear-gradient(180deg, #B00D1A 0%, #8B0913 100%)",
+            borderTop: "1px solid rgba(255,255,255,0.15)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+          }}
         >
-          <nav aria-label="Mobile" className="flex flex-col">
-            {links.map((l) => (
+          {/* Nav links with chevrons */}
+          <nav aria-label="Mobile navigation" className="px-4 pt-3 pb-1">
+            {links.map((l, i) => (
               <a
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-2 py-3 text-base font-semibold border-b border-white/15 text-white hover:bg-white/10 transition-colors"
+                className="flex items-center justify-between py-3.5 text-sm font-semibold text-white/90 hover:text-white transition-colors"
+                style={{
+                  borderBottom: i < links.length - 1 ? "1px solid rgba(255,255,255,0.10)" : "none",
+                }}
               >
                 {l.label}
+                <ChevronRight className="size-4 text-white/50" />
               </a>
             ))}
           </nav>
-          <div className="mt-4 flex flex-col gap-2">
+
+          {/* Divider */}
+          <div className="mx-4 my-2 border-t border-white/15" />
+
+          {/* CTA buttons */}
+          <div className="px-4 pb-5 flex flex-col gap-2.5">
             {isAuthenticated ? (
-              <Button asChild className="bg-emerald-600 text-white font-bold tracking-widest">
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
+              <Link
+                to="/dashboard"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center rounded-lg py-3 text-sm font-bold tracking-wider text-white transition-all"
+                style={{ background: "linear-gradient(135deg, #059669, #047857)", border: "1px solid #10b981" }}
+              >
+                Go to Dashboard
+              </Link>
             ) : (
               <>
-                <Button variant="outline" asChild className="border-white/40 text-white hover:bg-white/10">
-                  <Link to="/login">Log In</Link>
-                </Button>
-                <Button asChild className="bg-gradient-to-b from-[#26AF53] to-[#1F9E48] border border-[#2BBE5C] text-white font-bold tracking-widest">
-                  <Link to="/register">JOIN NOW</Link>
-                </Button>
+                <Link
+                  to="/register"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-center rounded-lg py-3 text-sm font-bold tracking-widest text-white transition-all hover:brightness-110"
+                  style={{ background: "linear-gradient(135deg, #26AF53, #1F9E48)", border: "1px solid #2BBE5C" }}
+                >
+                  JOIN NOW — FREE ACCOUNT
+                </Link>
+                <Link
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-center rounded-lg py-3 text-sm font-semibold tracking-wide transition-all"
+                  style={{
+                    background: "rgba(255,255,255,0.10)",
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    color: "white",
+                  }}
+                >
+                  Log In
+                </Link>
               </>
             )}
+          </div>
+
+          {/* Status footer */}
+          <div
+            className="flex items-center justify-center gap-1.5 py-2 text-[10px] font-mono font-bold tracking-widest"
+            style={{ background: "rgba(0,0,0,0.2)", color: "rgba(255,255,255,0.5)" }}
+          >
+            <span className="inline-block size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            SYSTEM ONLINE · SECURE CONNECTION
           </div>
         </div>
       )}

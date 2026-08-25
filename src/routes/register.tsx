@@ -107,7 +107,7 @@ function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center px-4 py-12" style={{ background: "linear-gradient(160deg, #C50F1F 0%, #E41827 40%, #9B0D17 100%)" }}>
       <div className="w-full max-w-md">
         <Link to="/" className="flex justify-center" aria-label="Virtu-IQ home">
           <LogoFull className="h-7" />
