@@ -26,6 +26,17 @@ export const Route = createFileRoute("/_authenticated/analyze")({
   component: AnalyzePage,
 });
 
+function generateUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 const MAX_BYTES = 8 * 1024 * 1024;
 
 const STAGES = [
@@ -55,7 +66,7 @@ function AnalyzePage() {
       if (file.size > MAX_BYTES) throw new Error("Images must be smaller than 8MB.");
 
       const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const path = `${user.id}/${generateUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("screenshots")
