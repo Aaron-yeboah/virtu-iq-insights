@@ -26,11 +26,14 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Clock,
   Coins,
   Copy,
   Mail,
+  Percent,
   Phone,
   Search,
+  Sliders,
   Trash2,
   User as UserIcon,
 } from "lucide-react";
@@ -51,6 +54,7 @@ import {
   adminPackagesQuery,
   adminPartnerApplicationsQuery,
   adminPartnerListQuery,
+  adminPartnerPayoutsQuery,
   adminPaymentsQuery,
   adminStatsQuery,
   auditLogsQuery,
@@ -60,6 +64,7 @@ import {
   type AdminApplicationRow,
   type AdminPartnerRow,
   type PackageRow,
+  type PartnerPayoutRow,
 } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -84,6 +89,7 @@ function AdminPage() {
   const { data: payments } = useQuery({ ...adminPaymentsQuery(), enabled: isAdmin });
   const { data: members } = useQuery({ ...adminMemberListQuery({}), enabled: isAdmin });
   const { data: logs } = useQuery({ ...auditLogsQuery(), enabled: isAdmin });
+  const { data: settings } = useQuery({ ...paymentSettingsQuery(), enabled: isAdmin });
 
   const reviewPayment = useMutation({
     mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
@@ -100,6 +106,9 @@ function AdminPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const devRate = Number(settings?.developer_commission_rate ?? 65);
+  const devCommission = ((stats?.revenue_ghs ?? 0) * devRate) / 100;
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayRevenue = (payments ?? [])
@@ -118,12 +127,12 @@ function AdminPage() {
 
   return (
     <>
-      <PageHeader title="Admin console" description="Review payments, partners and platform activity." />
+      <PageHeader title="Admin console" description="Review payments, partners, commission settings and platform activity." />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-7">
         <Stat label="Total Revenue" value={ghs(stats?.revenue_ghs ?? 0)} highlight />
         <Stat label="Today's Revenue" value={ghs(todayRevenue)} highlight />
-        <Stat label="Commission (65%)" value={ghs((stats?.revenue_ghs ?? 0) * 0.65)} highlight />
+        <Stat label={`Dev Commission (${devRate}%)`} value={ghs(devCommission)} highlight />
         <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
@@ -134,7 +143,7 @@ function AdminPage() {
         <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <TabsList className="w-max min-w-full justify-start gap-1">
             <TabsTrigger value="payments" className="whitespace-nowrap">Payments</TabsTrigger>
-            <TabsTrigger value="payment-details" className="whitespace-nowrap">Payment details</TabsTrigger>
+            <TabsTrigger value="settings" className="whitespace-nowrap">Settings</TabsTrigger>
             <TabsTrigger value="packages" className="whitespace-nowrap">Packages &amp; credits</TabsTrigger>
             <TabsTrigger value="partners" className="whitespace-nowrap">Partners</TabsTrigger>
             <TabsTrigger value="manage-partners" className="whitespace-nowrap">Manage partners</TabsTrigger>
@@ -147,8 +156,8 @@ function AdminPage() {
           <MonetisationManager />
         </TabsContent>
 
-        <TabsContent value="payment-details" className="mt-4">
-          <PaymentSettingsManager />
+        <TabsContent value="settings" className="mt-4">
+          <AdminSettingsManager />
         </TabsContent>
 
         <TabsContent value="manage-partners" className="mt-4">
@@ -602,6 +611,8 @@ function PartnerPayouts() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [rates, setRates] = useState<Record<string, string>>({});
+  const [selectedPartnerPayouts, setSelectedPartnerPayouts] = useState<{ id: string; name: string } | null>(null);
+
   const { data, isFetching } = useQuery(adminPartnerListQuery(search));
   const rows = data ?? [];
 
@@ -620,13 +631,16 @@ function PartnerPayouts() {
   });
 
   const clearPayout = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc("admin_clear_partner_payout", { _user_id: id });
+    mutationFn: async ({ id, note }: { id: string; note?: string }) => {
+      const { error } = await supabase.rpc("admin_clear_partner_payout", {
+        _user_id: id,
+        _note: note || null,
+      });
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries();
-      toast.success("Revenue and commission reset to zero");
+      toast.success("Payout cleared and recorded in history");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -647,71 +661,156 @@ function PartnerPayouts() {
             {isFetching ? "Loading partners…" : "No approved partners yet."}
           </p>
         )}
-        {rows.map((p: AdminPartnerRow) => (
-          <div
-            key={p.id}
-            className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/5"
-          >
-            <p className="truncate text-sm font-semibold text-foreground">{p.full_name ?? p.email}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {p.email} · code {p.referral_code} · {p.referral_count} referred
-            </p>
+        {rows.map((p: AdminPartnerRow) => {
+          const lifetimeRev = Number(p.lifetime_revenue_ghs ?? p.revenue_ghs);
+          const lifetimeComm = Number(p.lifetime_commissions_ghs ?? p.commissions_ghs);
+          const unpaidComm = Number(p.commissions_ghs ?? 0);
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-border bg-background p-3">
-                <p className="text-xs text-muted-foreground">Revenue</p>
-                <p className="mt-1 text-sm font-bold text-foreground">{ghs(p.revenue_ghs)}</p>
+          return (
+            <div
+              key={p.id}
+              className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">{p.full_name ?? p.email}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {p.email} · Code: <span className="font-semibold text-foreground">{p.referral_code}</span> · {p.referral_count} referred
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="size-8 p-0"
+                  title="View Payout History"
+                  onClick={() => setSelectedPartnerPayouts({ id: p.id, name: p.full_name ?? p.email ?? "Partner" })}
+                >
+                  <Clock className="size-4 text-muted-foreground" />
+                </Button>
               </div>
-              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
-                <p className="text-xs text-muted-foreground">Commission</p>
-                <p className="mt-1 text-sm font-bold text-primary">{ghs(p.commissions_ghs)}</p>
-              </div>
-            </div>
 
-            <div className="mt-4 flex items-end gap-2">
-              <div className="flex-1 space-y-1">
-                <Label htmlFor={`rate-${p.id}`} className="text-xs">
-                  Commission %
-                </Label>
-                <Input
-                  id={`rate-${p.id}`}
-                  type="number"
-                  min={0}
-                  max={100}
-                  step="0.5"
-                  value={rates[p.id] ?? String(p.commission_rate)}
-                  onChange={(e) => setRates({ ...rates, [p.id]: e.target.value })}
-                />
+              {/* All-time Lifetime Stats (Fixed) */}
+              <div className="mt-3 rounded-xl bg-muted/40 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Lifetime Performance (Fixed)</p>
+                <div className="mt-1 flex items-center justify-between text-xs">
+                  <span>Revenue: <strong className="text-foreground">{ghs(lifetimeRev)}</strong></span>
+                  <span>Total Earned: <strong className="text-primary font-semibold">{ghs(lifetimeComm)}</strong></span>
+                </div>
               </div>
+
+              {/* Current Period Unpaid */}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-border bg-background p-2.5">
+                  <p className="text-[11px] text-muted-foreground">Period Revenue</p>
+                  <p className="mt-0.5 text-sm font-bold text-foreground">{ghs(p.revenue_ghs)}</p>
+                </div>
+                <div className="rounded-xl border border-primary/30 bg-primary/5 p-2.5">
+                  <p className="text-[11px] text-muted-foreground">Unpaid Balance</p>
+                  <p className="mt-0.5 text-sm font-bold text-primary">{ghs(unpaidComm)}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-end gap-2">
+                <div className="flex-1 space-y-1">
+                  <Label htmlFor={`rate-${p.id}`} className="text-xs">
+                    Commission %
+                  </Label>
+                  <Input
+                    id={`rate-${p.id}`}
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.5"
+                    value={rates[p.id] ?? String(p.commission_rate)}
+                    onChange={(e) => setRates({ ...rates, [p.id]: e.target.value })}
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  disabled={setRate.isPending}
+                  onClick={() =>
+                    setRate.mutate({ id: p.id, rate: Number(rates[p.id] ?? p.commission_rate) })
+                  }
+                >
+                  Save %
+                </Button>
+              </div>
+
               <Button
                 size="sm"
-                disabled={setRate.isPending}
-                onClick={() =>
-                  setRate.mutate({ id: p.id, rate: Number(rates[p.id] ?? p.commission_rate) })
-                }
+                variant={unpaidComm > 0 ? "default" : "outline"}
+                className="mt-3 w-full"
+                disabled={clearPayout.isPending}
+                onClick={() => clearPayout.mutate({ id: p.id })}
               >
-                Save
+                {unpaidComm > 0 ? `Mark ${ghs(unpaidComm)} as paid` : "Clear current period"}
               </Button>
+              {p.payout_cleared_at && (
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  Last payout: {new Date(p.payout_cleared_at).toLocaleDateString()}
+                </p>
+              )}
             </div>
-
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-3 w-full"
-              disabled={clearPayout.isPending}
-              onClick={() => clearPayout.mutate(p.id)}
-            >
-              Paid out — clear revenue &amp; commission
-            </Button>
-            {p.payout_cleared_at && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Last cleared {new Date(p.payout_cleared_at).toLocaleString()}
-              </p>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {selectedPartnerPayouts && (
+        <PartnerPayoutHistoryDialog
+          partnerId={selectedPartnerPayouts.id}
+          partnerName={selectedPartnerPayouts.name}
+          onClose={() => setSelectedPartnerPayouts(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function PartnerPayoutHistoryDialog({
+  partnerId,
+  partnerName,
+  onClose,
+}: {
+  partnerId: string;
+  partnerName: string;
+  onClose: () => void;
+}) {
+  const { data: payouts, isLoading } = useQuery(adminPartnerPayoutsQuery(partnerId));
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Payout History — {partnerName}</DialogTitle>
+          <DialogDescription>
+            Record of cleared payouts and disbursements for this partner.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-80 overflow-y-auto divide-y divide-border rounded-xl border border-border bg-card">
+          {isLoading && <p className="p-4 text-sm text-muted-foreground">Loading history…</p>}
+          {!isLoading && (payouts ?? []).length === 0 && (
+            <p className="p-4 text-sm text-muted-foreground">No previous payouts recorded for this partner.</p>
+          )}
+          {(payouts ?? []).map((p: PartnerPayoutRow) => (
+            <div key={p.id} className="flex items-center justify-between p-3 text-sm">
+              <div>
+                <p className="font-semibold text-foreground">{ghs(p.amount_ghs)}</p>
+                <p className="text-xs text-muted-foreground">{new Date(p.cleared_at).toLocaleString()}</p>
+                {p.note && <p className="text-xs text-muted-foreground italic mt-0.5">Note: {p.note}</p>}
+              </div>
+              <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-600/30">
+                Disbursed
+              </Badge>
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1141,7 +1240,7 @@ const emptyDraft: PackageDraft = {
   sort_order: "0",
 };
 
-function PaymentSettingsManager() {
+function AdminSettingsManager() {
   const queryClient = useQueryClient();
   const { data: settings } = useQuery(paymentSettingsQuery());
   const [draft, setDraft] = useState<{
@@ -1149,6 +1248,9 @@ function PaymentSettingsManager() {
     recipient_name: string;
     network: string;
     instructions: string;
+    registration_fee_ghs: string;
+    developer_commission_rate: string;
+    default_partner_commission_rate: string;
   } | null>(null);
 
   const current = draft ?? {
@@ -1156,14 +1258,22 @@ function PaymentSettingsManager() {
     recipient_name: settings?.recipient_name ?? "",
     network: settings?.network ?? "MTN MoMo",
     instructions: settings?.instructions ?? "",
+    registration_fee_ghs: String(settings?.registration_fee_ghs ?? 50),
+    developer_commission_rate: String(settings?.developer_commission_rate ?? 65),
+    default_partner_commission_rate: String(settings?.default_partner_commission_rate ?? 10),
   };
 
   const save = useMutation({
     mutationFn: async () => {
       const number = current.momo_number.trim();
       const name = current.recipient_name.trim();
+      const fee = Number(current.registration_fee_ghs) || 50;
+      const devRate = Math.min(100, Math.max(0, Number(current.developer_commission_rate) || 65));
+      const partnerRate = Math.min(100, Math.max(0, Number(current.default_partner_commission_rate) || 10));
+
       if (number.length < 6 || number.length > 30) throw new Error("Enter a valid payment number.");
       if (name.length < 2 || name.length > 80) throw new Error("Enter the recipient name.");
+
       const { error } = await supabase
         .from("payment_settings")
         .update({
@@ -1171,6 +1281,9 @@ function PaymentSettingsManager() {
           recipient_name: name,
           network: current.network.trim() || "MTN MoMo",
           instructions: current.instructions.trim(),
+          registration_fee_ghs: fee,
+          developer_commission_rate: devRate,
+          default_partner_commission_rate: partnerRate,
           updated_at: new Date().toISOString(),
         })
         .eq("id", true);
@@ -1179,64 +1292,118 @@ function PaymentSettingsManager() {
     onSuccess: async () => {
       setDraft(null);
       await queryClient.invalidateQueries({ queryKey: ["payment-settings"] });
-      toast.success("Payment details updated");
+      toast.success("Platform settings updated successfully");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
     <form
-      className="grid max-w-xl gap-4 rounded-xl border border-border bg-card p-5"
+      className="grid max-w-2xl gap-6 rounded-2xl border border-border bg-card p-6 shadow-sm"
       onSubmit={(e) => {
         e.preventDefault();
         save.mutate();
       }}
     >
       <div>
-        <h3 className="text-lg font-semibold text-foreground">Checkout payment details</h3>
+        <h3 className="text-lg font-bold text-foreground">Platform & Commission Settings</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Shown to members on step 2 of the package payment flow.
+          Configure commission percentages, payment gateway details, and registration fees.
         </p>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="momo-number">Payment number</Label>
-        <Input
-          id="momo-number"
-          value={current.momo_number}
-          maxLength={30}
-          onChange={(e) => setDraft({ ...current, momo_number: e.target.value })}
-        />
+
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-4">
+        <h4 className="text-sm font-semibold text-primary">System Commissions</h4>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="dev-rate">Developer Commission Rate (%)</Label>
+            <Input
+              id="dev-rate"
+              type="number"
+              min={0}
+              max={100}
+              step="0.5"
+              value={current.developer_commission_rate}
+              onChange={(e) => setDraft({ ...current, developer_commission_rate: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Calculated on the dashboard overview.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="partner-rate">Default Partner Commission Rate (%)</Label>
+            <Input
+              id="partner-rate"
+              type="number"
+              min={0}
+              max={100}
+              step="0.5"
+              value={current.default_partner_commission_rate}
+              onChange={(e) => setDraft({ ...current, default_partner_commission_rate: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Base rate awarded on referred purchases.</p>
+          </div>
+        </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="recipient">Recipient name</Label>
-        <Input
-          id="recipient"
-          value={current.recipient_name}
-          maxLength={80}
-          onChange={(e) => setDraft({ ...current, recipient_name: e.target.value })}
-        />
+
+      <div className="space-y-4">
+        <h4 className="text-sm font-semibold text-foreground">Payment Gateway & Checkout Details</h4>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="momo-number">Payment Number (MoMo)</Label>
+            <Input
+              id="momo-number"
+              value={current.momo_number}
+              maxLength={30}
+              onChange={(e) => setDraft({ ...current, momo_number: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="recipient">Recipient Name</Label>
+            <Input
+              id="recipient"
+              value={current.recipient_name}
+              maxLength={80}
+              onChange={(e) => setDraft({ ...current, recipient_name: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="network">Network / Method Label</Label>
+            <Input
+              id="network"
+              value={current.network}
+              maxLength={40}
+              onChange={(e) => setDraft({ ...current, network: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="reg-fee">Registration Fee (GH₵)</Label>
+            <Input
+              id="reg-fee"
+              type="number"
+              min={0}
+              step="1"
+              value={current.registration_fee_ghs}
+              onChange={(e) => setDraft({ ...current, registration_fee_ghs: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="instructions">Payment Instructions (optional)</Label>
+          <Textarea
+            id="instructions"
+            rows={3}
+            value={current.instructions}
+            maxLength={300}
+            onChange={(e) => setDraft({ ...current, instructions: e.target.value })}
+          />
+        </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="network">Network / method label</Label>
-        <Input
-          id="network"
-          value={current.network}
-          maxLength={40}
-          onChange={(e) => setDraft({ ...current, network: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="instructions">Instructions (optional)</Label>
-        <Textarea
-          id="instructions"
-          rows={3}
-          value={current.instructions}
-          maxLength={300}
-          onChange={(e) => setDraft({ ...current, instructions: e.target.value })}
-        />
-      </div>
-      <Button type="submit" disabled={save.isPending}>
-        Save payment details
+
+      <Button type="submit" disabled={save.isPending} className="w-fit">
+        Save Platform Settings
       </Button>
     </form>
   );

@@ -43,6 +43,32 @@ function RegistrationFeePage() {
   const [senderName, setSenderName] = useState("");
   const [reference, setReference] = useState("");
   const [dismissedDecline, setDismissedDecline] = useState(false);
+  const [momoCopied, setMomoCopied] = useState(false);
+
+  const handleCopyMomo = async () => {
+    const num = settings?.momo_number;
+    if (!num) return;
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(num);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = num;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setMomoCopied(true);
+      toast.success("Payment number copied!");
+      setTimeout(() => setMomoCopied(false), 2200);
+    } catch {
+      toast.error("Please copy the number manually.");
+    }
+  };
 
   const fee = Number(settings?.registration_fee_ghs ?? 50);
   const approved = !!pending && pending.status === "approved";
@@ -176,12 +202,18 @@ function RegistrationFeePage() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(settings?.momo_number ?? "");
-                  toast.success("Number copied");
-                }}
+                className="min-w-[90px] transition-all"
+                onClick={handleCopyMomo}
               >
-                <Copy className="mr-1 size-3.5" /> Copy
+                {momoCopied ? (
+                  <span className="flex items-center gap-1.5 font-bold text-emerald-600 animate-in zoom-in-75 duration-200">
+                    <Check className="size-3.5 stroke-[3]" /> Copied!
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <Copy className="size-3.5" /> Copy
+                  </span>
+                )}
               </Button>
             </div>
             <div className="relative">

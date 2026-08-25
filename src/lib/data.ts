@@ -57,6 +57,8 @@ export type PaymentSettings = {
   network: string;
   instructions: string;
   registration_fee_ghs: number;
+  developer_commission_rate?: number;
+  default_partner_commission_rate?: number;
 };
 
 export const paymentSettingsQuery = () =>
@@ -65,7 +67,7 @@ export const paymentSettingsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payment_settings")
-        .select("momo_number, recipient_name, network, instructions, registration_fee_ghs")
+        .select("momo_number, recipient_name, network, instructions, registration_fee_ghs, developer_commission_rate, default_partner_commission_rate")
         .maybeSingle();
       if (error) throw error;
       return (data ?? null) as PaymentSettings | null;
@@ -330,12 +332,20 @@ export const partnerStatsQuery = (userId: string) =>
   queryOptions({
     queryKey: ["partner-stats", userId],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("partner_stats");
+      const { data, error } = await supabase.rpc("partner_stats", { _user_id: userId });
       if (error) throw error;
-      return (data ?? { registrations: 0, revenue_ghs: 0, commissions_ghs: 0 }) as {
+      return (data ?? {
+        registrations: 0,
+        revenue_ghs: 0,
+        commissions_ghs: 0,
+        lifetime_revenue_ghs: 0,
+        lifetime_commissions_ghs: 0,
+      }) as {
         registrations: number;
         revenue_ghs: number;
         commissions_ghs: number;
+        lifetime_revenue_ghs: number;
+        lifetime_commissions_ghs: number;
         commission_rate?: number;
       };
     },
@@ -351,7 +361,35 @@ export type AdminPartnerRow = {
   referral_count: number;
   revenue_ghs: number;
   commissions_ghs: number;
+  lifetime_revenue_ghs: number;
+  lifetime_commissions_ghs: number;
 };
+
+export type PartnerPayoutRow = {
+  id: string;
+  partner_id: string;
+  amount_ghs: number;
+  cleared_at: string;
+  cleared_by: string | null;
+  note: string | null;
+};
+
+export const adminPartnerPayoutsQuery = (partnerId?: string) =>
+  queryOptions({
+    queryKey: ["admin-partner-payouts", partnerId ?? "all"],
+    queryFn: async () => {
+      let query = supabase
+        .from("partner_payouts")
+        .select("id, partner_id, amount_ghs, cleared_at, cleared_by, note")
+        .order("cleared_at", { ascending: false });
+      if (partnerId) {
+        query = query.eq("partner_id", partnerId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as PartnerPayoutRow[];
+    },
+  });
 
 export const adminPartnerListQuery = (search?: string) =>
   queryOptions({

@@ -128,14 +128,19 @@ function CreditsPage() {
               {low && <Badge className="bg-white text-primary hover:bg-white">Running low</Badge>}
             </div>
 
-            <div className="mt-6 flex items-end gap-3">
+            <div className="mt-6 flex flex-wrap items-end gap-3">
               <p className="text-6xl font-extrabold leading-none tracking-tight">{credits}</p>
-              <p className="pb-1 text-sm opacity-80">credits available</p>
+              <div className="pb-1">
+                <p className="text-sm font-semibold">scans / credits available</p>
+                <p className="text-xs opacity-75">1 credit deducted per screenshot analyzed</p>
+              </div>
             </div>
 
-            <p className="mt-2 text-sm opacity-85">
-              Your plan delivers {verdictLimit ?? 1} verdict{(verdictLimit ?? 1) === 1 ? "" : "s"} per scan
-            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold backdrop-blur-xs">
+                Active Plan: {verdictLimit ?? 2} verdicts / predictions per scan
+              </span>
+            </div>
 
             <div className="mt-6">
               <Progress
@@ -276,12 +281,39 @@ function UpgradeDialog() {
 
   const pkg = (packages ?? []).find((p) => p.id === selected) ?? null;
 
+  const [momoCopied, setMomoCopied] = useState(false);
+  const handleCopyMomo = async () => {
+    const num = settings?.momo_number;
+    if (!num) return;
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(num);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = num;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setMomoCopied(true);
+      toast.success("Payment number copied!");
+      setTimeout(() => setMomoCopied(false), 2200);
+    } catch {
+      toast.error("Please copy the number manually.");
+    }
+  };
+
   const reset = () => {
     setStep(1);
     setSelected(null);
     setSenderName("");
     setReference("");
     setPaymentId(null);
+    setMomoCopied(false);
   };
 
   const submit = useMutation({
@@ -475,12 +507,18 @@ function UpgradeDialog() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(settings?.momo_number ?? "");
-                  toast.success("Number copied");
-                }}
+                className="min-w-[90px] transition-all"
+                onClick={handleCopyMomo}
               >
-                <Copy className="mr-1 size-3.5" /> Copy
+                {momoCopied ? (
+                  <span className="flex items-center gap-1.5 font-bold text-emerald-600 animate-in zoom-in-75 duration-200">
+                    <Check className="size-3.5 stroke-[3]" /> Copied!
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <Copy className="size-3.5" /> Copy
+                  </span>
+                )}
               </Button>
             </div>
             <div className="relative">

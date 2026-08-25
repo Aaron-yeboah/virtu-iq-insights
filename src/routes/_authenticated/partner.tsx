@@ -77,7 +77,7 @@ function PartnerPage() {
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
             <Handshake className="size-3.5" /> Verified partner
           </span>
-          <p className="mt-5 text-sm opacity-85">Commissions earned</p>
+          <p className="mt-5 text-sm opacity-85">Pending payout balance</p>
           <p className="mt-1 text-5xl font-extrabold leading-none tracking-tight">
             {ghs(stats?.commissions_ghs ?? 0)}
           </p>
@@ -128,15 +128,15 @@ function PartnerPage() {
           icon={<Users className="size-4" />}
         />
         <Stat
-          label="Revenue from your members"
-          value={ghs(stats?.revenue_ghs ?? 0)}
-          hint="Approved package payments"
+          label="Lifetime Member Revenue"
+          value={ghs(stats?.lifetime_revenue_ghs ?? stats?.revenue_ghs ?? 0)}
+          hint="All-time approved package volume"
           icon={<TrendingUp className="size-4" />}
         />
         <Stat
-          label="Commissions made"
-          value={ghs(stats?.commissions_ghs ?? 0)}
-          hint={`${stats?.commission_rate ?? 10}% of every approved payment`}
+          label="Lifetime Commissions"
+          value={ghs(stats?.lifetime_commissions_ghs ?? stats?.commissions_ghs ?? 0)}
+          hint="All-time earnings from referrals"
           icon={<Wallet className="size-4" />}
         />
       </div>
