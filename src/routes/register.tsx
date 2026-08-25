@@ -9,10 +9,15 @@ import { AuthBackground } from "@/components/brand/AuthBackground";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
+type SearchParams = {
+  ref?: string;
+  partner?: boolean;
+};
+
 export const Route = createFileRoute("/register")({
-  validateSearch: (search: Record<string, unknown>): { ref?: string; partner?: boolean } => ({
-    ...(typeof search["ref"] === "string" ? { ref: search["ref"].slice(0, 16) } : {}),
-    ...(search["partner"] === "1" || search["partner"] === true ? { partner: true } : {}),
+  validateSearch: (search: Record<string, unknown>): SearchParams => ({
+    ref: typeof search.ref === "string" ? search.ref : undefined,
+    partner: search.partner === true || search.partner === "1" || search.partner === "true",
   }),
   head: () => ({
     meta: [
@@ -56,6 +61,7 @@ function RegisterPage() {
 
   const score = strength(password);
   const labels = ["Too weak", "Weak", "Fair", "Strong", "Excellent"];
+  const colors = ["bg-destructive", "bg-destructive", "bg-amber-500", "bg-emerald-500", "bg-emerald-600"];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
