@@ -37,12 +37,29 @@ function PartnerPage() {
       ? `${window.location.origin}/register?ref=${profile.referral_code}`
       : "";
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!referralLink) return;
-    void navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    toast.success("Referral link copied to clipboard");
-    setTimeout(() => setCopied(false), 2200);
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(referralLink);
+      } else {
+        // Fallback for mobile browsers without Clipboard API
+        const textarea = document.createElement("textarea");
+        textarea.value = referralLink;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      toast.success("Referral link copied!");
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      toast.error("Could not copy — long-press the link to copy manually.");
+    }
   };
 
   return (
