@@ -1,54 +1,36 @@
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-export function renderErrorPage(error?: unknown): string {
-  const msg =
-    error instanceof Error
-      ? error.stack || `${error.name}: ${error.message}`
-      : typeof error === "string"
-        ? error
-        : error
-          ? JSON.stringify(error)
-          : "";
-
-  const errorDetails = msg
-    ? `<div style="margin: 1rem auto 1.5rem; text-align: left; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.75rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto;">${escapeHtml(msg)}</div>`
-    : "";
-
+export function renderErrorPage(_error?: unknown): string {
+  // Never show raw errors to users — present a branded recovery screen
+  // that auto-reloads after 2 seconds to silently recover from transient SSR failures.
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>This page didn't load</title>
+    <title>Virtu-IQ</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      body { font: 15px/1.5 system-ui, -apple-system, sans-serif; background: #fafafa; color: #111; display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 1.5rem; }
-      .card { max-width: 32rem; width: 100%; text-align: center; padding: 2rem; background: #fff; border-radius: 0.75rem; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-      h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem; }
-      p { color: #4b5563; margin: 0 0 1rem; }
+      body { font: 15px/1.5 system-ui, -apple-system, sans-serif; background: #0a0a0a; color: #fafafa; display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 1.5rem; }
+      .card { max-width: 24rem; width: 100%; text-align: center; padding: 2rem; }
+      .logo { width: 56px; height: 56px; margin: 0 auto 1.5rem; animation: pulse 1.6s ease-in-out infinite; }
+      @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+      h1 { font-size: 1.125rem; font-weight: 600; margin: 0 0 0.5rem; }
+      p { color: #9ca3af; margin: 0 0 1.5rem; font-size: 0.875rem; }
       .actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-      a, button { padding: 0.5rem 1rem; border-radius: 0.375rem; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-      .primary { background: #111; color: #fff; }
-      .secondary { background: #fff; color: #111; border-color: #d1d5db; }
+      a, button { padding: 0.5rem 1rem; border-radius: 0.375rem; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; font-size: 0.875rem; }
+      .primary { background: #fff; color: #111; }
+      .secondary { background: transparent; color: #fafafa; border-color: #333; }
     </style>
   </head>
   <body>
     <div class="card">
-      <h1>This page didn't load</h1>
-      <p>Something went wrong on our end. You can try refreshing or head back home.</p>
-      ${errorDetails}
+      <img src="/virtu-iq-symbol.png" alt="" class="logo" />
+      <h1>Loading Virtu-IQ…</h1>
+      <p>Please wait while we connect.</p>
       <div class="actions">
-        <button class="primary" onclick="location.reload()">Try again</button>
-        <a class="secondary" href="/">Go home</a>
+        <button class="primary" onclick="location.reload()">Refresh</button>
+        <a class="secondary" href="/">Home</a>
       </div>
     </div>
+    <script>setTimeout(function(){location.reload()},2000)</script>
   </body>
 </html>`;
 }
-

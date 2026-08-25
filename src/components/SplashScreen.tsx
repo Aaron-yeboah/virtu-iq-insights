@@ -10,11 +10,11 @@ export function SplashScreen() {
       setVisible(false);
       return;
     }
-    const fadeTimer = setTimeout(() => setFading(true), 1300);
+    const fadeTimer = setTimeout(() => setFading(true), 350);
     const hideTimer = setTimeout(() => {
       setVisible(false);
       sessionStorage.setItem("viq-splash", "1");
-    }, 1800);
+    }, 600);
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);

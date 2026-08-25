@@ -19,45 +19,46 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <img src="/virtu-iq-symbol.png" alt="" className="mx-auto h-14 w-auto animate-pulse mb-6" />
+        <h2 className="text-lg font-semibold text-foreground">Taking you home…</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          This page doesn't exist. Redirecting you automatically.
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Go home now
           </Link>
         </div>
+        <script dangerouslySetInnerHTML={{ __html: `setTimeout(function(){window.location.href='/'},2000)` }} />
       </div>
     </div>
   );
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+    // Auto-retry once after 1.5 seconds to silently recover from transient SSR errors
+    const timer = setTimeout(() => {
+      void router.invalidate().then(() => reset());
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [error, router, reset]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+        <img src="/virtu-iq-symbol.png" alt="" className="mx-auto h-14 w-auto animate-pulse mb-6" />
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          Loading Virtu-IQ…
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Reconnecting to the server. This should only take a moment.
         </p>
-        {error?.message && (
-          <p className="mt-3 text-xs text-destructive font-mono bg-destructive/10 p-2.5 rounded-lg max-w-sm mx-auto overflow-auto text-left">
-            {error.message}
-          </p>
-        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -66,7 +67,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Refresh
           </button>
           <a
             href="/"
@@ -186,19 +187,18 @@ function RootComponent() {
 
 // Last-resort boundary: router boundaries ignore falsy thrown values (e.g. `throw undefined`),
 // which loops into a blank screen. This catches anything and always renders a recovery screen.
-class AppErrorBoundary extends Component<{ children: ReactNode }, { crashed: boolean; message: string }> {
-  override state = { crashed: false, message: "" };
+class AppErrorBoundary extends Component<{ children: ReactNode }, { crashed: boolean }> {
+  override state = { crashed: false };
 
-  static getDerivedStateFromError(error: unknown) {
-    return {
-      crashed: true,
-      message: error instanceof Error && error.message ? error.message : "",
-    };
+  static getDerivedStateFromError() {
+    return { crashed: true };
   }
 
   override componentDidCatch(error: unknown) {
     console.error("App error boundary:", error);
     reportLovableError(error, { boundary: "app_root_boundary" });
+    // Auto-reload after 2s to silently recover
+    setTimeout(() => window.location.reload(), 2000);
   }
 
   override render() {
@@ -206,23 +206,19 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { crashed: boo
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="max-w-md text-center">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">
-            This page didn't load
+          <img src="/virtu-iq-symbol.png" alt="" className="mx-auto h-14 w-auto animate-pulse mb-6" />
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+            Loading Virtu-IQ…
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Something went wrong. Please try again.
+            Please wait while we reconnect.
           </p>
-          {this.state.message && (
-            <p className="mt-3 max-w-sm mx-auto overflow-auto rounded-lg bg-destructive/10 p-2.5 text-left font-mono text-xs text-destructive">
-              {this.state.message}
-            </p>
-          )}
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <button
               onClick={() => window.location.reload()}
               className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              Reload
+              Refresh now
             </button>
             <a
               href="/"
