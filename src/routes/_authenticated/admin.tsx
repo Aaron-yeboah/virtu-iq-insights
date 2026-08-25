@@ -22,7 +22,18 @@ import { LogoSymbol } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteMember, explodePlatformData } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Copy, Trash2 } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Coins,
+  Copy,
+  Mail,
+  Phone,
+  Search,
+  Trash2,
+  User as UserIcon,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -144,73 +155,16 @@ function AdminPage() {
           <PartnerManager />
         </TabsContent>
 
-        <TabsContent value="payments" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-          {(payments ?? []).length === 0 && <p className="p-5 text-sm text-muted-foreground">No payments yet.</p>}
-          {(payments ?? []).map((p) => (
-            <div key={p.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">
-                  {ghs(p.amount_ghs)} ·{" "}
-                  {p.kind === "registration" ? "Registration fee" : `${p.credits} credits`} · {p.method}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">Ref: {p.reference}</p>
-                <p className="truncate text-xs text-muted-foreground">MoMo name: {p.sender_name ?? "—"}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {new Date(p.created_at).toLocaleString()} · user {p.user_id.slice(0, 8)}
-                </p>
-              </div>
-              {p.status === "pending" ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" className="flex-1 sm:flex-none" disabled={reviewPayment.isPending} onClick={() => reviewPayment.mutate({ id: p.id, approve: true })}>
-                    Approve
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={reviewPayment.isPending} onClick={() => reviewPayment.mutate({ id: p.id, approve: false })}>
-                    Reject
-                  </Button>
-                </div>
-              ) : (
-                <Badge className="w-fit" variant={p.status === "approved" ? "default" : "destructive"}>{p.status}</Badge>
-              )}
-            </div>
-          ))}
+        <TabsContent value="payments" className="mt-4">
+          <PaymentsList payments={payments ?? []} reviewPayment={reviewPayment} />
         </TabsContent>
 
         <TabsContent value="partners" className="mt-4">
           <PartnerPayouts />
         </TabsContent>
 
-        <TabsContent value="members" className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-          {(members ?? []).length === 0 && (
-            <p className="p-5 text-sm text-muted-foreground">No members yet.</p>
-          )}
-          {(members ?? []).map((m) => (
-            <div key={m.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
-                  <span className="truncate">{m.full_name ?? m.email}</span>
-                  <Badge variant={m.registration_paid ? "default" : "destructive"}>
-                    {m.registration_paid ? "Registered" : "Fee pending"}
-                  </Badge>
-                </div>
-                <p className="truncate text-xs text-muted-foreground">{m.email}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  Phone: {m.phone || "—"} · Code {m.referral_code} · {m.credits} credit
-                  {m.credits === 1 ? "" : "s"}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  Registered {new Date(m.created_at).toLocaleString()} · Last login{" "}
-                  {m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleString() : "never"}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{ghs(m.spent_ghs)}</span>
-                <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
-                {m.id !== user.id && (
-                  <RemoveMember userId={m.id} label={m.full_name ?? m.email ?? "this member"} />
-                )}
-              </div>
-            </div>
-          ))}
+        <TabsContent value="members" className="mt-4">
+          <MembersList members={members ?? []} currentUserId={user.id} />
         </TabsContent>
 
         <TabsContent value="audit" className="mt-4 space-y-4">
@@ -278,7 +232,7 @@ function RemoveMember({ userId, label }: { userId: string; label: string }) {
 
 function AuditLogList({ logs }: { logs: AuditLog[] }) {
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? logs : logs.slice(0, 4);
+  const visible = expanded ? logs : logs.slice(0, 12);
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
@@ -293,10 +247,248 @@ function AuditLogList({ logs }: { logs: AuditLog[] }) {
           </div>
         ))}
       </div>
-      {logs.length > 4 && (
+      {logs.length > 12 && (
         <div className="border-t border-border p-3">
-          <Button variant="ghost" size="sm" className="w-full" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? "Collapse" : `Show ${logs.length - 4} more`}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full flex items-center justify-center gap-1.5 font-medium"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="size-4" /> Collapse (show top 12)
+              </>
+            ) : (
+              <>
+                <ChevronDown className="size-4" /> Show all {logs.length} logs ({logs.length - 12} more)
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type AdminPaymentItem = {
+  id: string;
+  user_id: string;
+  amount_ghs: number;
+  credits: number;
+  kind: string;
+  method: string;
+  reference: string;
+  sender_name: string | null;
+  status: string;
+  admin_note?: string | null;
+  created_at: string;
+};
+
+function PaymentsList({
+  payments,
+  reviewPayment,
+}: {
+  payments: AdminPaymentItem[];
+  reviewPayment: { isPending: boolean; mutate: (vars: { id: string; approve: boolean }) => void };
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? payments : payments.slice(0, 12);
+
+  return (
+    <div className="space-y-3">
+      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        {payments.length === 0 && <p className="p-5 text-sm text-muted-foreground">No payments yet.</p>}
+        {visible.map((p) => (
+          <div key={p.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                {ghs(p.amount_ghs)} ·{" "}
+                {p.kind === "registration" ? "Registration fee" : `${p.credits} credits`} · {p.method}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">Ref: {p.reference}</p>
+              <p className="truncate text-xs text-muted-foreground">MoMo name: {p.sender_name ?? "—"}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {new Date(p.created_at).toLocaleString()} · user {p.user_id.slice(0, 8)}
+              </p>
+            </div>
+            {p.status === "pending" ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                  disabled={reviewPayment.isPending}
+                  onClick={() => reviewPayment.mutate({ id: p.id, approve: true })}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                  disabled={reviewPayment.isPending}
+                  onClick={() => reviewPayment.mutate({ id: p.id, approve: false })}
+                >
+                  Reject
+                </Button>
+              </div>
+            ) : (
+              <Badge className="w-fit" variant={p.status === "approved" ? "default" : "destructive"}>
+                {p.status}
+              </Badge>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {payments.length > 12 && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1.5"
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="size-4" /> Show less (top 12)
+              </>
+            ) : (
+              <>
+                <ChevronDown className="size-4" /> Show all {payments.length} payments ({payments.length - 12} more)
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MembersList({ members, currentUserId }: { members: MemberRow[]; currentUserId: string }) {
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState(false);
+
+  const filtered = members.filter((m) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (m.full_name || "").toLowerCase().includes(q) ||
+      (m.email || "").toLowerCase().includes(q) ||
+      (m.phone || "").toLowerCase().includes(q) ||
+      (m.referral_code || "").toLowerCase().includes(q)
+    );
+  });
+
+  const visible = expanded ? filtered : filtered.slice(0, 12);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 sm:max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search members by name, email, phone or referral code..."
+            aria-label="Search members"
+            className="pl-9"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Showing <span className="font-semibold text-foreground">{visible.length}</span> of{" "}
+          <span className="font-semibold text-foreground">{filtered.length}</span> members
+        </p>
+      </div>
+
+      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        {filtered.length === 0 && (
+          <p className="p-8 text-center text-sm text-muted-foreground">
+            {search ? "No members match your search." : "No registered members yet."}
+          </p>
+        )}
+        {visible.map((m) => {
+          const nameDisplay = m.full_name || m.email || "Member";
+          const initials = nameDisplay
+            .split(" ")
+            .map((n) => n[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
+
+          return (
+            <div key={m.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary text-xs">
+                  {initials}
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-foreground text-sm truncate">
+                      {m.full_name || m.email}
+                    </span>
+                    {m.is_admin && <Badge variant="secondary" className="text-[10px]">Admin</Badge>}
+                    {m.is_partner && <Badge className="text-[10px]">Partner</Badge>}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Mail className="size-3 text-muted-foreground/70" /> {m.email}
+                    </span>
+                    {m.phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="size-3 text-muted-foreground/70" /> {m.phone}
+                      </span>
+                    )}
+                    <span className="rounded bg-muted/60 px-1.5 py-0.5 text-[11px] font-mono font-medium">
+                      Code: {m.referral_code}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground pt-0.5">
+                    <span className="flex items-center gap-1 font-medium text-foreground">
+                      <Coins className="size-3 text-primary" /> {m.credits} credit{m.credits === 1 ? "" : "s"}
+                    </span>
+                    <span>·</span>
+                    <span>Spent: <strong className="text-foreground">{ghs(m.spent_ghs)}</strong></span>
+                    <span>·</span>
+                    <span>Joined: {new Date(m.created_at).toLocaleDateString()}</span>
+                    {m.last_sign_in_at && (
+                      <>
+                        <span>·</span>
+                        <span>Active: {new Date(m.last_sign_in_at).toLocaleDateString()}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center">
+                <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
+                {m.id !== currentUserId && (
+                  <RemoveMember userId={m.id} label={m.full_name ?? m.email ?? "this member"} />
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {filtered.length > 12 && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1.5"
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="size-4" /> Show less (top 12)
+              </>
+            ) : (
+              <>
+                <ChevronDown className="size-4" /> Show all {filtered.length} members ({filtered.length - 12} more)
+              </>
+            )}
           </Button>
         </div>
       )}
@@ -597,6 +789,9 @@ function PartnerManager() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [expandedRows, setExpandedRows] = useState(false);
+  const visibleRows = expandedRows ? rows : rows.slice(0, 12);
+
   return (
     <div className="space-y-4">
       <PartnerInviteLink />
@@ -647,7 +842,7 @@ function PartnerManager() {
             {isFetching ? "Loading members…" : "No members match this filter."}
           </p>
         )}
-        {rows.map((m) => (
+        {visibleRows.map((m) => (
           <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
@@ -702,6 +897,27 @@ function PartnerManager() {
           </div>
         ))}
       </div>
+
+      {rows.length > 12 && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExpandedRows((v) => !v)}
+            className="flex items-center gap-1.5"
+          >
+            {expandedRows ? (
+              <>
+                <ChevronUp className="size-4" /> Show less (top 12)
+              </>
+            ) : (
+              <>
+                <ChevronDown className="size-4" /> Show all {rows.length} members ({rows.length - 12} more)
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
