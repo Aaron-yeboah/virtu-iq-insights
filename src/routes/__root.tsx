@@ -92,7 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Virtu-IQ turns screenshots into intelligent, structured insight reports using AI image analysis.",
       },
       { name: "author", content: "Virtu-IQ" },
-      { name: "theme-color", content: "#2563EB" },
+      { name: "theme-color", content: "#ffffff" },
       { property: "og:title", content: "Virtu-IQ — AI Visual Analytics" },
       {
         property: "og:description",
