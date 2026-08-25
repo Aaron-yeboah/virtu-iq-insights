@@ -328,13 +328,14 @@ function UpgradeDialog() {
       const { data, error } = await supabase
         .from("payments")
         .insert({
-        user_id: user.id,
-        package_id: pkg.id,
-        amount_ghs: pkg.price_ghs,
-        credits: pkg.credits,
-        method,
-        sender_name: name,
-        reference: ref || "Not provided",
+          user_id: user.id,
+          package_id: pkg.id,
+          amount_ghs: pkg.price_ghs,
+          credits: pkg.credits,
+          kind: "package",
+          method,
+          sender_name: name,
+          reference: ref || "Not provided",
         })
         .select("id")
         .single();

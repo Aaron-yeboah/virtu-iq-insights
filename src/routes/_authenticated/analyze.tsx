@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { runAnalysis } from "@/lib/analysis.functions";
 import { getFreshAccessToken } from "@/lib/auth-bearer";
 import { profileQuery, verdictLimitQuery } from "@/lib/data";
+import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
 import { LogoSymbol } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
@@ -51,8 +52,9 @@ function AnalyzePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const analyze = useServerFn(runAnalysis);
-  const { data: profile } = useQuery(profileQuery(user.id));
-  const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
+  usePaymentRealtime(user.id);
+  const { data: profile } = useQuery({ ...profileQuery(user.id), refetchInterval: 3000 });
+  const { data: verdictLimit } = useQuery({ ...verdictLimitQuery(user.id), refetchInterval: 3000 });
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
