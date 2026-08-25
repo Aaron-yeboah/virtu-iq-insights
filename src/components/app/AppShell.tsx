@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   ScanSearch,
@@ -10,6 +11,7 @@ import {
   ShieldCheck,
   LogOut,
   Menu,
+  WifiOff,
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,9 +40,31 @@ export function AppShell({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast.success("Back online — syncing latest data…");
+      void queryClient.invalidateQueries();
+    };
+    const handleOffline = () => {
+      setIsOffline(true);
+      toast.error("You are currently offline. Check your network connection.");
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    if (!navigator.onLine) setIsOffline(true);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [queryClient]);
 
   const { data: profile } = useQuery(profileQuery(userId));
   const partnerOnly = isPartner && !isAdmin;

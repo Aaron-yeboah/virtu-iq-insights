@@ -112,12 +112,23 @@ export const runAnalysis = createServerFn({ method: "POST" })
 
     let raw = "";
 
+    // 25-second serverless timeout guard
+    const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs = 25000): Promise<Response> => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
     if (lovableKey) {
       // Lovable AI Gateway (OpenAI-compatible chat completions)
       const imageUrl = base64Image ? `data:${mimeType};base64,${base64Image}` : signed.signedUrl;
       let response: Response;
       try {
-        response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        response = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -137,8 +148,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
             ],
           }),
         });
-      } catch {
-        return fail("The AI service could not be reached. Please try again.");
+      } catch (err: unknown) {
+        const isAbort = err instanceof Error && err.name === "AbortError";
+        return fail(isAbort ? "AI processing timed out. Please try a clearer screenshot." : "The AI service could not be reached. Please try again.");
       }
 
       if (response.status === 429) return fail("Rate limit reached. Please try again in a moment.");
@@ -166,7 +178,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
 
       let geminiRes: Response;
       try {
-        geminiRes = await fetch(geminiUrl, {
+        geminiRes = await fetchWithTimeout(geminiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -176,8 +188,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
             },
           }),
         });
-      } catch {
-        return fail("The AI service could not be reached. Please try again.");
+      } catch (err: unknown) {
+        const isAbort = err instanceof Error && err.name === "AbortError";
+        return fail(isAbort ? "AI processing timed out. Please try a clearer screenshot." : "The AI service could not be reached. Please try again.");
       }
 
       if (geminiRes.status === 429) return fail("Rate limit reached. Please try again in a moment.");
@@ -193,7 +206,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
     } else if (openAiKey) {
       let response: Response;
       try {
-        response = await fetch("https://api.openai.com/v1/chat/completions", {
+        response = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${openAiKey}` },
           body: JSON.stringify({
@@ -210,8 +223,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
             ],
           }),
         });
-      } catch {
-        return fail("The AI service could not be reached. Please try again.");
+      } catch (err: unknown) {
+        const isAbort = err instanceof Error && err.name === "AbortError";
+        return fail(isAbort ? "AI processing timed out. Please try a clearer screenshot." : "The AI service could not be reached. Please try again.");
       }
 
       if (response.status === 429) return fail("Rate limit reached. Please try again in a moment.");

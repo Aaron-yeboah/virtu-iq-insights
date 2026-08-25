@@ -12,6 +12,7 @@ import { runAnalysis } from "@/lib/analysis.functions";
 import { getFreshAccessToken } from "@/lib/auth-bearer";
 import { profileQuery, verdictLimitQuery } from "@/lib/data";
 import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
+import { compressImage } from "@/lib/image-compress";
 import { LogoSymbol } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
@@ -67,12 +68,13 @@ function AnalyzePage() {
       if (!file.type.startsWith("image/")) throw new Error("Only image files are supported.");
       if (file.size > MAX_BYTES) throw new Error("Images must be smaller than 8MB.");
 
-      const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+      const processedFile = await compressImage(file);
+      const ext = processedFile.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "webp";
       const path = `${user.id}/${generateUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("screenshots")
-        .upload(path, file, { contentType: file.type });
+        .upload(path, processedFile, { contentType: processedFile.type });
       if (uploadError) throw new Error(uploadError.message);
 
       const { data: created, error: insertError } = await supabase
