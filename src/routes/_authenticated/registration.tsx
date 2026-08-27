@@ -105,6 +105,11 @@ function RegistrationFeePage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
+      void supabase.channel("admin-realtime-websocket").send({
+        type: "broadcast",
+        event: "payment-submitted",
+        payload: { userId: user.id },
+      });
       await queryClient.invalidateQueries({ queryKey: ["registration-payment", user.id] });
       toast.success("Submitted — an admin will approve shortly.");
     },

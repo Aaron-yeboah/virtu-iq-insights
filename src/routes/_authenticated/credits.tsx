@@ -345,6 +345,11 @@ function UpgradeDialog() {
     onSuccess: async (id: string) => {
       setPaymentId(id);
       setStep(3);
+      void supabase.channel("admin-realtime-websocket").send({
+        type: "broadcast",
+        event: "payment-submitted",
+        payload: { userId: user.id },
+      });
       await queryClient.invalidateQueries({ queryKey: ["payments", user.id] });
     },
     onError: (e: Error) => toast.error(e.message),

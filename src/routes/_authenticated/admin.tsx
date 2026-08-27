@@ -92,6 +92,16 @@ function useAdminRealtime(enabled: boolean) {
     const channel = supabase
       .channel("admin-realtime-websocket")
       .on(
+        "broadcast",
+        { event: "payment-submitted" },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-members"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] });
+        }
+      )
+      .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "payments" },
         () => {
@@ -144,9 +154,21 @@ function AdminPage() {
   // Subscribe to real-time WebSockets when admin access is granted
   useAdminRealtime(isAdmin);
 
-  const { data: stats } = useQuery({ ...adminStatsQuery(), enabled: isAdmin });
-  const { data: payments } = useQuery({ ...adminPaymentsQuery(), enabled: isAdmin });
-  const { data: members } = useQuery({ ...adminMemberListQuery({}), enabled: isAdmin });
+  const { data: stats } = useQuery({
+    ...adminStatsQuery(),
+    enabled: isAdmin,
+    refetchInterval: 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+  });
+  const { data: payments } = useQuery({
+    ...adminPaymentsQuery(),
+    enabled: isAdmin,
+    refetchInterval: 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+  });
+  const { data: members } = useQuery({ ...adminMemberListQuery({}), enabled: isAdmin, refetchInterval: 2000 });
   const { data: logs } = useQuery({ ...auditLogsQuery(), enabled: isAdmin });
   const { data: settings } = useQuery({ ...paymentSettingsQuery(), enabled: isAdmin });
 
