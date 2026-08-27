@@ -30,6 +30,7 @@ export const rolesQuery = (userId: string) =>
 export const packagesQuery = () =>
   queryOptions({
     queryKey: ["packages"],
+    staleTime: 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("packages")
@@ -44,6 +45,7 @@ export const packagesQuery = () =>
 export const verdictLimitQuery = (userId: string) =>
   queryOptions({
     queryKey: ["verdict-limit", userId],
+    staleTime: 15 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("my_verdict_limit");
       if (error) throw error;
@@ -65,6 +67,7 @@ export type PaymentSettings = {
 export const paymentSettingsQuery = () =>
   queryOptions({
     queryKey: ["payment-settings"],
+    staleTime: 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payment_settings")

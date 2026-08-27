@@ -35,8 +35,12 @@ function RegistrationFeePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: settings } = useQuery(paymentSettingsQuery());
-  const { data: profile } = useQuery({ ...profileQuery(user.id), refetchInterval: 3000 });
-  const { data: pending } = useQuery({ ...registrationPaymentQuery(user.id), refetchInterval: 3000 });
+  const { data: pending } = useQuery(registrationPaymentQuery(user.id));
+  const isPending = pending?.status === "pending";
+  const { data: profile } = useQuery({
+    ...profileQuery(user.id),
+    refetchInterval: isPending ? 4000 : false,
+  });
   usePaymentRealtime(user.id);
 
   const [method, setMethod] = useState<string>(METHODS[0]);

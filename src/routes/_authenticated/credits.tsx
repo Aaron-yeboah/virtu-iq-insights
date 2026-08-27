@@ -66,11 +66,18 @@ function CreditsPage() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: profile } = useQuery({ ...profileQuery(user.id), refetchInterval: 3000 });
+  const { data: payments } = useQuery(paymentsQuery(user.id));
+  const hasPending = (payments ?? []).some((p) => p.status === "pending");
+  const { data: profile } = useQuery({
+    ...profileQuery(user.id),
+    refetchInterval: hasPending ? 4000 : false,
+  });
   const { data: packages } = useQuery(packagesQuery());
-  const { data: payments } = useQuery({ ...paymentsQuery(user.id), refetchInterval: 3000 });
-  const { data: history } = useQuery({ ...creditHistoryQuery(user.id), refetchInterval: 3000 });
-  const { data: verdictLimit } = useQuery({ ...verdictLimitQuery(user.id), refetchInterval: 3000 });
+  const { data: history } = useQuery({
+    ...creditHistoryQuery(user.id),
+    refetchInterval: hasPending ? 4000 : false,
+  });
+  const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
   usePaymentRealtime(user.id);
 
   const seen = useRef<Map<string, string> | null>(null);

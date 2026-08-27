@@ -54,8 +54,8 @@ function AnalyzePage() {
   const queryClient = useQueryClient();
   const analyze = useServerFn(runAnalysis);
   usePaymentRealtime(user.id);
-  const { data: profile } = useQuery({ ...profileQuery(user.id), refetchInterval: 3000 });
-  const { data: verdictLimit } = useQuery({ ...verdictLimitQuery(user.id), refetchInterval: 3000 });
+  const { data: profile } = useQuery(profileQuery(user.id));
+  const { data: verdictLimit } = useQuery(verdictLimitQuery(user.id));
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
