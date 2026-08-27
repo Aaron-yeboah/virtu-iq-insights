@@ -67,11 +67,15 @@ export function AppShell({
   }, [queryClient]);
 
   const { data: profile } = useQuery(profileQuery(userId));
-  const nav = [
-    ...baseNav.filter((item) => item.to !== "/partner"),
-    ...(isPartner || isAdmin ? ([{ to: "/partner", label: "Partner Hub", icon: Handshake }] as const) : []),
-    ...(isAdmin ? ([{ to: "/admin", label: "Admin", icon: ShieldCheck }] as const) : []),
-  ];
+  const partnerOnly = isPartner && !isAdmin;
+
+  const nav = partnerOnly
+    ? ([{ to: "/partner", label: "Partner Hub", icon: Handshake }] as const)
+    : [
+        ...baseNav.filter((item) => item.to !== "/partner"),
+        ...(isAdmin ? ([{ to: "/partner", label: "Partner", icon: Handshake }] as const) : []),
+        ...(isAdmin ? ([{ to: "/admin", label: "Admin", icon: ShieldCheck }] as const) : []),
+      ];
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -113,15 +117,17 @@ export function AppShell({
           <LogoFull className="h-7 w-auto object-contain" />
         </Link>
         <div className="mt-8 flex-1">{navList}</div>
-        <div className="rounded-lg border border-border bg-secondary/60 p-3">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Credit balance
-          </p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{profile?.credits ?? 0}</p>
-          <Button asChild size="sm" className="mt-3 w-full">
-            <Link to="/credits">Top up</Link>
-          </Button>
-        </div>
+        {!partnerOnly && (
+          <div className="rounded-lg border border-border bg-secondary/60 p-3">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Credit balance
+            </p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{profile?.credits ?? 0}</p>
+            <Button asChild size="sm" className="mt-3 w-full">
+              <Link to="/credits">Top up</Link>
+            </Button>
+          </div>
+        )}
         <button
           type="button"
           onClick={signOut}
@@ -137,7 +143,7 @@ export function AppShell({
         </Link>
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-foreground">
-            {profile?.credits ?? 0} credits
+            {partnerOnly ? "Partner" : `${profile?.credits ?? 0} credits`}
           </span>
           <button
             type="button"

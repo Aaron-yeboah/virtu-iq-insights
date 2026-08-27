@@ -44,8 +44,9 @@ export const Route = createFileRoute("/_authenticated")({
     }
 
     if (!isAdmin) {
+      if (isPartner && !path.startsWith("/partner")) throw redirect({ to: "/partner" });
       if (!isPartner && path.startsWith("/partner")) throw redirect({ to: "/dashboard" });
-      if (path.startsWith("/admin")) throw redirect({ to: "/dashboard" });
+      if (path.startsWith("/admin")) throw redirect({ to: isPartner ? "/partner" : "/dashboard" });
     }
 
     let registrationPaid = true;

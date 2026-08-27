@@ -33,8 +33,19 @@ function LoginPage() {
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (data.session?.user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.session.user.id);
+        const roles = (roleData ?? []).map((r) => r.role);
+        if (roles.includes("partner") && !roles.includes("admin")) {
+          navigate({ to: "/partner", replace: true });
+        } else {
+          navigate({ to: "/dashboard", replace: true });
+        }
+      }
     });
   }, [navigate]);
 
@@ -80,12 +91,24 @@ function LoginPage() {
       }
       loginEmail = resolvedEmail;
     }
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password,
     });
     setPending(false);
     if (signInError) return setError(signInError.message);
+
+    if (signInData.user) {
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", signInData.user.id);
+      const roles = (roleData ?? []).map((r) => r.role);
+      if (roles.includes("partner") && !roles.includes("admin")) {
+        navigate({ to: "/partner", replace: true });
+        return;
+      }
+    }
     navigate({ to: "/dashboard", replace: true });
   }
 
