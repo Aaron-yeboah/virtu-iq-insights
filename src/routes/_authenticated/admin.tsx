@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -557,34 +557,9 @@ function PaymentsList({
 type MemberSortKey = "newest" | "oldest" | "active" | "spent" | "credits" | "referrals";
 
 function MembersList({ members, currentUserId }: { members: MemberRow[]; currentUserId: string }) {
-  const queryClient = useQueryClient();
-  const router = useRouter();
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [sortBy, setSortBy] = useState<MemberSortKey>("newest");
-
-  const setAdmin = useMutation({
-    mutationFn: async ({ id, make }: { id: string; make: boolean }) => {
-      const { error } = await supabase.rpc("admin_set_admin", { _user_id: id, _make: make });
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: async (_d, vars) => {
-      await queryClient.invalidateQueries();
-      // Force the route context (isAdmin flag) to refresh for ALL users
-      void router.invalidate();
-      toast.success(vars.make ? "Admin role granted" : "Admin role removed");
-    },
-    onError: (e: Error) =>
-      toast.error(
-        e.message === "FORBIDDEN"
-          ? "Admin access required"
-          : e.message === "CANNOT_REMOVE_DEFAULT_ADMIN"
-            ? "The default root admin cannot be removed"
-            : e.message === "CANNOT_REMOVE_SELF"
-              ? "You cannot remove your own admin role"
-              : e.message,
-      ),
-  });
 
   const now = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
@@ -750,17 +725,6 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center">
                 <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
-                {m.id !== currentUserId && (
-                  <Button
-                    size="sm"
-                    variant={m.is_admin ? "destructive" : "outline"}
-                    className="h-8 text-xs font-medium"
-                    disabled={setAdmin.isPending}
-                    onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
-                  >
-                    {m.is_admin ? "Remove admin" : "Make admin"}
-                  </Button>
-                )}
                 {m.id !== currentUserId && (
                   <RemoveMember userId={m.id} label={m.full_name ?? m.email ?? "this member"} />
                 )}
@@ -1135,8 +1099,6 @@ type MemberRow = {
 
 function PartnerManager() {
   const queryClient = useQueryClient();
-  const router = useRouter();
-  const { user } = Route.useRouteContext();
   const [search, setSearch] = useState("");
   const [onlyPartners, setOnlyPartners] = useState(false);
   const [partnerId, setPartnerId] = useState<string | null>(null);
@@ -1146,29 +1108,6 @@ function PartnerManager() {
     adminMemberListQuery({ search, onlyPartners, partnerId }),
   );
   const rows = (data ?? []) as MemberRow[];
-
-  const setAdmin = useMutation({
-    mutationFn: async ({ id, make }: { id: string; make: boolean }) => {
-      const { error } = await supabase.rpc("admin_set_admin", { _user_id: id, _make: make });
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: async (_d, vars) => {
-      await queryClient.invalidateQueries();
-      // Force the route context (isAdmin flag) to refresh for ALL users
-      void router.invalidate();
-      toast.success(vars.make ? "Admin role granted" : "Admin role removed");
-    },
-    onError: (e: Error) =>
-      toast.error(
-        e.message === "FORBIDDEN"
-          ? "Admin access required"
-          : e.message === "CANNOT_REMOVE_DEFAULT_ADMIN"
-            ? "The default root admin cannot be removed"
-            : e.message === "CANNOT_REMOVE_SELF"
-              ? "You cannot remove your own admin role"
-              : e.message,
-      ),
-  });
 
   const setPartner = useMutation({
     mutationFn: async ({ id, make }: { id: string; make: boolean }) => {
@@ -1330,17 +1269,6 @@ function PartnerManager() {
                 onClick={() => setPartner.mutate({ id: m.id, make: !m.is_partner })}
               >
                 {m.is_partner ? "Remove partner" : "Make partner"}
-              </Button>
-              {/* Admin toggle — same button switches label */}
-              <Button
-                size="sm"
-                variant={m.is_admin ? "destructive" : "outline"}
-                className="flex-1 sm:flex-none"
-                disabled={setAdmin.isPending || (m.id === user.id && m.is_admin)}
-                title={m.id === user.id && m.is_admin ? "Cannot remove your own admin role" : undefined}
-                onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
-              >
-                {m.is_admin ? "Remove admin" : "Make admin"}
               </Button>
             </div>
           </div>

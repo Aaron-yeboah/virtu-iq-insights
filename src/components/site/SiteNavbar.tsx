@@ -50,36 +50,46 @@ export function SiteNavbar() {
         </nav>
 
         {/* Desktop CTA */}
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-2.5 lg:flex">
           {loading ? null : isAuthenticated ? (
             <Button asChild className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wide border border-emerald-400">
               <Link to="/dashboard">Dashboard</Link>
             </Button>
           ) : (
             <>
-              <Button variant="ghost" asChild className="text-xs font-semibold uppercase tracking-wider text-white hover:bg-white/10 hover:text-white">
+              <Button asChild variant="outline" className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs font-bold uppercase tracking-wider h-9 px-4">
                 <Link to="/login">Log In</Link>
               </Button>
-              <Button asChild className="bg-gradient-to-b from-[#26AF53] to-[#1F9E48] border border-[#2BBE5C] text-white font-bold tracking-wider hover:brightness-110 shadow-lg shadow-emerald-900/30">
+              <Button asChild className="bg-gradient-to-b from-[#26AF53] to-[#1F9E48] border border-[#2BBE5C] text-white font-bold tracking-wider hover:brightness-110 shadow-lg shadow-emerald-900/30 h-9 px-5">
                 <Link to="/register">JOIN NOW</Link>
               </Button>
             </>
           )}
         </div>
 
-        {/* Mobile: compact CTA + hamburger */}
-        <div className="flex items-center gap-2 lg:hidden">
+        {/* Mobile & Tablet CTA */}
+        <div className="flex items-center gap-1.5 sm:gap-2 lg:hidden">
           {!loading && !isAuthenticated && (
-            <Button
-              asChild
-              size="sm"
-              className="hidden sm:flex bg-gradient-to-b from-[#26AF53] to-[#1F9E48] border border-[#2BBE5C] text-white font-bold text-xs px-3"
-            >
-              <Link to="/register">JOIN NOW</Link>
-            </Button>
+            <>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="h-8 border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs font-bold px-2.5 sm:px-3"
+              >
+                <Link to="/login">Log In</Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="h-8 bg-gradient-to-b from-[#26AF53] to-[#1F9E48] border border-[#2BBE5C] text-white font-bold text-xs px-2.5 sm:px-3"
+              >
+                <Link to="/register">JOIN</Link>
+              </Button>
+            </>
           )}
           {!loading && isAuthenticated && (
-            <Button asChild size="sm" className="hidden sm:flex bg-emerald-600 text-white font-bold text-xs px-3">
+            <Button asChild size="sm" className="h-8 bg-emerald-600 text-white font-bold text-xs px-3">
               <Link to="/dashboard">Dashboard</Link>
             </Button>
           )}
@@ -89,7 +99,7 @@ export function SiteNavbar() {
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
-            className="inline-flex size-10 items-center justify-center rounded-md text-white hover:bg-white/10 transition-colors"
+            className="inline-flex size-9 sm:size-10 items-center justify-center rounded-md text-white hover:bg-white/10 transition-colors ml-1 touch-manipulation"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
