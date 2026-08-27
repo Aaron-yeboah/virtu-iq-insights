@@ -15,10 +15,19 @@ type SearchParams = {
 };
 
 export const Route = createFileRoute("/register")({
-  validateSearch: (search: Record<string, unknown>): SearchParams => ({
-    ref: typeof search["ref"] === "string" ? search["ref"] : undefined,
-    partner: search["partner"] === true || search["partner"] === "1" || search["partner"] === "true",
-  }),
+  validateSearch: (search: Record<string, unknown>): SearchParams => {
+    const rawPartner = search["partner"];
+    const isPartner =
+      rawPartner === true ||
+      rawPartner === 1 ||
+      rawPartner === "1" ||
+      rawPartner === "true" ||
+      rawPartner === "";
+    return {
+      ref: typeof search["ref"] === "string" ? search["ref"] : undefined,
+      partner: isPartner ? true : undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Create Account — Virtu-IQ" },
@@ -56,9 +65,15 @@ function RegisterPage() {
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) {
+        if (isPartnerInvite) {
+          navigate({ to: "/partner-apply", replace: true });
+        } else {
+          navigate({ to: "/dashboard", replace: true });
+        }
+      }
     });
-  }, [navigate]);
+  }, [navigate, isPartnerInvite]);
 
   const score = strength(password);
   const labels = ["Too weak", "Weak", "Fair", "Strong", "Excellent"];
@@ -86,58 +101,78 @@ function RegisterPage() {
           full_name: fullName.trim().slice(0, 80),
           phone: phone.trim().slice(0, 24),
           referral_code: finalReferralCode,
-          ...(isPartnerInvite ? { partner_applicant: "true" } : {}),
+          partner_applicant: isPartnerInvite ? "true" : undefined,
         },
       },
     });
-    setPending(false);
-    if (signUpError) return setError(signUpError.message);
+
+    if (signUpError) {
+      setPending(false);
+      return setError(signUpError.message);
+    }
 
     if (isPartnerInvite) {
+      let newUserId = data.user?.id ?? data.session?.user?.id ?? "";
       if (!data.session) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: syntheticEmail,
           password,
         });
-        if (signInError) return setError(signInError.message);
+        if (signInError) {
+          setPending(false);
+          return setError(signInError.message);
+        }
+        newUserId = signInData.user?.id ?? newUserId;
       }
-      const newUserId = data.user?.id ?? data.session?.user?.id ?? "";
-      if (newUserId) {
-        // 1. Explicitly update profile to ensure registration_paid = true and partner_applicant = true
-        await supabase
-          .from("profiles")
-          .update({
-            partner_applicant: true,
-            registration_paid: true,
-          })
-          .eq("id", newUserId);
 
-        // 2. Auto-submit a partner application so admin can review and approve
-        await supabase.from("partner_applications").upsert(
-          {
-            user_id: newUserId,
-            audience: "Partner link invite",
-            motivation: "Registered via partner invitation link",
-            payout_method: "MTN MoMo",
-            payout_details: phone.trim(),
-            status: "pending",
-          },
-          { onConflict: "user_id" }
-        );
+      if (newUserId) {
+        // 1. Call secure RPC to mark as partner applicant and waive registration fee
+        await supabase.rpc("register_partner_applicant" as never, {
+          _user_id: newUserId,
+          _phone: phone.trim(),
+        } as never);
+
+        // 2. Direct upsert fallback
+        await Promise.allSettled([
+          supabase
+            .from("profiles")
+            .update({
+              partner_applicant: true,
+              registration_paid: true,
+            })
+            .eq("id", newUserId),
+          supabase.from("partner_applications").upsert(
+            {
+              user_id: newUserId,
+              audience: "Partner link invite",
+              motivation: "Registered via partner invitation link",
+              payout_method: "MTN MoMo",
+              payout_details: phone.trim(),
+              status: "pending",
+            },
+            { onConflict: "user_id" },
+          ),
+        ]);
       }
-      setNotice("Account created — awaiting partner approval…");
+
+      setPending(false);
+      setNotice("Partner account created — awaiting approval…");
       navigate({ to: "/partner-apply", replace: true });
       return;
     }
 
-    // Log the new member straight in — the registration fee screen follows.
+    // Log the new regular member straight in — the registration fee screen follows.
     if (!data.session) {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: syntheticEmail,
         password,
       });
-      if (signInError) return setError(signInError.message);
+      if (signInError) {
+        setPending(false);
+        return setError(signInError.message);
+      }
     }
+    setPending(false);
     setNotice("Account created — continuing to your registration…");
     navigate({ to: "/registration", replace: true });
   }
