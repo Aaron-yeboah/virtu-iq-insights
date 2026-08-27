@@ -235,43 +235,43 @@ function AdminPage() {
           <TabsList className="w-max min-w-full justify-start gap-1.5 bg-muted/60 p-1 rounded-xl">
             <TabsTrigger
               value="payments"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
             >
               Payments
             </TabsTrigger>
             <TabsTrigger
               value="settings"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
             >
               Settings
             </TabsTrigger>
             <TabsTrigger
               value="packages"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
             >
               Packages &amp; credits
             </TabsTrigger>
             <TabsTrigger
               value="partners"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
             >
               Partners
             </TabsTrigger>
             <TabsTrigger
               value="manage-partners"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
             >
               Manage partners
             </TabsTrigger>
             <TabsTrigger
               value="members"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
             >
               Members
             </TabsTrigger>
             <TabsTrigger
               value="audit"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
             >
               Audit log
             </TabsTrigger>

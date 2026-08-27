@@ -84,6 +84,11 @@ export function AppShell({
     navigate({ to: "/", replace: true });
   }
 
+  // Auto-close mobile drawer whenever navigation completes
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   const navList = (
     <nav className="flex flex-col gap-1" aria-label="Workspace">
       {nav.map((item) => {
@@ -93,10 +98,9 @@ export function AppShell({
             key={item.to}
             to={item.to}
             onClick={() => setOpen(false)}
-            onTouchStart={() => setOpen(false)}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              "touch-manipulation select-none active:scale-[0.97]",
+              "flex items-center gap-3 rounded-lg px-3.5 py-3 text-sm font-medium transition-colors",
+              "touch-manipulation select-none active:scale-[0.98]",
               active
                 ? "bg-primary/15 text-primary border border-primary/30 font-semibold shadow-xs"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -159,18 +163,18 @@ export function AppShell({
 
       {open && (
         <>
-          {/* Backdrop — pointer-events-none so it never intercepts taps on nav items */}
+          {/* Backdrop */}
           <div
             aria-hidden="true"
             onClick={() => setOpen(false)}
-            className="fixed inset-0 top-16 z-30 bg-background/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 top-16 z-40 bg-background/60 backdrop-blur-sm lg:hidden"
           />
-          <div className="fixed inset-x-0 top-16 z-40 max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-border bg-card px-4 py-4 shadow-lg lg:hidden">
+          <div className="fixed inset-x-0 top-16 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-border bg-card px-4 py-4 shadow-lg lg:hidden">
             {navList}
             <button
               type="button"
               onClick={signOut}
-              className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground touch-manipulation"
+              className="mt-2 flex w-full items-center gap-3 rounded-lg px-3.5 py-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground touch-manipulation"
             >
               <LogOut className="size-4" /> Sign out
             </button>
