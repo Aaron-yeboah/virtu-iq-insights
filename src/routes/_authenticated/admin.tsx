@@ -317,18 +317,45 @@ function RemoveMember({ userId, label }: { userId: string; label: string }) {
   const queryClient = useQueryClient();
   const removeFn = useServerFn(deleteMember);
   const remove = useMutation({
-    mutationFn: () => removeFn({ data: { userId } }),
+    mutationFn: async () => {
+      // Direct Database RPC execution (instant, authenticated)
+      const { data: rpcSuccess, error: rpcError } = await supabase.rpc("admin_delete_member" as never, {
+        _user_id: userId,
+      } as never);
+
+      if (!rpcError && rpcSuccess) {
+        return;
+      }
+
+      if (rpcError && rpcError.message && (
+        rpcError.message.includes("FORBIDDEN") ||
+        rpcError.message.includes("CANNOT_REMOVE_DEFAULT_ADMIN") ||
+        rpcError.message.includes("CANNOT_REMOVE_SELF")
+      )) {
+        throw new Error(rpcError.message);
+      }
+
+      // Fall back to server function
+      try {
+        await removeFn({ data: { userId } });
+      } catch (err: unknown) {
+        if (rpcError) throw new Error(rpcError.message);
+        throw err;
+      }
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries();
       toast.success("Member removed");
     },
     onError: (e: Error) =>
       toast.error(
-        e.message === "FORBIDDEN"
+        e.message.includes("FORBIDDEN")
           ? "Admins only"
-          : e.message === "CANNOT_REMOVE_DEFAULT_ADMIN"
+          : e.message.includes("CANNOT_REMOVE_DEFAULT_ADMIN")
             ? "The default admin cannot be removed"
-            : e.message,
+            : e.message.includes("CANNOT_REMOVE_SELF")
+              ? "You cannot remove your own account"
+              : e.message,
       ),
   });
 

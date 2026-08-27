@@ -33,26 +33,48 @@ export const deleteMember = createServerFn({ method: "POST" })
       // If RPC is not available, proceed safely
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Primary: Database RPC (executes securely with DB admin privileges)
+    const { data: rpcResult, error: rpcError } = await supabase.rpc("admin_delete_member" as never, {
+      _user_id: data.userId,
+    } as never);
+    if (!rpcError && rpcResult) {
+      return { ok: true as const };
+    }
 
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("email")
-      .eq("id", data.userId)
-      .maybeSingle();
+    if (rpcError && rpcError.message && (
+      rpcError.message.includes("FORBIDDEN") ||
+      rpcError.message.includes("CANNOT_REMOVE_DEFAULT_ADMIN") ||
+      rpcError.message.includes("CANNOT_REMOVE_SELF")
+    )) {
+      throw new Error(rpcError.message);
+    }
 
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    // Fallback: Admin client if SUPABASE_SERVICE_ROLE_KEY is configured
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    await supabaseAdmin.from("audit_logs").insert({
-      actor_id: userId,
-      action: "member.removed",
-      entity: "profiles",
-      entity_id: data.userId,
-      meta: { email: profile?.email ?? null },
-    });
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", data.userId)
+        .maybeSingle();
 
-    return { ok: true as const };
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+      if (error) throw new Error(error.message);
+
+      await supabaseAdmin.from("audit_logs").insert({
+        actor_id: userId,
+        action: "member.removed",
+        entity: "profiles",
+        entity_id: data.userId,
+        meta: { email: profile?.email ?? null },
+      });
+
+      return { ok: true as const };
+    } catch (fallbackError) {
+      if (rpcError) throw new Error(rpcError.message);
+      throw fallbackError;
+    }
   });
 
 const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
