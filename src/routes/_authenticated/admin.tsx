@@ -557,9 +557,31 @@ function PaymentsList({
 type MemberSortKey = "newest" | "oldest" | "active" | "spent" | "credits" | "referrals";
 
 function MembersList({ members, currentUserId }: { members: MemberRow[]; currentUserId: string }) {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [sortBy, setSortBy] = useState<MemberSortKey>("newest");
+
+  const setAdmin = useMutation({
+    mutationFn: async ({ id, make }: { id: string; make: boolean }) => {
+      const { error } = await supabase.rpc("admin_set_admin", { _user_id: id, _make: make });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async (_d, vars) => {
+      await queryClient.invalidateQueries();
+      toast.success(vars.make ? "Admin role granted" : "Admin role removed");
+    },
+    onError: (e: Error) =>
+      toast.error(
+        e.message === "FORBIDDEN"
+          ? "Admin access required"
+          : e.message === "CANNOT_REMOVE_DEFAULT_ADMIN"
+            ? "The default root admin cannot be removed"
+            : e.message === "CANNOT_REMOVE_SELF"
+              ? "You cannot remove your own admin role"
+              : e.message,
+      ),
+  });
 
   const now = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
@@ -675,8 +697,16 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
                         NEW
                       </span>
                     )}
-                    {m.is_admin && <Badge variant="secondary" className="text-[10px]">Admin</Badge>}
-                    {m.is_partner && <Badge className="text-[10px]">Partner</Badge>}
+                    {m.is_admin && (
+                      <Badge className="bg-primary text-primary-foreground font-bold tracking-wider text-[10px] px-2 py-0.5">
+                        ADMIN
+                      </Badge>
+                    )}
+                    {m.is_partner && (
+                      <Badge className="bg-blue-600 text-white font-bold tracking-wider text-[10px] px-2 py-0.5">
+                        PARTNER
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
@@ -717,6 +747,17 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center">
                 <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
+                {m.id !== currentUserId && (
+                  <Button
+                    size="sm"
+                    variant={m.is_admin ? "destructive" : "outline"}
+                    className="h-8 text-xs font-medium"
+                    disabled={setAdmin.isPending}
+                    onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
+                  >
+                    {m.is_admin ? "Remove admin" : "Make admin"}
+                  </Button>
+                )}
                 {m.id !== currentUserId && (
                   <RemoveMember userId={m.id} label={m.full_name ?? m.email ?? "this member"} />
                 )}
@@ -1233,8 +1274,16 @@ function PartnerManager() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
                 <span className="truncate font-semibold">{m.full_name ?? m.email}</span>
-                {m.is_partner && <Badge className="shrink-0">Partner</Badge>}
-                {m.is_admin && <Badge variant="secondary" className="shrink-0">Admin</Badge>}
+                {m.is_admin && (
+                  <Badge className="shrink-0 bg-primary text-primary-foreground font-bold tracking-wider text-[10px] px-2 py-0.5">
+                    ADMIN
+                  </Badge>
+                )}
+                {m.is_partner && (
+                  <Badge className="shrink-0 bg-blue-600 text-white font-bold tracking-wider text-[10px] px-2 py-0.5">
+                    PARTNER
+                  </Badge>
+                )}
               </div>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {m.email}
@@ -1277,7 +1326,7 @@ function PartnerManager() {
               </Button>
               <Button
                 size="sm"
-                variant={m.is_admin ? "outline" : "secondary"}
+                variant={m.is_admin ? "destructive" : "outline"}
                 className="flex-1 sm:flex-none"
                 disabled={setAdmin.isPending || (m.id === user.id && m.is_admin)}
                 onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}

@@ -12,6 +12,8 @@ export function LogoFull({ className, ...rest }: LogoProps) {
     <img
       src={FULL_LOGO}
       alt="Virtu-IQ"
+      loading="eager"
+      decoding="async"
       className={cn("h-7 w-auto select-none", className)}
       {...rest}
     />
@@ -23,6 +25,8 @@ export function LogoSymbol({ className, ...rest }: LogoProps) {
     <img
       src={SYMBOL_LOGO}
       alt="Virtu-IQ"
+      loading="eager"
+      decoding="async"
       className={cn("h-9 w-auto select-none", className)}
       {...rest}
     />
