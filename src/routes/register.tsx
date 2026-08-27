@@ -10,14 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 type SearchParams = {
-  ref?: string;
-  partner?: boolean;
+  ref?: string | undefined;
+  partner?: boolean | undefined;
 };
 
 export const Route = createFileRoute("/register")({
   validateSearch: (search: Record<string, unknown>): SearchParams => ({
-    ref: typeof search.ref === "string" ? search.ref : undefined,
-    partner: search.partner === true || search.partner === "1" || search.partner === "true",
+    ref: typeof search["ref"] === "string" ? search["ref"] : undefined,
+    partner: search["partner"] === true || search["partner"] === "1" || search["partner"] === "true",
   }),
   head: () => ({
     meta: [
