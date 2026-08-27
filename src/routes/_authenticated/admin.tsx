@@ -230,44 +230,79 @@ function AdminPage() {
         <Stat label="Pending payments" value={String(stats?.pending_payments ?? 0)} />
       </div>
 
-      <Tabs defaultValue="payments" className="mt-8">
-        <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <TabsList className="w-max min-w-full justify-start gap-1">
-            <TabsTrigger value="payments" className="whitespace-nowrap">Payments</TabsTrigger>
-            <TabsTrigger value="settings" className="whitespace-nowrap">Settings</TabsTrigger>
-            <TabsTrigger value="packages" className="whitespace-nowrap">Packages &amp; credits</TabsTrigger>
-            <TabsTrigger value="partners" className="whitespace-nowrap">Partners</TabsTrigger>
-            <TabsTrigger value="manage-partners" className="whitespace-nowrap">Manage partners</TabsTrigger>
-            <TabsTrigger value="members" className="whitespace-nowrap">Members</TabsTrigger>
-            <TabsTrigger value="audit" className="whitespace-nowrap">Audit log</TabsTrigger>
+      <Tabs defaultValue="payments" className="mt-8 min-h-[600px]">
+        <div className="sticky top-16 z-30 -mx-4 overflow-x-auto border-b border-border/60 bg-background/95 px-4 py-2.5 backdrop-blur-md sm:mx-0 sm:px-0 sm:border-b-0 sm:py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <TabsList className="w-max min-w-full justify-start gap-1.5 bg-muted/60 p-1 rounded-xl">
+            <TabsTrigger
+              value="payments"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+            >
+              Payments
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+            >
+              Settings
+            </TabsTrigger>
+            <TabsTrigger
+              value="packages"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+            >
+              Packages &amp; credits
+            </TabsTrigger>
+            <TabsTrigger
+              value="partners"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+            >
+              Partners
+            </TabsTrigger>
+            <TabsTrigger
+              value="manage-partners"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+            >
+              Manage partners
+            </TabsTrigger>
+            <TabsTrigger
+              value="members"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+            >
+              Members
+            </TabsTrigger>
+            <TabsTrigger
+              value="audit"
+              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none"
+            >
+              Audit log
+            </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="packages" className="mt-4">
+        <TabsContent value="packages" className="mt-4 min-h-[450px]">
           <MonetisationManager />
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-4">
+        <TabsContent value="settings" className="mt-4 min-h-[450px]">
           <AdminSettingsManager />
         </TabsContent>
 
-        <TabsContent value="manage-partners" className="mt-4">
+        <TabsContent value="manage-partners" className="mt-4 min-h-[450px]">
           <PartnerManager />
         </TabsContent>
 
-        <TabsContent value="payments" className="mt-4">
+        <TabsContent value="payments" className="mt-4 min-h-[450px]">
           <PaymentsList payments={payments ?? []} reviewPayment={reviewPayment} />
         </TabsContent>
 
-        <TabsContent value="partners" className="mt-4">
+        <TabsContent value="partners" className="mt-4 min-h-[450px]">
           <PartnerPayouts />
         </TabsContent>
 
-        <TabsContent value="members" className="mt-4">
+        <TabsContent value="members" className="mt-4 min-h-[450px]">
           <MembersList members={members ?? []} currentUserId={user.id} />
         </TabsContent>
 
-        <TabsContent value="audit" className="mt-4 space-y-4">
+        <TabsContent value="audit" className="mt-4 min-h-[450px] space-y-4">
           <ExplodeCard />
           <AuditLogList logs={logs ?? []} />
         </TabsContent>
@@ -860,14 +895,14 @@ function PartnerPayouts() {
       <Input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search partners by name, email or code"
+        placeholder="Search partners by name, email or code..."
         aria-label="Search partners"
-        className="sm:max-w-sm"
+        className="w-full sm:max-w-sm"
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
         {rows.length === 0 && (
-          <p className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+          <p className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground sm:col-span-2 xl:col-span-3">
             {isFetching ? "Loading partners…" : "No approved partners yet."}
           </p>
         )}
@@ -879,87 +914,98 @@ function PartnerPayouts() {
           return (
             <div
               key={p.id}
-              className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40 shadow-sm"
+              className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 sm:p-5 transition-colors hover:border-primary/40 shadow-sm gap-3"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">{p.full_name ?? p.email}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {p.email} · Code: <span className="font-semibold text-foreground">{p.referral_code}</span> · {p.referral_count} referred
+              <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">{p.full_name ?? p.email}</p>
+                    <p className="break-all text-xs text-muted-foreground mt-0.5">{p.email}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium text-foreground">
+                        Code: {p.referral_code}
+                      </span>
+                      <span>·</span>
+                      <span>{p.referral_count} referred</span>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="size-8 shrink-0 p-0 text-muted-foreground hover:text-foreground"
+                    title="View Payout History"
+                    onClick={() => setSelectedPartnerPayouts({ id: p.id, name: p.full_name ?? p.email ?? "Partner" })}
+                  >
+                    <Clock className="size-4" />
+                  </Button>
+                </div>
+
+                {/* All-time Lifetime Stats */}
+                <div className="mt-3 rounded-xl bg-muted/40 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Lifetime Performance</p>
+                  <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span>Revenue: <strong className="font-semibold text-foreground">{ghs(lifetimeRev)}</strong></span>
+                    <span>Total Earned: <strong className="font-bold text-primary">{ghs(lifetimeComm)}</strong></span>
+                  </div>
+                </div>
+
+                {/* Current Period Unpaid */}
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-border bg-background p-2.5">
+                    <p className="text-[11px] font-medium text-muted-foreground">Period Revenue</p>
+                    <p className="mt-0.5 truncate text-sm font-bold text-foreground">{ghs(p.revenue_ghs)}</p>
+                  </div>
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-2.5">
+                    <p className="text-[11px] font-medium text-primary/80">Unpaid Balance</p>
+                    <p className="mt-0.5 truncate text-sm font-bold text-primary">{ghs(unpaidComm)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="mt-2 flex items-end gap-2">
+                  <div className="flex-1 space-y-1">
+                    <Label htmlFor={`rate-${p.id}`} className="text-xs font-medium">
+                      Commission %
+                    </Label>
+                    <Input
+                      id={`rate-${p.id}`}
+                      type="number"
+                      min={0}
+                      max={100}
+                      step="0.5"
+                      value={rates[p.id] ?? String(p.commission_rate)}
+                      onChange={(e) => setRates({ ...rates, [p.id]: e.target.value })}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-9 shrink-0 px-3 font-medium"
+                    disabled={setRate.isPending}
+                    onClick={() =>
+                      setRate.mutate({ id: p.id, rate: Number(rates[p.id] ?? p.commission_rate) })
+                    }
+                  >
+                    Save %
+                  </Button>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant={unpaidComm > 0 ? "default" : "outline"}
+                  className="mt-3 w-full font-medium"
+                  disabled={clearPayout.isPending}
+                  onClick={() => clearPayout.mutate({ id: p.id })}
+                >
+                  {unpaidComm > 0 ? `Mark ${ghs(unpaidComm)} as paid` : "Clear current period"}
+                </Button>
+                {p.payout_cleared_at && (
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    Last payout: {new Date(p.payout_cleared_at).toLocaleDateString()}
                   </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="size-8 p-0"
-                  title="View Payout History"
-                  onClick={() => setSelectedPartnerPayouts({ id: p.id, name: p.full_name ?? p.email ?? "Partner" })}
-                >
-                  <Clock className="size-4 text-muted-foreground" />
-                </Button>
+                )}
               </div>
-
-              {/* All-time Lifetime Stats (Fixed) */}
-              <div className="mt-3 rounded-xl bg-muted/40 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Lifetime Performance (Fixed)</p>
-                <div className="mt-1 flex items-center justify-between text-xs">
-                  <span>Revenue: <strong className="text-foreground">{ghs(lifetimeRev)}</strong></span>
-                  <span>Total Earned: <strong className="text-primary font-semibold">{ghs(lifetimeComm)}</strong></span>
-                </div>
-              </div>
-
-              {/* Current Period Unpaid */}
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="rounded-xl border border-border bg-background p-2.5">
-                  <p className="text-[11px] text-muted-foreground">Period Revenue</p>
-                  <p className="mt-0.5 text-sm font-bold text-foreground">{ghs(p.revenue_ghs)}</p>
-                </div>
-                <div className="rounded-xl border border-primary/30 bg-primary/5 p-2.5">
-                  <p className="text-[11px] text-muted-foreground">Unpaid Balance</p>
-                  <p className="mt-0.5 text-sm font-bold text-primary">{ghs(unpaidComm)}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-end gap-2">
-                <div className="flex-1 space-y-1">
-                  <Label htmlFor={`rate-${p.id}`} className="text-xs">
-                    Commission %
-                  </Label>
-                  <Input
-                    id={`rate-${p.id}`}
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.5"
-                    value={rates[p.id] ?? String(p.commission_rate)}
-                    onChange={(e) => setRates({ ...rates, [p.id]: e.target.value })}
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  disabled={setRate.isPending}
-                  onClick={() =>
-                    setRate.mutate({ id: p.id, rate: Number(rates[p.id] ?? p.commission_rate) })
-                  }
-                >
-                  Save %
-                </Button>
-              </div>
-
-              <Button
-                size="sm"
-                variant={unpaidComm > 0 ? "default" : "outline"}
-                className="mt-3 w-full"
-                disabled={clearPayout.isPending}
-                onClick={() => clearPayout.mutate({ id: p.id })}
-              >
-                {unpaidComm > 0 ? `Mark ${ghs(unpaidComm)} as paid` : "Clear current period"}
-              </Button>
-              {p.payout_cleared_at && (
-                <p className="mt-2 text-center text-xs text-muted-foreground">
-                  Last payout: {new Date(p.payout_cleared_at).toLocaleDateString()}
-                </p>
-              )}
             </div>
           );
         })}
@@ -1126,15 +1172,16 @@ function PartnerManager() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, email or referral code"
+            placeholder="Search by name, email or referral code..."
             aria-label="Search members"
-            className="sm:max-w-sm"
+            className="w-full sm:max-w-sm"
           />
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <Button
               type="button"
               size="sm"
               variant={!onlyPartners && !partnerId ? "default" : "outline"}
+              className="flex-1 sm:flex-none"
               onClick={() => {
                 setOnlyPartners(false);
                 setPartnerId(null);
@@ -1146,6 +1193,7 @@ function PartnerManager() {
               type="button"
               size="sm"
               variant={onlyPartners ? "default" : "outline"}
+              className="flex-1 sm:flex-none"
               onClick={() => {
                 setOnlyPartners(true);
                 setPartnerId(null);
@@ -1154,7 +1202,7 @@ function PartnerManager() {
               Partners only
             </Button>
             {partnerId && (
-              <Button type="button" size="sm" variant="secondary" onClick={() => setPartnerId(null)}>
+              <Button type="button" size="sm" variant="secondary" className="w-full sm:w-auto" onClick={() => setPartnerId(null)}>
                 Clear: referred by {partnerName}
               </Button>
             )}

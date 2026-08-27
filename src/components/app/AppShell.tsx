@@ -98,7 +98,7 @@ export function AppShell({
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
               "touch-manipulation select-none active:scale-[0.97]",
               active
-                ? "bg-primary text-primary-foreground"
+                ? "bg-primary/15 text-primary border border-primary/30 font-semibold shadow-xs"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
