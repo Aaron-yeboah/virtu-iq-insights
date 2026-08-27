@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -432,7 +433,16 @@ function PaymentsList({
                 </Button>
               </div>
             ) : (
-              <Badge className="w-fit" variant={p.status === "approved" ? "default" : "destructive"}>
+              <Badge
+                className={cn(
+                  "w-fit font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
+                  p.status === "approved"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : p.status === "rejected"
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : "bg-secondary text-secondary-foreground"
+                )}
+              >
                 {p.status}
               </Badge>
             )}
@@ -1196,7 +1206,18 @@ function PartnerApplications() {
               <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
                 <span className="truncate">{a.full_name ?? a.email ?? "Applicant"}</span>
                 {a.status !== "pending" && (
-                  <Badge variant={a.status === "approved" ? "default" : "destructive"}>{a.status}</Badge>
+                  <Badge
+                    className={cn(
+                      "font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
+                      a.status === "approved"
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : a.status === "rejected"
+                          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          : "bg-secondary text-secondary-foreground"
+                    )}
+                  >
+                    {a.status}
+                  </Badge>
                 )}
               </div>
               <p className="truncate text-xs text-muted-foreground">
