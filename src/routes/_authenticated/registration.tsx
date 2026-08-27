@@ -259,16 +259,6 @@ function RegistrationFeePage() {
                 required
               />
             </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="reference">Transaction reference (optional)</Label>
-              <Input
-                id="reference"
-                value={reference}
-                maxLength={80}
-                onChange={(e) => setReference(e.target.value)}
-                placeholder="e.g. MP2401.1234.567890"
-              />
-            </div>
           </div>
 
           <Button type="submit" size="lg" disabled={submit.isPending}>

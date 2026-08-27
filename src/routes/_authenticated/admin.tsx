@@ -291,7 +291,7 @@ function AdminPage() {
         </TabsContent>
 
         <TabsContent value="payments" className="mt-4 min-h-[450px]">
-          <PaymentsList payments={payments ?? []} reviewPayment={reviewPayment} />
+          <PaymentsList payments={payments ?? []} members={(members ?? []) as MemberRow[]} reviewPayment={reviewPayment} />
         </TabsContent>
 
         <TabsContent value="partners" className="mt-4 min-h-[450px]">
@@ -451,15 +451,43 @@ type PaymentSortKey = "newest" | "oldest" | "pending_first" | "highest_amount";
 
 function PaymentsList({
   payments,
+  members = [],
   reviewPayment,
 }: {
   payments: AdminPaymentItem[];
+  members?: MemberRow[];
   reviewPayment: { isPending: boolean; mutate: (vars: { id: string; approve: boolean }) => void };
 }) {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [expanded, setExpanded] = useState(false);
   const [sortBy, setSortBy] = useState<PaymentSortKey>("pending_first");
 
-  const sorted = [...payments].sort((a, b) => {
+  const memberMap = new Map<string, MemberRow>(members.map((m) => [m.id, m]));
+
+  const filtered = payments.filter((p) => {
+    if (statusFilter !== "all" && p.status !== statusFilter) return false;
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    const member = memberMap.get(p.user_id);
+    const amountStr = String(p.amount_ghs);
+    return (
+      (p.sender_name || "").toLowerCase().includes(q) ||
+      (p.reference || "").toLowerCase().includes(q) ||
+      (p.method || "").toLowerCase().includes(q) ||
+      (p.kind || "").toLowerCase().includes(q) ||
+      (p.status || "").toLowerCase().includes(q) ||
+      amountStr.includes(q) ||
+      p.id.toLowerCase().includes(q) ||
+      p.user_id.toLowerCase().includes(q) ||
+      (member?.full_name || "").toLowerCase().includes(q) ||
+      (member?.phone || "").toLowerCase().includes(q) ||
+      (member?.email || "").toLowerCase().includes(q) ||
+      (member?.referral_code || "").toLowerCase().includes(q)
+    );
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "pending_first") {
       if (a.status === "pending" && b.status !== "pending") return -1;
       if (a.status !== "pending" && b.status === "pending") return 1;
@@ -471,7 +499,11 @@ function PaymentsList({
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  const visible = expanded ? sorted : sorted.slice(0, 12);
+  const visible = expanded ? sorted : sorted.slice(0, 15);
+
+  const pendingCount = payments.filter((p) => p.status === "pending").length;
+  const approvedCount = payments.filter((p) => p.status === "approved").length;
+  const rejectedCount = payments.filter((p) => p.status === "rejected").length;
 
   const sortOptions: { key: PaymentSortKey; label: string }[] = [
     { key: "pending_first", label: "⚡ Pending First" },
@@ -481,83 +513,191 @@ function PaymentsList({
   ];
 
   return (
-    <div className="space-y-3">
-      {/* Sort Controls */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-          <Sliders className="size-3" /> Sort:
-        </span>
-        {sortOptions.map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            onClick={() => setSortBy(opt.key)}
-            className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-colors border",
-              sortBy === opt.key
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
+    <div className="space-y-4">
+      {/* Search & Filters */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1 sm:max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, phone, MoMo sender, ref, amount..."
+              aria-label="Search payments"
+              className="pl-9"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground shrink-0">
+            Showing <span className="font-semibold text-foreground">{visible.length}</span> of{" "}
+            <span className="font-semibold text-foreground">{sorted.length}</span> payment{sorted.length === 1 ? "" : "s"}
+          </p>
+        </div>
+
+        {/* Status Filter Badges & Sort */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button
+              type="button"
+              size="sm"
+              variant={statusFilter === "all" ? "default" : "outline"}
+              className="h-7 text-xs px-2.5"
+              onClick={() => setStatusFilter("all")}
+            >
+              All ({payments.length})
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={statusFilter === "pending" ? "default" : "outline"}
+              className={cn(
+                "h-7 text-xs px-2.5",
+                statusFilter === "pending"
+                  ? "bg-amber-500 hover:bg-amber-600 text-white"
+                  : "border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+              )}
+              onClick={() => setStatusFilter("pending")}
+            >
+              Pending ({pendingCount})
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={statusFilter === "approved" ? "default" : "outline"}
+              className={cn(
+                "h-7 text-xs px-2.5",
+                statusFilter === "approved"
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+              )}
+              onClick={() => setStatusFilter("approved")}
+            >
+              Approved ({approvedCount})
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={statusFilter === "rejected" ? "default" : "outline"}
+              className={cn(
+                "h-7 text-xs px-2.5",
+                statusFilter === "rejected"
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "border-red-500/30 text-red-500 hover:bg-red-500/10"
+              )}
+              onClick={() => setStatusFilter("rejected")}
+            >
+              Rejected ({rejectedCount})
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <Sliders className="size-3" /> Sort:
+            </span>
+            {sortOptions.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setSortBy(opt.key)}
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors border",
+                  sortBy === opt.key
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-        {payments.length === 0 && <p className="p-5 text-sm text-muted-foreground">No payments yet.</p>}
-        {visible.map((p) => (
-          <div key={p.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">
-                {ghs(p.amount_ghs)} ·{" "}
-                {p.kind === "registration" ? "Registration fee" : `${p.credits} credits`} · {p.method}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">Ref: {p.reference}</p>
-              <p className="truncate text-xs text-muted-foreground">MoMo name: {p.sender_name ?? "—"}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {new Date(p.created_at).toLocaleString()} · user {p.user_id.slice(0, 8)}
-              </p>
-            </div>
-            {p.status === "pending" ? (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  className="flex-1 sm:flex-none"
-                  disabled={reviewPayment.isPending}
-                  onClick={() => reviewPayment.mutate({ id: p.id, approve: true })}
-                >
-                  Approve
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 sm:flex-none"
-                  disabled={reviewPayment.isPending}
-                  onClick={() => reviewPayment.mutate({ id: p.id, approve: false })}
-                >
-                  Reject
-                </Button>
-              </div>
-            ) : (
-              <Badge
-                className={cn(
-                  "w-fit font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
-                  p.status === "approved"
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : p.status === "rejected"
-                      ? "bg-red-600 text-white hover:bg-red-700"
-                      : "bg-amber-500 text-white hover:bg-amber-600"
+        {sorted.length === 0 && (
+          <p className="p-5 text-sm text-muted-foreground">
+            {search || statusFilter !== "all" ? "No payments match your search." : "No payments yet."}
+          </p>
+        )}
+        {visible.map((p) => {
+          const member = memberMap.get(p.user_id);
+          return (
+            <div key={p.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-base font-bold text-foreground">
+                    {ghs(p.amount_ghs)}
+                  </p>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                    {p.kind === "registration" ? "Registration fee" : `${p.credits} credits`}
+                  </span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                    {p.method}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                  <span className="text-muted-foreground">
+                    MoMo Sender:{" "}
+                    <strong className="text-foreground font-semibold">
+                      {p.sender_name || "—"}
+                    </strong>
+                  </span>
+                  {member && (
+                    <span className="text-muted-foreground">
+                      Account:{" "}
+                      <strong className="text-foreground font-semibold">
+                        {member.full_name || "Unnamed"}
+                      </strong>{" "}
+                      ({member.phone || member.email || "No phone"})
+                    </span>
+                  )}
+                </div>
+                {p.reference && p.reference !== "Not provided" && (
+                  <p className="truncate text-xs text-muted-foreground">Ref: {p.reference}</p>
                 )}
-              >
-                {p.status}
-              </Badge>
-            )}
-          </div>
-        ))}
+                <p className="text-xs text-muted-foreground">
+                  {new Date(p.created_at).toLocaleString()} · User ID: {p.user_id.slice(0, 8)}
+                </p>
+              </div>
+              {p.status === "pending" ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 sm:flex-none"
+                    disabled={reviewPayment.isPending}
+                    onClick={() => reviewPayment.mutate({ id: p.id, approve: true })}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 sm:flex-none"
+                    disabled={reviewPayment.isPending}
+                    onClick={() => reviewPayment.mutate({ id: p.id, approve: false })}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              ) : (
+                <Badge
+                  className={cn(
+                    "w-fit font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
+                    p.status === "approved"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : p.status === "rejected"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-amber-500 text-white hover:bg-amber-600"
+                  )}
+                >
+                  {p.status}
+                </Badge>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {sorted.length > 12 && (
+      {sorted.length > 15 && (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"
@@ -567,11 +707,11 @@ function PaymentsList({
           >
             {expanded ? (
               <>
-                <ChevronUp className="size-4" /> Show less (top 12)
+                <ChevronUp className="size-4" /> Show less (top 15)
               </>
             ) : (
               <>
-                <ChevronDown className="size-4" /> Show all {sorted.length} payments ({sorted.length - 12} more)
+                <ChevronDown className="size-4" /> Show all {sorted.length} payments ({sorted.length - 15} more)
               </>
             )}
           </Button>
@@ -1347,8 +1487,8 @@ function PartnerInviteLink() {
     <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
       <p className="text-sm font-semibold text-foreground">Partner&apos;s registration link</p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Send this to potential partners. They register, apply, and skip the registration fee — you
-        approve or reject the application below.
+        Send this to potential partners. They register with instant partner access and skip the 50 GHS
+        registration fee — sent directly to their partner hub.
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <Input readOnly value={link} aria-label="Partner registration link" />

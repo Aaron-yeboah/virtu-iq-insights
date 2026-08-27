@@ -274,7 +274,6 @@ function UpgradeDialog() {
   const [selected, setSelected] = useState<string | null>(null);
   const [method, setMethod] = useState(METHODS[0]!);
   const [senderName, setSenderName] = useState("");
-  const [reference, setReference] = useState("");
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const { data: livePayments } = useQuery({
     ...paymentsQuery(user.id),
@@ -316,7 +315,6 @@ function UpgradeDialog() {
     setStep(1);
     setSelected(null);
     setSenderName("");
-    setReference("");
     setPaymentId(null);
     setMomoCopied(false);
   };
@@ -328,8 +326,6 @@ function UpgradeDialog() {
       if (name.length < 2 || name.length > 80) {
         throw new Error("Enter the MoMo name on the account you paid from (2-80 characters).");
       }
-      const ref = reference.trim();
-      if (ref.length > 80) throw new Error("Transaction reference is too long.");
       const { data, error } = await supabase
         .from("payments")
         .insert({
@@ -340,7 +336,7 @@ function UpgradeDialog() {
           kind: "package",
           method,
           sender_name: name,
-          reference: ref || "Not provided",
+          reference: "Not provided",
         })
         .select("id")
         .single();
@@ -568,16 +564,7 @@ function UpgradeDialog() {
                 required
               />
             </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="reference">Transaction reference (optional)</Label>
-              <Input
-                id="reference"
-                value={reference}
-                maxLength={80}
-                onChange={(e) => setReference(e.target.value)}
-                placeholder="e.g. MP2401.1234.567890"
-              />
-            </div>
+
           </div>
           <div className="flex flex-wrap gap-3">
             <Button type="button" variant="outline" onClick={() => setStep(1)}>
@@ -627,7 +614,6 @@ function UpgradeDialog() {
               />
               <Row label="Method" value={method} />
               <Row label="MoMo name" value={senderName} />
-              <Row label="Reference" value={reference} />
               <Row
                 label="Status"
                 value={approved ? "Approved" : rejected ? "Declined" : "Pending approval"}

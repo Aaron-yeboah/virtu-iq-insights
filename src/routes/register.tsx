@@ -101,7 +101,8 @@ function RegisterPage() {
         });
         if (signInError) return setError(signInError.message);
       }
-      navigate({ to: "/partner-apply", replace: true });
+      setNotice("Partner account created — opening your partner hub…");
+      navigate({ to: "/partner", replace: true });
       return;
     }
 
@@ -130,7 +131,7 @@ function RegisterPage() {
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           {isPartnerInvite
-            ? "Create your account, then apply to become a Virtu-IQ partner — no registration fee."
+            ? "Create your account to access your partner hub immediately — no registration fee."
             : "Create your account with your phone number to continue."}
         </p>
 
