@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +48,11 @@ function RegisterPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [referral, setReferral] = useState(ref ?? "");
+
+  const urlRef = (ref ?? "").trim().toUpperCase();
+  const [referral, setReferral] = useState(urlRef);
+  const isRefFromLink = Boolean(urlRef.length > 0);
+
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -58,6 +62,10 @@ function RegisterPage() {
       if (data.session) navigate({ to: "/credits", replace: true });
     });
   }, [navigate]);
+
+  useEffect(() => {
+    if (urlRef) setReferral(urlRef);
+  }, [urlRef]);
 
   const score = strength(password);
   const labels = ["Too weak", "Weak", "Fair", "Strong", "Excellent"];
@@ -72,6 +80,10 @@ function RegisterPage() {
     if (phone.trim().replace(/\D/g, "").length < 9) return setError("Please enter a valid phone number.");
     if (password.length < 8) return setError("Passwords must be at least 8 characters.");
 
+    const finalReferralCode = isPartnerInvite
+      ? ""
+      : (isRefFromLink ? urlRef : referral).trim().toUpperCase().slice(0, 16);
+
     setPending(true);
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
@@ -81,7 +93,7 @@ function RegisterPage() {
         data: {
           full_name: fullName.trim().slice(0, 80),
           phone: phone.trim().slice(0, 24),
-          referral_code: isPartnerInvite ? "" : referral.trim().toUpperCase().slice(0, 16),
+          referral_code: finalReferralCode,
           ...(isPartnerInvite ? { partner_applicant: "true" } : {}),
         },
       },
@@ -183,8 +195,41 @@ function RegisterPage() {
           </div>
           {!isPartnerInvite && (
             <div className="space-y-2">
-              <Label htmlFor="referral">Referral code (optional)</Label>
-              <Input id="referral" value={referral} maxLength={16} onChange={(e) => setReferral(e.target.value)} placeholder="ABCD1234" />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="referral">Referral code {isRefFromLink ? "" : "(optional)"}</Label>
+                {isRefFromLink && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-emerald-600 border border-emerald-500/20">
+                    <Lock className="size-3" /> Partner Code Locked
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <Input
+                  id="referral"
+                  value={isRefFromLink ? urlRef : referral}
+                  maxLength={16}
+                  readOnly={isRefFromLink}
+                  onChange={(e) => !isRefFromLink && setReferral(e.target.value)}
+                  placeholder="ABCD1234"
+                  className={cn(
+                    isRefFromLink && "bg-muted/60 font-mono font-bold tracking-wider cursor-not-allowed select-none pr-9 text-foreground"
+                  )}
+                />
+                {isRefFromLink && (
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-emerald-600">
+                    <Lock className="size-4" />
+                  </div>
+                )}
+              </div>
+              {isRefFromLink ? (
+                <p className="text-xs text-emerald-700 font-medium">
+                  Partner referral code <span className="font-mono font-bold">{urlRef}</span> is locked to this link.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Enter a partner referral code if you were invited.
+                </p>
+              )}
             </div>
           )}
           {error && (

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -79,11 +79,70 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
+/**
+ * Realtime WebSockets hook for the Admin Console:
+ * Instant updates for payments, members, partners, and revenue stats without reloading.
+ */
+function useAdminRealtime(enabled: boolean) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const channel = supabase
+      .channel("admin-realtime-websocket")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payments" },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-members"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] });
+          void queryClient.invalidateQueries({ queryKey: ["credit-transactions"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "partner_applications" },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["admin-partner-applications"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["admin-members"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-partners"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "partner_commissions" },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [enabled, queryClient]);
+}
+
 function AdminPage() {
   const { user } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const { data: roles, isLoading: rolesLoading } = useQuery(rolesQuery(user.id));
   const isAdmin = (roles ?? []).includes("admin");
+
+  // Subscribe to real-time WebSockets when admin access is granted
+  useAdminRealtime(isAdmin);
 
   const { data: stats } = useQuery({ ...adminStatsQuery(), enabled: isAdmin });
   const { data: payments } = useQuery({ ...adminPaymentsQuery(), enabled: isAdmin });
@@ -101,7 +160,12 @@ function AdminPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-payments"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-members"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] }),
+      ]);
       toast.success("Payment reviewed");
     },
     onError: (e: Error) => toast.error(e.message),
