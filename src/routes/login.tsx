@@ -52,12 +52,33 @@ function LoginPage() {
     setPending(true);
     let loginEmail = raw;
     if (!isEmail) {
-      const resolved = await resolveEmail({ data: { phone: raw } });
-      if (!resolved.email) {
-        setPending(false);
-        return setError("No account found for that phone number.");
+      let resolvedEmail: string | null = null;
+      try {
+        const resolved = await resolveEmail({ data: { phone: raw } });
+        resolvedEmail = resolved.email;
+      } catch {
+        // Fall back to client-side RPC lookup if server function throws
       }
-      loginEmail = resolved.email;
+
+      if (!resolvedEmail) {
+        try {
+          const { data: rpcEmail } = await supabase.rpc("resolve_phone_email" as never, {
+            p_phone: raw,
+          } as never);
+          const rpcStr = rpcEmail as unknown as string | null;
+          if (typeof rpcStr === "string" && rpcStr.length > 0) {
+            resolvedEmail = rpcStr;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!resolvedEmail) {
+        setPending(false);
+        return setError("No account found for that phone number. Please check the number or use your email address.");
+      }
+      loginEmail = resolvedEmail;
     }
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: loginEmail,

@@ -8,17 +8,39 @@ import { z } from "zod";
 export const resolveLoginEmail = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ phone: z.string().min(6).max(24) }).parse(data))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabase } = await import("@/integrations/supabase/client");
     const digits = data.phone.replace(/\D/g, "");
-    if (digits.length < 9) return { email: null as string | null };
-    const tail = digits.slice(-9);
-    const { data: rows } = await supabaseAdmin
-      .from("profiles")
-      .select("email, phone")
-      .not("phone", "is", null)
-      .limit(1000);
-    const match = (rows ?? []).find(
-      (r) => (r.phone ?? "").replace(/\D/g, "").slice(-9) === tail,
-    );
-    return { email: (match?.email ?? null) as string | null };
+    if (digits.length < 8) return { email: null as string | null };
+
+    // Try RPC function first
+    try {
+      const { data: emailRpc, error } = await supabase.rpc("resolve_phone_email" as never, {
+        p_phone: data.phone,
+      } as never);
+      const resolvedStr = emailRpc as unknown as string | null;
+      if (!error && resolvedStr && typeof resolvedStr === "string" && resolvedStr.length > 0) {
+        return { email: resolvedStr };
+      }
+    } catch {
+      // Fall through to admin query below
+    }
+
+    // Fallback: Admin client query if environment variable is available
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const tail = digits.slice(-9);
+      const { data: rows } = await supabaseAdmin
+        .from("profiles")
+        .select("email, phone")
+        .not("phone", "is", null)
+        .limit(1000);
+      const match = (rows ?? []).find(
+        (r) => (r.phone ?? "").replace(/\D/g, "").slice(-9) === tail,
+      );
+      if (match?.email) return { email: match.email };
+    } catch {
+      // Admin client not configured
+    }
+
+    return { email: null as string | null };
   });
