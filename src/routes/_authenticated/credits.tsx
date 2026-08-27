@@ -193,9 +193,14 @@ function CreditsPage() {
                   )}
                 </div>
                 <Badge
-                  variant={
-                    p.status === "approved" ? "default" : p.status === "rejected" ? "destructive" : "secondary"
-                  }
+                  className={cn(
+                    "font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
+                    p.status === "approved"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : p.status === "rejected"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-amber-500 text-white hover:bg-amber-600"
+                  )}
                 >
                   {p.status}
                 </Badge>

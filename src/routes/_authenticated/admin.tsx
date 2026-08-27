@@ -437,10 +437,10 @@ function PaymentsList({
                 className={cn(
                   "w-fit font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
                   p.status === "approved"
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
                     : p.status === "rejected"
-                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      : "bg-secondary text-secondary-foreground"
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-amber-500 text-white hover:bg-amber-600"
                 )}
               >
                 {p.status}
@@ -1210,10 +1210,10 @@ function PartnerApplications() {
                     className={cn(
                       "font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
                       a.status === "approved"
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
                         : a.status === "rejected"
-                          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          : "bg-secondary text-secondary-foreground"
+                          ? "bg-red-600 text-white hover:bg-red-700"
+                          : "bg-amber-500 text-white hover:bg-amber-600"
                     )}
                   >
                     {a.status}
