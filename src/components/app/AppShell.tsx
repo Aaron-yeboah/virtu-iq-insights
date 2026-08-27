@@ -93,14 +93,16 @@ export function AppShell({
             key={item.to}
             to={item.to}
             onClick={() => setOpen(false)}
+            onTouchStart={() => setOpen(false)}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              "touch-manipulation select-none active:scale-[0.97]",
               active
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
-            <item.icon className="size-4" />
+            <item.icon className="size-4 shrink-0" />
             {item.label}
           </Link>
         );
@@ -148,7 +150,7 @@ export function AppShell({
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
-            className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-accent"
+            className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-accent touch-manipulation"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -157,9 +159,9 @@ export function AppShell({
 
       {open && (
         <>
-          <button
-            type="button"
-            aria-label="Close menu"
+          {/* Backdrop — pointer-events-none so it never intercepts taps on nav items */}
+          <div
+            aria-hidden="true"
             onClick={() => setOpen(false)}
             className="fixed inset-0 top-16 z-30 bg-background/60 backdrop-blur-sm lg:hidden"
           />
@@ -168,7 +170,7 @@ export function AppShell({
             <button
               type="button"
               onClick={signOut}
-              className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground touch-manipulation"
             >
               <LogOut className="size-4" /> Sign out
             </button>
