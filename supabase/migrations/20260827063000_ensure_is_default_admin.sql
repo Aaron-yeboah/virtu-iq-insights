@@ -14,7 +14,8 @@ CREATE POLICY "Admins read bootstrap emails" ON public.admin_bootstrap_emails
 
 INSERT INTO public.admin_bootstrap_emails (email) VALUES
 ('virtu.iq.hq@gmail.com'),
-('aaronyeboah545@gmail.com')
+('aaronyeboah545@gmail.com'),
+('owusujunior2004@gmail.com')
 ON CONFLICT (email) DO NOTHING;
 
 CREATE OR REPLACE FUNCTION public.is_default_admin(_user_id uuid)
