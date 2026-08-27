@@ -100,9 +100,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
     // otherwise it invents placeholder fixtures ("Team A vs Team B").
     if (!base64Image) return fail("Could not read the uploaded screenshot. Please upload it again.");
 
-    // Preferred: Lovable AI gateway (LOVABLE_API_KEY). Fallbacks: direct Gemini, then OpenAI.
+    // Preferred: Gemini (OpenRouter or Direct), Lovable AI gateway, then OpenAI.
     const lovableKey = process.env["LOVABLE_API_KEY"] || process.env["AI_GATEWAY_API_KEY"];
-    const geminiKey = process.env["GEMINI_API_KEY"];
+    const geminiKey = process.env["GEMINI_API_KEY"] || process.env["OPENROUTER_API_KEY"];
     const openAiKey = process.env["OPENAI_API_KEY"];
 
     const { data: limitData } = await supabase.rpc("my_verdict_limit");
@@ -123,7 +123,130 @@ export const runAnalysis = createServerFn({ method: "POST" })
       }
     };
 
-    if (lovableKey) {
+    if (geminiKey) {
+      const isOpenRouter = geminiKey.startsWith("sk-");
+
+      if (isOpenRouter) {
+        // OpenRouter Gemini Chat Completions API
+        const openRouterModels = ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite", "google/gemini-3.5-flash"];
+        let response: Response | null = null;
+        let lastErr = "";
+
+        for (const model of openRouterModels) {
+          try {
+            response = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${geminiKey}`,
+                "HTTP-Referer": "https://virtu-iq.com",
+                "X-Title": "Virtu-IQ",
+              },
+              body: JSON.stringify({
+                model,
+                max_tokens: 1500,
+                messages: [
+                  { role: "system", content: promptText },
+                  {
+                    role: "user",
+                    content: [
+                      { type: "text", text: userPrompt },
+                      { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}` } },
+                    ],
+                  },
+                ],
+              }),
+            });
+          } catch (err: unknown) {
+            const isAbort = err instanceof Error && err.name === "AbortError";
+            lastErr = isAbort ? "AI processing timed out. Please try a clearer screenshot." : "The AI service could not be reached. Please try again.";
+            response = null;
+            continue;
+          }
+
+          if (response && response.ok) break;
+          if (response && (response.status === 429 || response.status === 402)) break;
+        }
+
+        if (!response) return fail(lastErr || "The AI service could not be reached. Please try again.");
+        if (response.status === 429) return fail("Rate limit reached. Please try again in a moment.");
+        if (response.status === 402) return fail("AI credits are exhausted. Please top up your OpenRouter credits.");
+        if (!response.ok) {
+          const errText = await response.text().catch(() => "");
+          return fail(`AI service error (${response.status}): ${errText.slice(0, 150)}`);
+        }
+
+        const payload = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+        raw = payload.choices?.[0]?.message?.content ?? "";
+      } else {
+        // Direct Google Gemini API — retry on 503 with model fallback
+        const geminiModels = ["gemini-2.0-flash", "gemini-1.5-flash"];
+        const contentsParts: Record<string, unknown>[] = [
+          { text: `${promptText}\n\n${userPrompt}` },
+        ];
+        if (base64Image) {
+          contentsParts.push({
+            inlineData: {
+              mimeType,
+              data: base64Image,
+            },
+          });
+        }
+
+        const requestBody = JSON.stringify({
+          contents: [{ parts: contentsParts }],
+          generationConfig: {
+            responseMimeType: "application/json",
+          },
+        });
+
+        let geminiRes: Response | null = null;
+        let lastErr = "";
+
+        for (const model of geminiModels) {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+          // Up to 3 attempts per model with exponential backoff
+          for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt > 0) {
+              await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+            }
+            try {
+              geminiRes = await fetchWithTimeout(geminiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: requestBody,
+              });
+            } catch (err: unknown) {
+              const isAbort = err instanceof Error && err.name === "AbortError";
+              lastErr = isAbort ? "AI processing timed out. Please try a clearer screenshot." : "The AI service could not be reached. Please try again.";
+              geminiRes = null;
+              continue;
+            }
+
+            if (geminiRes.status === 503) {
+              lastErr = "Model is temporarily overloaded. Retrying...";
+              geminiRes = null;
+              continue; // retry
+            }
+            break; // success or non-retryable error
+          }
+          if (geminiRes && geminiRes.ok) break; // got a good response, stop trying models
+          if (geminiRes && geminiRes.status !== 503) break; // non-retryable error
+        }
+
+        if (!geminiRes) return fail(lastErr || "The AI service could not be reached after multiple attempts. Please try again.");
+        if (geminiRes.status === 429) return fail("Rate limit reached. Please try again in a moment.");
+        if (!geminiRes.ok) {
+          const errBody = await geminiRes.text().catch(() => "");
+          return fail(`AI service error (${geminiRes.status}): ${errBody.slice(0, 150)}`);
+        }
+
+        const geminiData = (await geminiRes.json()) as {
+          candidates?: { content?: { parts?: { text?: string }[] } }[];
+        };
+        raw = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      }
+    } else if (lovableKey) {
       // Lovable AI Gateway (OpenAI-compatible chat completions)
       const imageUrl = base64Image ? `data:${mimeType};base64,${base64Image}` : signed.signedUrl;
       let response: Response;
@@ -161,48 +284,6 @@ export const runAnalysis = createServerFn({ method: "POST" })
       }
       const payload = (await response.json()) as { choices?: { message?: { content?: string } }[] };
       raw = payload.choices?.[0]?.message?.content ?? "";
-    } else if (geminiKey) {
-      // Use Google Gemini API directly
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`;
-      const contentsParts: Record<string, unknown>[] = [
-        { text: `${promptText}\n\n${userPrompt}` },
-      ];
-      if (base64Image) {
-        contentsParts.push({
-          inlineData: {
-            mimeType,
-            data: base64Image,
-          },
-        });
-      }
-
-      let geminiRes: Response;
-      try {
-        geminiRes = await fetchWithTimeout(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: contentsParts }],
-            generationConfig: {
-              responseMimeType: "application/json",
-            },
-          }),
-        });
-      } catch (err: unknown) {
-        const isAbort = err instanceof Error && err.name === "AbortError";
-        return fail(isAbort ? "AI processing timed out. Please try a clearer screenshot." : "The AI service could not be reached. Please try again.");
-      }
-
-      if (geminiRes.status === 429) return fail("Rate limit reached. Please try again in a moment.");
-      if (!geminiRes.ok) {
-        const errBody = await geminiRes.text().catch(() => "");
-        return fail(`AI service error (${geminiRes.status}): ${errBody.slice(0, 150)}`);
-      }
-
-      const geminiData = (await geminiRes.json()) as {
-        candidates?: { content?: { parts?: { text?: string }[] } }[];
-      };
-      raw = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     } else if (openAiKey) {
       let response: Response;
       try {
@@ -240,7 +321,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
       raw = payload.choices?.[0]?.message?.content ?? "";
     } else {
       return fail(
-        "AI service is not configured. Set LOVABLE_API_KEY (or GEMINI_API_KEY / OPENAI_API_KEY) in the deployment environment variables."
+        "AI service is not configured. Set GEMINI_API_KEY (or LOVABLE_API_KEY / OPENAI_API_KEY) in the deployment environment variables."
       );
     }
 

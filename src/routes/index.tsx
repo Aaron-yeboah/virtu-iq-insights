@@ -33,7 +33,7 @@ import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { LiveTicker } from "@/components/site/LiveTicker";
 import { FloatingParticles } from "@/components/site/FloatingParticles";
-import { MatrixRain } from "@/components/site/MatrixRain";
+
 import { GlitchText } from "@/components/site/GlitchText";
 import { AnimatedCounter } from "@/components/site/AnimatedCounter";
 import { LogoSymbol } from "@/components/brand/Logo";
@@ -350,8 +350,7 @@ function Index() {
       <main className="relative">
         {/* ── HERO ── */}
         <section className="relative overflow-hidden border-b border-border/60 bg-white">
-          {/* Vertical Matrix binary rain (green binary streams on white) */}
-          <MatrixRain opacity={0.20} />
+
 
           {/* Red radial ambient glow */}
           <div
@@ -456,7 +455,7 @@ function Index() {
 
         {/* ── FEATURES ── */}
         <section id="features" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24 relative">
-          <MatrixRain opacity={0.12} />
+
           <div className="max-w-2xl relative">
             <span className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest text-primary">
               <Activity className="size-3.5" />
@@ -492,7 +491,7 @@ function Index() {
         {/* ── HOW IT WORKS ── */}
         <section id="how-it-works" className="border-y border-slate-200 relative bg-slate-50/80">
           <FloatingParticles />
-          <MatrixRain opacity={0.15} />
+
           <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16 sm:px-6 lg:py-24 relative">
             <div className="max-w-2xl">
               <span className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest text-emerald-700">
@@ -537,24 +536,58 @@ function Index() {
 
 
         {/* ── TRUST ── */}
-        <section className="border-y border-slate-200 bg-slate-50">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {trust.map((t) => (
-                <div key={t.title} className="flex gap-3 group">
-                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-primary shadow-sm">
-                    <t.icon className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-bold font-mono text-slate-950">
+        <section className="relative bg-white border-y border-slate-200">
+          <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20 sm:px-6">
+            {/* Section header */}
+            <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+              <span className="mb-3 inline-flex items-center gap-1.5 font-mono text-xs font-bold tracking-widest text-primary">
+                <Database className="size-3.5" />
+                OPERATIONAL INTEGRITY
+              </span>
+              <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl text-slate-950">
+                Built on Trust, Hardened by Design
+              </h2>
+              <p className="mt-3 text-slate-600 font-medium text-sm sm:text-base">
+                Every layer of Virtu-IQ is engineered for security, reliability, and transparency.
+              </p>
+            </div>
+
+            {/* Trust cards grid */}
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {trust.map((t, idx) => {
+                const accents = [
+                  { border: "border-t-red-500", iconBg: "bg-red-50 group-hover:bg-red-100", iconText: "text-red-600" },
+                  { border: "border-t-emerald-500", iconBg: "bg-emerald-50 group-hover:bg-emerald-100", iconText: "text-emerald-600" },
+                  { border: "border-t-blue-500", iconBg: "bg-blue-50 group-hover:bg-blue-100", iconText: "text-blue-600" },
+                  { border: "border-t-amber-500", iconBg: "bg-amber-50 group-hover:bg-amber-100", iconText: "text-amber-600" },
+                ];
+                const accent = accents[idx % accents.length] ?? accents[0];
+                return (
+                  <div
+                    key={t.title}
+                    className={cn(
+                      "group relative rounded-xl border border-slate-200/80 border-t-[3px] bg-white p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-default",
+                      accent.border
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "inline-flex size-11 items-center justify-center rounded-lg transition-colors duration-300",
+                        accent.iconBg,
+                        accent.iconText
+                      )}
+                    >
+                      <t.icon className="size-5" />
+                    </span>
+                    <h3 className="mt-4 text-sm font-bold font-mono text-slate-950">
                       {t.title}
                     </h3>
-                    <p className="mt-1 text-sm text-slate-600 font-medium">
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600 font-medium">
                       {t.body}
                     </p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
@@ -588,7 +621,7 @@ function Index() {
 
         {/* ── CTA BANNER ── */}
         <section className="border-t border-primary/30 relative overflow-hidden bg-gradient-to-r from-red-600 via-primary to-red-700 text-white">
-          <MatrixRain opacity={0.18} />
+
           <FloatingParticles />
           <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center sm:px-6 relative">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 font-mono text-[10px] sm:text-xs font-bold tracking-widest text-white">
