@@ -1760,7 +1760,7 @@ function AdminSettingsManager() {
           admin_commission_rate: adminRate,
           default_partner_commission_rate: partnerRate,
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq("id", true);
       if (error) throw new Error(error.message);
     },

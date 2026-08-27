@@ -333,7 +333,7 @@ export const partnerStatsQuery = (userId: string) =>
   queryOptions({
     queryKey: ["partner-stats", userId],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("partner_stats", { _user_id: userId });
+      const { data, error } = await supabase.rpc("partner_stats" as never, { _user_id: userId } as never);
       if (error) throw error;
       return (data ?? {
         registrations: 0,
@@ -379,7 +379,7 @@ export const adminPartnerPayoutsQuery = (partnerId?: string) =>
   queryOptions({
     queryKey: ["admin-partner-payouts", partnerId ?? "all"],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from("partner_payouts")
         .select("id, partner_id, amount_ghs, cleared_at, cleared_by, note")
         .order("cleared_at", { ascending: false });
@@ -398,8 +398,8 @@ export const adminPartnerListQuery = (search?: string) =>
     queryFn: async () => {
       const term = search?.trim();
       const { data, error } = await supabase.rpc(
-        "admin_partner_list",
-        term ? { _search: term } : {},
+        "admin_partner_list" as never,
+        (term ? { _search: term } : {}) as never,
       );
       if (error) throw error;
       return (data ?? []) as AdminPartnerRow[];

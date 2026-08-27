@@ -47,13 +47,16 @@ export function MatrixRain({ opacity = 0.06 }: { opacity?: number }) {
       ctx.font = `${FONT_SIZE}px "JetBrains Mono", monospace`;
 
       for (let i = 0; i < drops.length; i++) {
-        const y = drops[i] * FONT_SIZE;
+        const drop = drops[i];
+        if (drop === undefined) continue;
+
+        const y = drop * FONT_SIZE;
         if (y < 0) {
-          drops[i]++;
+          drops[i] = drop + 1;
           continue;
         }
 
-        const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+        const char = CHARS[Math.floor(Math.random() * CHARS.length)] ?? "0";
         const x = i * FONT_SIZE;
 
         // Leading character — deep emerald green
@@ -61,29 +64,24 @@ export function MatrixRain({ opacity = 0.06 }: { opacity?: number }) {
         ctx.fillText(char, x, y);
 
         // One step behind — vibrant matrix green
-        if (drops[i] > 1) {
+        if (drop > 1) {
           ctx.fillStyle = "#059669";
-          ctx.fillText(
-            CHARS[Math.floor(Math.random() * CHARS.length)],
-            x,
-            y - FONT_SIZE
-          );
+          const trailChar1 = CHARS[Math.floor(Math.random() * CHARS.length)] ?? "1";
+          ctx.fillText(trailChar1, x, y - FONT_SIZE);
         }
 
         // Rest of trail — softer green
-        if (drops[i] > 2) {
+        if (drop > 2) {
           ctx.fillStyle = "rgba(16, 185, 129, 0.6)";
-          ctx.fillText(
-            CHARS[Math.floor(Math.random() * CHARS.length)],
-            x,
-            y - FONT_SIZE * 2
-          );
+          const trailChar2 = CHARS[Math.floor(Math.random() * CHARS.length)] ?? "0";
+          ctx.fillText(trailChar2, x, y - FONT_SIZE * 2);
         }
 
         if (y > height && Math.random() > 0.975) {
           drops[i] = 0;
+        } else {
+          drops[i] = drop + 1;
         }
-        drops[i]++;
       }
 
       animId = requestAnimationFrame(draw);

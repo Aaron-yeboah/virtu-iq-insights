@@ -561,7 +561,11 @@ function Index() {
                   { border: "border-t-blue-500", iconBg: "bg-blue-50 group-hover:bg-blue-100", iconText: "text-blue-600" },
                   { border: "border-t-amber-500", iconBg: "bg-amber-50 group-hover:bg-amber-100", iconText: "text-amber-600" },
                 ];
-                const accent = accents[idx % accents.length] ?? accents[0];
+                const accent = accents[idx % accents.length] ?? {
+                  border: "border-t-emerald-500",
+                  iconBg: "bg-emerald-50 group-hover:bg-emerald-100",
+                  iconText: "text-emerald-600",
+                };
                 return (
                   <div
                     key={t.title}

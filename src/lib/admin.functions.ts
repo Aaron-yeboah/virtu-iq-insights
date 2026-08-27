@@ -97,7 +97,7 @@ export const explodePlatformData = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("FORBIDDEN");
 
     // Primary method: Database RPC (executes securely with DB admin privileges without service role key)
-    const { data: rpcResult, error: rpcError } = await supabase.rpc("explode_platform_data");
+    const { data: rpcResult, error: rpcError } = await supabase.rpc("explode_platform_data" as never);
     if (!rpcError && rpcResult) {
       return rpcResult as { analyses: number; payments: number; commissions: number; applications: number };
     }
