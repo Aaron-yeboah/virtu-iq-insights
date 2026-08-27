@@ -101,8 +101,21 @@ function RegisterPage() {
         });
         if (signInError) return setError(signInError.message);
       }
-      setNotice("Partner account created — opening your partner hub…");
-      navigate({ to: "/partner", replace: true });
+      // Auto-submit a partner application so admin can review and approve.
+      // Do not grant the partner role yet — the admin must approve first.
+      const newUserId = data.user?.id ?? data.session?.user?.id ?? "";
+      if (newUserId) {
+        await supabase.from("partner_applications").insert({
+          user_id: newUserId,
+          audience: "Partner link invite",
+          motivation: "Registered via partner invitation link",
+          payout_method: "MTN MoMo",
+          payout_details: phone.trim(),
+          status: "pending",
+        });
+      }
+      setNotice("Account created — awaiting partner approval…");
+      navigate({ to: "/partner-apply", replace: true });
       return;
     }
 

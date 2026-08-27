@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LogoFull, LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { partnerApplicationQuery } from "@/lib/data";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/partner-apply")({
   head: () => ({
@@ -126,13 +127,58 @@ function PartnerApplyPage() {
           </p>
         </section>
       ) : status === "pending" ? (
-        <section className="relative mt-8 overflow-hidden rounded-2xl border border-border bg-card p-8 text-center">
+        <section className="relative mt-8 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20 p-8 text-center">
           <LogoSymbol className="pointer-events-none absolute -right-6 -bottom-8 h-40 w-auto opacity-[0.06]" aria-hidden />
-          <Loader2 className="relative mx-auto size-10 animate-spin text-primary" />
-          <h1 className="relative mt-4 text-xl font-semibold text-foreground">Pending approval</h1>
-          <p className="relative mt-2 text-sm text-muted-foreground">
-            Your partner application is with our team. This page updates the moment you&apos;re approved —
-            no need to refresh.
+          {/* Animated waiting indicator */}
+          <div className="relative mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
+            <Loader2 className="size-8 animate-spin text-amber-600 dark:text-amber-400" />
+          </div>
+          <h1 className="relative text-xl font-bold tracking-tight text-amber-800 dark:text-amber-300">
+            Application under review
+          </h1>
+          <p className="relative mt-2 text-sm leading-relaxed text-amber-700/80 dark:text-amber-400/80">
+            Your partner application has been submitted and is being reviewed by our team.
+            You&apos;ll get instant access to your partner dashboard the moment you&apos;re approved —
+            no need to refresh this page.
+          </p>
+          {/* What happens next */}
+          <div className="relative mt-6 space-y-3 rounded-xl border border-amber-200 bg-white/70 dark:border-amber-800/40 dark:bg-amber-950/30 p-4 text-left">
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-400">
+              What happens next
+            </p>
+            <div className="space-y-2.5">
+              {[
+                { done: true, label: "Account created & fee waived" },
+                { done: true, label: "Application submitted for review" },
+                { done: false, label: "Admin approves your application" },
+                { done: false, label: "Partner dashboard unlocked automatically" },
+              ].map(({ done, label }, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm">
+                  <span
+                    className={cn(
+                      "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                      done
+                        ? "bg-emerald-500 text-white"
+                        : "bg-amber-200 text-amber-700 dark:bg-amber-800 dark:text-amber-300",
+                    )}
+                  >
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <span
+                    className={cn(
+                      done
+                        ? "text-emerald-700 dark:text-emerald-400 line-through"
+                        : "text-foreground font-medium",
+                    )}
+                  >
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="relative mt-5 text-xs text-muted-foreground">
+            This page updates in real time. You can safely leave and come back.
           </p>
         </section>
       ) : (

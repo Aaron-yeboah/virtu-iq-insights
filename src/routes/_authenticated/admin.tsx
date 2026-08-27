@@ -1487,8 +1487,9 @@ function PartnerInviteLink() {
     <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
       <p className="text-sm font-semibold text-foreground">Partner&apos;s registration link</p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Send this to potential partners. They register with instant partner access and skip the 50 GHS
-        registration fee — sent directly to their partner hub.
+        Send this to potential partners. They register, skip the 50 GHS fee, and are placed in a{" "}
+        <span className="font-semibold text-amber-600">pending review</span> queue — you approve
+        them below before they access the partner dashboard.
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <Input readOnly value={link} aria-label="Partner registration link" />
