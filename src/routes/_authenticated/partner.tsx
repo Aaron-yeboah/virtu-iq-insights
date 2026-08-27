@@ -120,7 +120,7 @@ function PartnerPage() {
         </div>
       </section>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-3">
+      <div className="mt-5 grid gap-4 grid-cols-1 sm:grid-cols-3">
         <Stat
           label="Registrations"
           value={String(stats?.registrations ?? 0)}
@@ -151,13 +151,18 @@ function PartnerPage() {
           <div className="relative divide-y divide-border">
             {(commissions ?? []).length === 0 && (
               <p className="p-5 text-sm text-muted-foreground">
-                No commissions yet. They appear when a referred member's payment is approved.
+                No commissions yet. They appear when a referred member&apos;s payment is approved.
               </p>
             )}
             {(commissions ?? []).map((c) => (
-              <div key={c.id} className="flex items-center justify-between gap-3 p-4">
-                <p className="text-sm text-muted-foreground">{new Date(c.created_at).toLocaleString()}</p>
-                <span className="text-sm font-semibold text-primary">{ghs(c.amount_ghs)}</span>
+              <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{ghs(c.amount_ghs)}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleString()}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                  Earned
+                </span>
               </div>
             ))}
           </div>

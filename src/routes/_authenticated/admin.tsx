@@ -219,7 +219,7 @@ function AdminPage() {
     <>
       <PageHeader title="Admin console" description="Review payments, partners, commission settings and platform activity." />
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4 2xl:grid-cols-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-8">
         <Stat label="Total Revenue" value={ghs(stats?.revenue_ghs ?? 0)} highlight />
         <Stat label="Today's Revenue" value={ghs(todayRevenue)} highlight />
         <Stat label={`Dev Commission (${devRate}%)`} value={ghs(devCommission)} highlight />
@@ -385,6 +385,8 @@ type AdminPaymentItem = {
   created_at: string;
 };
 
+type PaymentSortKey = "newest" | "oldest" | "pending_first" | "highest_amount";
+
 function PaymentsList({
   payments,
   reviewPayment,
@@ -393,10 +395,53 @@ function PaymentsList({
   reviewPayment: { isPending: boolean; mutate: (vars: { id: string; approve: boolean }) => void };
 }) {
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? payments : payments.slice(0, 12);
+  const [sortBy, setSortBy] = useState<PaymentSortKey>("pending_first");
+
+  const sorted = [...payments].sort((a, b) => {
+    if (sortBy === "pending_first") {
+      if (a.status === "pending" && b.status !== "pending") return -1;
+      if (a.status !== "pending" && b.status === "pending") return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+    if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    if (sortBy === "highest_amount") return Number(b.amount_ghs) - Number(a.amount_ghs);
+    // newest (default)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const visible = expanded ? sorted : sorted.slice(0, 12);
+
+  const sortOptions: { key: PaymentSortKey; label: string }[] = [
+    { key: "pending_first", label: "⚡ Pending First" },
+    { key: "newest", label: "Newest First" },
+    { key: "oldest", label: "Oldest First" },
+    { key: "highest_amount", label: "Highest Amount" },
+  ];
 
   return (
     <div className="space-y-3">
+      {/* Sort Controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <Sliders className="size-3" /> Sort:
+        </span>
+        {sortOptions.map((opt) => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => setSortBy(opt.key)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+              sortBy === opt.key
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
         {payments.length === 0 && <p className="p-5 text-sm text-muted-foreground">No payments yet.</p>}
         {visible.map((p) => (
@@ -450,7 +495,7 @@ function PaymentsList({
         ))}
       </div>
 
-      {payments.length > 12 && (
+      {sorted.length > 12 && (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"
@@ -464,7 +509,7 @@ function PaymentsList({
               </>
             ) : (
               <>
-                <ChevronDown className="size-4" /> Show all {payments.length} payments ({payments.length - 12} more)
+                <ChevronDown className="size-4" /> Show all {sorted.length} payments ({sorted.length - 12} more)
               </>
             )}
           </Button>
@@ -474,9 +519,15 @@ function PaymentsList({
   );
 }
 
+type MemberSortKey = "newest" | "oldest" | "active" | "spent" | "credits" | "referrals";
+
 function MembersList({ members, currentUserId }: { members: MemberRow[]; currentUserId: string }) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [sortBy, setSortBy] = useState<MemberSortKey>("newest");
+
+  const now = Date.now();
+  const oneDayMs = 24 * 60 * 60 * 1000;
 
   const filtered = members.filter((m) => {
     const q = search.trim().toLowerCase();
@@ -489,29 +540,76 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
     );
   });
 
-  const visible = expanded ? filtered : filtered.slice(0, 12);
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    if (sortBy === "active") {
+      const aT = a.last_sign_in_at ? new Date(a.last_sign_in_at).getTime() : 0;
+      const bT = b.last_sign_in_at ? new Date(b.last_sign_in_at).getTime() : 0;
+      return bT - aT;
+    }
+    if (sortBy === "spent") return Number(b.spent_ghs) - Number(a.spent_ghs);
+    if (sortBy === "credits") return b.credits - a.credits;
+    if (sortBy === "referrals") return b.referral_count - a.referral_count;
+    // newest (default)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const visible = expanded ? sorted : sorted.slice(0, 12);
+
+  const sortOptions: { key: MemberSortKey; label: string }[] = [
+    { key: "newest", label: "🆕 Newest" },
+    { key: "oldest", label: "Oldest" },
+    { key: "active", label: "Recently Active" },
+    { key: "spent", label: "Highest Spent" },
+    { key: "credits", label: "Most Credits" },
+    { key: "referrals", label: "Most Referrals" },
+  ];
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 sm:max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search members by name, email, phone or referral code..."
-            aria-label="Search members"
-            className="pl-9"
-          />
+      <div className="flex flex-col gap-3">
+        {/* Search row */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1 sm:max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, email, phone or referral code..."
+              aria-label="Search members"
+              className="pl-9"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground shrink-0">
+            Showing <span className="font-semibold text-foreground">{visible.length}</span> of{" "}
+            <span className="font-semibold text-foreground">{sorted.length}</span> members
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Showing <span className="font-semibold text-foreground">{visible.length}</span> of{" "}
-          <span className="font-semibold text-foreground">{filtered.length}</span> members
-        </p>
+        {/* Sort controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <Sliders className="size-3" /> Sort:
+          </span>
+          {sortOptions.map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setSortBy(opt.key)}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+                sortBy === opt.key
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        {filtered.length === 0 && (
+        {sorted.length === 0 && (
           <p className="p-8 text-center text-sm text-muted-foreground">
             {search ? "No members match your search." : "No registered members yet."}
           </p>
@@ -524,6 +622,7 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
             .slice(0, 2)
             .join("")
             .toUpperCase();
+          const isNew = now - new Date(m.created_at).getTime() < oneDayMs;
 
           return (
             <div key={m.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
@@ -536,6 +635,11 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
                     <span className="font-semibold text-foreground text-sm truncate">
                       {m.full_name || m.email}
                     </span>
+                    {isNew && (
+                      <span className="inline-flex items-center rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-bold text-white tracking-wider animate-pulse">
+                        NEW
+                      </span>
+                    )}
                     {m.is_admin && <Badge variant="secondary" className="text-[10px]">Admin</Badge>}
                     {m.is_partner && <Badge className="text-[10px]">Partner</Badge>}
                   </div>
@@ -566,6 +670,12 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
                         <span>Active: {new Date(m.last_sign_in_at).toLocaleDateString()}</span>
                       </>
                     )}
+                    {m.referral_count > 0 && (
+                      <>
+                        <span>·</span>
+                        <span>{m.referral_count} referral{m.referral_count === 1 ? "" : "s"}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -581,7 +691,7 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
         })}
       </div>
 
-      {filtered.length > 12 && (
+      {sorted.length > 12 && (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"
@@ -595,7 +705,7 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
               </>
             ) : (
               <>
-                <ChevronDown className="size-4" /> Show all {filtered.length} members ({filtered.length - 12} more)
+                <ChevronDown className="size-4" /> Show all {sorted.length} members ({sorted.length - 12} more)
               </>
             )}
           </Button>
@@ -989,49 +1099,87 @@ function PartnerManager() {
   });
 
   const [expandedRows, setExpandedRows] = useState(false);
-  const visibleRows = expandedRows ? rows : rows.slice(0, 12);
+  const [sortRows, setSortRows] = useState<MemberSortKey>("newest");
+
+  const sortedRows = [...rows].sort((a, b) => {
+    if (sortRows === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    if (sortRows === "active") {
+      const aT = a.last_sign_in_at ? new Date(a.last_sign_in_at).getTime() : 0;
+      const bT = b.last_sign_in_at ? new Date(b.last_sign_in_at).getTime() : 0;
+      return bT - aT;
+    }
+    if (sortRows === "spent") return Number(b.spent_ghs) - Number(a.spent_ghs);
+    if (sortRows === "credits") return b.credits - a.credits;
+    if (sortRows === "referrals") return b.referral_count - a.referral_count;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const visibleRows = expandedRows ? sortedRows : sortedRows.slice(0, 12);
 
   return (
     <div className="space-y-4">
       <PartnerInviteLink />
       <PartnerApplications />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email or referral code"
-          aria-label="Search members"
-          className="sm:max-w-sm"
-        />
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant={!onlyPartners && !partnerId ? "default" : "outline"}
-            onClick={() => {
-              setOnlyPartners(false);
-              setPartnerId(null);
-            }}
-          >
-            All members
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={onlyPartners ? "default" : "outline"}
-            onClick={() => {
-              setOnlyPartners(true);
-              setPartnerId(null);
-            }}
-          >
-            Partners only
-          </Button>
-          {partnerId && (
-            <Button type="button" size="sm" variant="secondary" onClick={() => setPartnerId(null)}>
-              Clear: referred by {partnerName}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email or referral code"
+            aria-label="Search members"
+            className="sm:max-w-sm"
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={!onlyPartners && !partnerId ? "default" : "outline"}
+              onClick={() => {
+                setOnlyPartners(false);
+                setPartnerId(null);
+              }}
+            >
+              All members
             </Button>
-          )}
+            <Button
+              type="button"
+              size="sm"
+              variant={onlyPartners ? "default" : "outline"}
+              onClick={() => {
+                setOnlyPartners(true);
+                setPartnerId(null);
+              }}
+            >
+              Partners only
+            </Button>
+            {partnerId && (
+              <Button type="button" size="sm" variant="secondary" onClick={() => setPartnerId(null)}>
+                Clear: referred by {partnerName}
+              </Button>
+            )}
+          </div>
+        </div>
+        {/* Sort controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <Sliders className="size-3" /> Sort:
+          </span>
+          {(["newest", "oldest", "active", "spent", "credits", "referrals"] as MemberSortKey[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSortRows(key)}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+                sortRows === key
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+              )}
+            >
+              {key === "newest" ? "🆕 Newest" : key === "oldest" ? "Oldest" : key === "active" ? "Recently Active" : key === "spent" ? "Highest Spent" : key === "credits" ? "Most Credits" : "Most Referrals"}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -1042,15 +1190,18 @@ function PartnerManager() {
           </p>
         )}
         {visibleRows.map((m) => (
-          <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
-                {m.full_name ?? m.email}
-                {m.is_partner && <Badge>Partner</Badge>}
-                {m.is_admin && <Badge variant="secondary">Admin</Badge>}
+          <div key={m.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
+                <span className="truncate font-semibold">{m.full_name ?? m.email}</span>
+                {m.is_partner && <Badge className="shrink-0">Partner</Badge>}
+                {m.is_admin && <Badge variant="secondary" className="shrink-0">Admin</Badge>}
               </div>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {m.email}
+              </p>
               <p className="truncate text-xs text-muted-foreground">
-                {m.email} · code {m.referral_code} · spent {ghs(m.spent_ghs)}
+                Code: <span className="font-mono font-medium">{m.referral_code}</span> · Spent: {ghs(m.spent_ghs)}
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {m.is_partner
@@ -1060,11 +1211,12 @@ function PartnerManager() {
                     : "Direct signup"}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
               {m.is_partner && (
                 <Button
                   size="sm"
                   variant="outline"
+                  className="flex-1 sm:flex-none"
                   onClick={() => {
                     setPartnerId(m.id);
                     setPartnerName(m.full_name ?? m.email ?? "partner");
@@ -1078,26 +1230,28 @@ function PartnerManager() {
               <Button
                 size="sm"
                 variant={m.is_partner ? "destructive" : "default"}
+                className="flex-1 sm:flex-none"
                 disabled={setPartner.isPending}
                 onClick={() => setPartner.mutate({ id: m.id, make: !m.is_partner })}
               >
-                {m.is_partner ? "Remove partner" : "Add partner"}
+                {m.is_partner ? "Remove partner" : "Make partner"}
               </Button>
               <Button
                 size="sm"
                 variant={m.is_admin ? "outline" : "secondary"}
+                className="flex-1 sm:flex-none"
                 disabled={setAdmin.isPending || (m.id === user.id && m.is_admin)}
                 onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
                 title={m.id === user.id ? "Cannot remove your own admin role" : undefined}
               >
-                {m.is_admin ? "Remove admin" : "Add admin"}
+                {m.is_admin ? "Remove admin" : "Make admin"}
               </Button>
             </div>
           </div>
         ))}
       </div>
 
-      {rows.length > 12 && (
+      {sortedRows.length > 12 && (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"
@@ -1111,7 +1265,7 @@ function PartnerManager() {
               </>
             ) : (
               <>
-                <ChevronDown className="size-4" /> Show all {rows.length} members ({rows.length - 12} more)
+                <ChevronDown className="size-4" /> Show all {sortedRows.length} members ({sortedRows.length - 12} more)
               </>
             )}
           </Button>
@@ -1201,51 +1355,66 @@ function PartnerApplications() {
           </p>
         )}
         {rows.map((a) => (
-          <div key={a.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
-                <span className="truncate">{a.full_name ?? a.email ?? "Applicant"}</span>
-                {a.status !== "pending" && (
-                  <Badge
-                    className={cn(
-                      "font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
-                      a.status === "approved"
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : a.status === "rejected"
-                          ? "bg-red-600 text-white hover:bg-red-700"
-                          : "bg-amber-500 text-white hover:bg-amber-600"
-                    )}
-                  >
-                    {a.status}
-                  </Badge>
-                )}
+          <div key={a.id} className="flex flex-col gap-3 p-4">
+            {/* Header row: name + status badge */}
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
+                  <span className="truncate">{a.full_name ?? a.email ?? "Applicant"}</span>
+                  {a.status !== "pending" && (
+                    <Badge
+                      className={cn(
+                        "shrink-0 font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent",
+                        a.status === "approved"
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : a.status === "rejected"
+                            ? "bg-red-600 text-white hover:bg-red-700"
+                            : "bg-amber-500 text-white hover:bg-amber-600"
+                      )}
+                    >
+                      {a.status}
+                    </Badge>
+                  )}
+                </div>
+                <p className="mt-0.5 break-all text-xs text-muted-foreground">{a.email}</p>
               </div>
-              <p className="truncate text-xs text-muted-foreground">
-                {a.email} · {a.phone ?? "no phone"} · {new Date(a.created_at).toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground">Audience: {a.audience}</p>
+              {a.status === "pending" && (
+                <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                  PENDING REVIEW
+                </span>
+              )}
+            </div>
+            {/* Details */}
+            <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
-                Payout: {a.payout_method} · {a.payout_details}
+                📞 {a.phone ?? "No phone"} · 🕐 {new Date(a.created_at).toLocaleDateString()}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Audience:</span> {a.audience}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Payout:</span> {a.payout_method} · {a.payout_details}
               </p>
             </div>
+            {/* Action buttons */}
             {a.status === "pending" && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2 pt-1">
                 <Button
                   size="sm"
-                  className="flex-1 sm:flex-none"
+                  className="flex-1"
                   disabled={review.isPending}
                   onClick={() => review.mutate({ id: a.id, approve: true })}
                 >
-                  Approve
+                  ✓ Approve
                 </Button>
                 <Button
                   size="sm"
                   variant="destructive"
-                  className="flex-1 sm:flex-none"
+                  className="flex-1"
                   disabled={review.isPending}
                   onClick={() => review.mutate({ id: a.id, approve: false })}
                 >
-                  Reject
+                  ✕ Reject
                 </Button>
               </div>
             )}
