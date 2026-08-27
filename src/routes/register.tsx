@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { LogoFull } from "@/components/brand/Logo";
 import { AuthBackground } from "@/components/brand/AuthBackground";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 type SearchParams = {
   ref?: string;
