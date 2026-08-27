@@ -750,26 +750,15 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center">
                 <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
-                {m.id !== currentUserId && !m.is_admin && (
+                {m.id !== currentUserId && (
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant={m.is_admin ? "destructive" : "outline"}
                     className="h-8 text-xs font-medium"
                     disabled={setAdmin.isPending}
-                    onClick={() => setAdmin.mutate({ id: m.id, make: true })}
+                    onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
                   >
-                    Make admin
-                  </Button>
-                )}
-                {m.id !== currentUserId && m.is_admin && (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="h-8 text-xs font-medium"
-                    disabled={setAdmin.isPending}
-                    onClick={() => setAdmin.mutate({ id: m.id, make: false })}
-                  >
-                    Remove admin
+                    {m.is_admin ? "Remove admin" : "Make admin"}
                   </Button>
                 )}
                 {m.id !== currentUserId && (
@@ -1342,30 +1331,17 @@ function PartnerManager() {
               >
                 {m.is_partner ? "Remove partner" : "Make partner"}
               </Button>
-              {/* Admin — separate explicit buttons */}
-              {!m.is_admin && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 sm:flex-none border-amber-500/40 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/30"
-                  disabled={setAdmin.isPending}
-                  onClick={() => setAdmin.mutate({ id: m.id, make: true })}
-                >
-                  Make admin
-                </Button>
-              )}
-              {m.is_admin && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="flex-1 sm:flex-none"
-                  disabled={setAdmin.isPending || m.id === user.id}
-                  title={m.id === user.id ? "Cannot remove your own admin role" : undefined}
-                  onClick={() => setAdmin.mutate({ id: m.id, make: false })}
-                >
-                  Remove admin
-                </Button>
-              )}
+              {/* Admin toggle — same button switches label */}
+              <Button
+                size="sm"
+                variant={m.is_admin ? "destructive" : "outline"}
+                className="flex-1 sm:flex-none"
+                disabled={setAdmin.isPending || (m.id === user.id && m.is_admin)}
+                title={m.id === user.id && m.is_admin ? "Cannot remove your own admin role" : undefined}
+                onClick={() => setAdmin.mutate({ id: m.id, make: !m.is_admin })}
+              >
+                {m.is_admin ? "Remove admin" : "Make admin"}
+              </Button>
             </div>
           </div>
         ))}
