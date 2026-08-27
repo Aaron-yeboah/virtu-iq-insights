@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -558,6 +558,7 @@ type MemberSortKey = "newest" | "oldest" | "active" | "spent" | "credits" | "ref
 
 function MembersList({ members, currentUserId }: { members: MemberRow[]; currentUserId: string }) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [sortBy, setSortBy] = useState<MemberSortKey>("newest");
@@ -569,6 +570,8 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
     },
     onSuccess: async (_d, vars) => {
       await queryClient.invalidateQueries();
+      // Force the route context (isAdmin flag) to refresh for ALL users
+      void router.invalidate();
       toast.success(vars.make ? "Admin role granted" : "Admin role removed");
     },
     onError: (e: Error) =>
@@ -1132,6 +1135,7 @@ type MemberRow = {
 
 function PartnerManager() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { user } = Route.useRouteContext();
   const [search, setSearch] = useState("");
   const [onlyPartners, setOnlyPartners] = useState(false);
@@ -1150,6 +1154,8 @@ function PartnerManager() {
     },
     onSuccess: async (_d, vars) => {
       await queryClient.invalidateQueries();
+      // Force the route context (isAdmin flag) to refresh for ALL users
+      void router.invalidate();
       toast.success(vars.make ? "Admin role granted" : "Admin role removed");
     },
     onError: (e: Error) =>
