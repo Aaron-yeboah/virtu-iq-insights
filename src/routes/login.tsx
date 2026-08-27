@@ -34,7 +34,7 @@ function LoginPage() {
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/credits", replace: true });
+      if (data.session) navigate({ to: "/dashboard", replace: true });
     });
   }, [navigate]);
 
@@ -86,7 +86,7 @@ function LoginPage() {
     });
     setPending(false);
     if (signInError) return setError(signInError.message);
-    navigate({ to: "/credits", replace: true });
+    navigate({ to: "/dashboard", replace: true });
   }
 
   async function handleReset() {

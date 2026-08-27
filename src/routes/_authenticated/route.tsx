@@ -44,9 +44,8 @@ export const Route = createFileRoute("/_authenticated")({
     }
 
     if (!isAdmin) {
-      if (isPartner && !path.startsWith("/partner")) throw redirect({ to: "/partner" });
       if (!isPartner && path.startsWith("/partner")) throw redirect({ to: "/dashboard" });
-      if (path.startsWith("/admin")) throw redirect({ to: isPartner ? "/partner" : "/dashboard" });
+      if (path.startsWith("/admin")) throw redirect({ to: "/dashboard" });
     }
 
     let registrationPaid = true;
@@ -54,7 +53,7 @@ export const Route = createFileRoute("/_authenticated")({
       registrationPaid = profile?.registration_paid ?? false;
       if (!registrationPaid && path !== "/registration") throw redirect({ to: "/registration" });
     }
-    if (registrationPaid && path === "/registration") throw redirect({ to: "/credits" });
+    if (registrationPaid && path === "/registration") throw redirect({ to: "/dashboard" });
 
     return { user: authUser, roles, isAdmin, isPartner, registrationPaid };
   },
