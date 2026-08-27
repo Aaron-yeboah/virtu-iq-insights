@@ -6,13 +6,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LogoFull, LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
 import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
 import { supabase } from "@/integrations/supabase/client";
 import { ghs, paymentSettingsQuery, profileQuery, registrationPaymentQuery } from "@/lib/data";
-
-const METHODS = ["MTN MoMo", "Telecel Cash", "AirtelTigo Money", "Bank transfer"] as const;
 
 export const Route = createFileRoute("/_authenticated/registration")({
   head: () => ({
@@ -43,7 +40,7 @@ function RegistrationFeePage() {
   });
   usePaymentRealtime(user.id);
 
-  const [method, setMethod] = useState<string>(METHODS[0]);
+  const method = settings?.network ?? "MTN MoMo";
   const [senderName, setSenderName] = useState("");
   const [reference, setReference] = useState("");
   const [dismissedDecline, setDismissedDecline] = useState(false);
@@ -239,18 +236,9 @@ function RegistrationFeePage() {
           <div className="grid gap-4 rounded-2xl border border-border bg-muted/30 p-5 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Payment method</Label>
-              <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {METHODS.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex h-10 items-center rounded-lg border border-border bg-secondary/60 px-3">
+                <span className="text-sm font-semibold text-foreground">{method}</span>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="sender">Your MoMo name</Label>
