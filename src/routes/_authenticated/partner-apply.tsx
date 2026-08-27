@@ -61,7 +61,10 @@ function PartnerApplyPage() {
     };
   }, [user.id, queryClient]);
 
-  const status = application?.status ?? null;
+  const isInviteApplicant =
+    user.user_metadata?.["partner_applicant"] === "true" ||
+    user.user_metadata?.["partner_applicant"] === true;
+  const status = application?.status ?? (isInviteApplicant ? "pending" : null);
 
   useEffect(() => {
     if (status !== "approved") return;

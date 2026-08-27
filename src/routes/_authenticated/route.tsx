@@ -16,13 +16,18 @@ export const Route = createFileRoute("/_authenticated")({
       authUser = userData.user;
     }
 
-    // Parallel fetch for roles and profile to minimize latency
-    const [roleRes, profileRes] = await Promise.all([
+    // Parallel fetch for roles, profile, and partner_applications to minimize latency
+    const [roleRes, profileRes, partnerAppRes] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", authUser.id),
       supabase
         .from("profiles")
         .select("registration_paid, partner_applicant")
         .eq("id", authUser.id)
+        .maybeSingle(),
+      supabase
+        .from("partner_applications")
+        .select("id, status")
+        .eq("user_id", authUser.id)
         .maybeSingle(),
     ]);
 
@@ -32,14 +37,20 @@ export const Route = createFileRoute("/_authenticated")({
     const profile = profileRes.data ?? null;
     const path = location.pathname;
 
+    const isPartnerApplicant =
+      profile?.partner_applicant === true ||
+      authUser.user_metadata?.["partner_applicant"] === "true" ||
+      authUser.user_metadata?.["partner_applicant"] === true ||
+      Boolean(partnerAppRes.data?.id);
+
     // Invited partner applicants live entirely on the application screen
     // until an admin approves them (no registration fee for them).
-    if (!isAdmin && !isPartner && profile?.partner_applicant) {
+    if (!isAdmin && !isPartner && isPartnerApplicant) {
       if (path !== "/partner-apply") throw redirect({ to: "/partner-apply" });
       return { user: authUser, roles, isAdmin, isPartner, registrationPaid: true };
     }
     if (isPartner && path === "/partner-apply") throw redirect({ to: "/partner" });
-    if (isAdmin === false && !isPartner && path === "/partner-apply") {
+    if (isAdmin === false && !isPartner && !isPartnerApplicant && path === "/partner-apply") {
       throw redirect({ to: "/dashboard" });
     }
 

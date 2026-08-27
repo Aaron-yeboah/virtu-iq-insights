@@ -8,7 +8,7 @@ export const profileQuery = (userId: string) =>
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "id, email, full_name, phone, credits, referral_code, referred_by, created_at, registration_paid",
+          "id, email, full_name, phone, credits, referral_code, referred_by, created_at, registration_paid, partner_applicant",
         )
         .eq("id", userId)
         .maybeSingle();

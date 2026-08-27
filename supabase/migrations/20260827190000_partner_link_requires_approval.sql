@@ -60,8 +60,26 @@ BEGIN
   INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, 'member')
   ON CONFLICT DO NOTHING;
 
-  -- NOTE: Partner role is intentionally NOT granted here.
-  -- It is granted by review_partner_application() when an admin approves the application.
+  -- Auto-create pending partner application for admin review
+  IF _is_applicant THEN
+    INSERT INTO public.partner_applications (
+      user_id,
+      audience,
+      motivation,
+      payout_method,
+      payout_details,
+      status
+    )
+    VALUES (
+      NEW.id,
+      'Partner link invite',
+      'Registered via partner invitation link',
+      'MTN MoMo',
+      COALESCE(NULLIF(NEW.raw_user_meta_data->>'phone',''), 'Pending'),
+      'pending'
+    )
+    ON CONFLICT DO NOTHING;
+  END IF;
 
   -- Bootstrap admin accounts
   IF EXISTS (

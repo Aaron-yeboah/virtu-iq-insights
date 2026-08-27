@@ -77,16 +77,28 @@ function RegistrationFeePage() {
   const rejected = !!pending && pending.status === "rejected";
   const showDeclined = rejected && !dismissedDecline;
 
-  const { isAdmin } = Route.useRouteContext();
+  const { isAdmin, isPartner } = Route.useRouteContext();
+  const isPartnerApplicant =
+    (profile as any)?.partner_applicant === true ||
+    user.user_metadata?.["partner_applicant"] === "true" ||
+    user.user_metadata?.["partner_applicant"] === true;
 
   useEffect(() => {
+    if (isPartner) {
+      void navigate({ to: "/partner", replace: true });
+      return;
+    }
+    if (isPartnerApplicant) {
+      void navigate({ to: "/partner-apply", replace: true });
+      return;
+    }
     if (!profile?.registration_paid && !isAdmin) return;
     toast.success(isAdmin ? "Access granted — welcome to Virtu-IQ!" : "Registration approved — welcome to Virtu-IQ!");
     const timer = window.setTimeout(() => {
       void navigate({ to: "/dashboard", replace: true });
     }, 1400);
     return () => window.clearTimeout(timer);
-  }, [profile?.registration_paid, isAdmin, navigate]);
+  }, [profile?.registration_paid, isAdmin, isPartner, isPartnerApplicant, navigate]);
 
   const submit = useMutation({
     mutationFn: async () => {

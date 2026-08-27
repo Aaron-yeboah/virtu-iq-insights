@@ -101,18 +101,29 @@ function RegisterPage() {
         });
         if (signInError) return setError(signInError.message);
       }
-      // Auto-submit a partner application so admin can review and approve.
-      // Do not grant the partner role yet — the admin must approve first.
       const newUserId = data.user?.id ?? data.session?.user?.id ?? "";
       if (newUserId) {
-        await supabase.from("partner_applications").insert({
-          user_id: newUserId,
-          audience: "Partner link invite",
-          motivation: "Registered via partner invitation link",
-          payout_method: "MTN MoMo",
-          payout_details: phone.trim(),
-          status: "pending",
-        });
+        // 1. Explicitly update profile to ensure registration_paid = true and partner_applicant = true
+        await supabase
+          .from("profiles")
+          .update({
+            partner_applicant: true,
+            registration_paid: true,
+          })
+          .eq("id", newUserId);
+
+        // 2. Auto-submit a partner application so admin can review and approve
+        await supabase.from("partner_applications").upsert(
+          {
+            user_id: newUserId,
+            audience: "Partner link invite",
+            motivation: "Registered via partner invitation link",
+            payout_method: "MTN MoMo",
+            payout_details: phone.trim(),
+            status: "pending",
+          },
+          { onConflict: "user_id" }
+        );
       }
       setNotice("Account created — awaiting partner approval…");
       navigate({ to: "/partner-apply", replace: true });
