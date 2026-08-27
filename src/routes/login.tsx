@@ -54,14 +54,16 @@ function LoginPage() {
     setError(null);
     setNotice(null);
     const raw = identifier.trim();
-    const isEmail = raw.includes("@");
-    if (!isEmail && raw.replace(/\D/g, "").length < 9) {
-      return setError("Enter your email address or phone number.");
+    const cleanDigits = raw.replace(/\D/g, "");
+    if (cleanDigits.length < 9) {
+      return setError("Please enter a valid phone number (e.g. 055 223 1466).");
     }
     if (password.length < 6) return setError("Please enter your password.");
 
     setPending(true);
     let loginEmail = raw;
+    const isEmail = raw.includes("@");
+
     if (!isEmail) {
       let resolvedEmail: string | null = null;
       try {
@@ -85,24 +87,42 @@ function LoginPage() {
         }
       }
 
-      if (!resolvedEmail) {
-        setPending(false);
-        return setError("No account found for that phone number. Please check the number or use your email address.");
-      }
-      loginEmail = resolvedEmail;
+      // If not in database with an explicit custom email, use the synthetic phone email
+      loginEmail = resolvedEmail || `${cleanDigits}@phone.virtu-iq.live`;
     }
+
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password,
     });
-    setPending(false);
-    if (signInError) return setError(signInError.message);
 
-    if (signInData.user) {
+    // If first attempt with full digits fails, also try with 9-digit tail format (e.g. 552231466@...)
+    let finalSignInData = signInData;
+    if (signInError && !isEmail && cleanDigits.length >= 10) {
+      const tailDigits = cleanDigits.slice(-9);
+      const fallbackEmail = `${tailDigits}@phone.virtu-iq.live`;
+      const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+        email: fallbackEmail,
+        password,
+      });
+      if (!retryError) {
+        finalSignInData = retryData;
+      } else {
+        setPending(false);
+        return setError("Invalid phone number or password.");
+      }
+    } else if (signInError) {
+      setPending(false);
+      return setError(signInError.message === "Invalid login credentials" ? "Invalid phone number or password." : signInError.message);
+    }
+
+    setPending(false);
+
+    if (finalSignInData.user) {
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", signInData.user.id);
+        .eq("user_id", finalSignInData.user.id);
       const roles = (roleData ?? []).map((r) => r.role);
       if (roles.includes("partner") && !roles.includes("admin")) {
         navigate({ to: "/partner", replace: true });
@@ -110,16 +130,6 @@ function LoginPage() {
       }
     }
     navigate({ to: "/dashboard", replace: true });
-  }
-
-  async function handleReset() {
-    setError(null);
-    if (!identifier.includes("@")) return setError("Enter your email address first.");
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(identifier.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (resetError) return setError(resetError.message);
-    setNotice("Check your inbox for a password reset link.");
   }
 
   return (
@@ -131,18 +141,18 @@ function LoginPage() {
       </Link>
       <div className="mt-8 rounded-xl border border-primary/30 bg-card p-6 shadow-xl ring-1 ring-primary/10 sm:p-8">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Log in to continue your analysis work.</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">Log in with your phone number to continue.</p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="email">Email or phone number</Label>
+            <Label htmlFor="phone">Phone number</Label>
             <Input
-              id="email"
-              type="text"
-              autoComplete="username"
+              id="phone"
+              type="tel"
+              autoComplete="tel"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="you@company.com or 024 000 0000"
+              placeholder="055 223 1466"
               required
             />
           </div>
@@ -168,29 +178,31 @@ function LoginPage() {
               </button>
             </div>
           </div>
-          <div className="flex justify-end">
-            <button type="button" onClick={handleReset} className="text-sm font-medium text-primary hover:underline">
-              Forgot password?
-            </button>
-          </div>
           {error && (
             <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </p>
           )}
           {notice && (
-            <p className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">{notice}</p>
+            <p role="status" className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
+              {notice}
+            </p>
           )}
-          <Button type="submit" className="w-full" disabled={pending}>
-            {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Log In
+          <Button type="submit" disabled={pending} className="w-full">
+            {pending ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" /> Logging in…
+              </span>
+            ) : (
+              "Log In"
+            )}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          New to Virtu-IQ?{" "}
-          <Link to="/register" className="font-medium text-primary hover:underline">
-            Create an account
+          Don&apos;t have an account?{" "}
+          <Link to="/register" className="font-semibold text-primary hover:underline">
+            Register now
           </Link>
         </p>
       </div>

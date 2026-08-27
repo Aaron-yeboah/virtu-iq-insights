@@ -1,13 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Loader2, Lock } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoFull } from "@/components/brand/Logo";
 import { AuthBackground } from "@/components/brand/AuthBackground";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 
 type SearchParams = {
   ref?: string;
@@ -45,13 +44,10 @@ function RegisterPage() {
   const isPartnerInvite = partner === true;
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  const urlRef = (ref ?? "").trim().toUpperCase();
-  const [referral, setReferral] = useState(urlRef);
-  const isRefFromLink = Boolean(urlRef.length > 0);
+  const urlRef = (ref ?? "").trim().toUpperCase().slice(0, 16);
 
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -63,10 +59,6 @@ function RegisterPage() {
     });
   }, [navigate]);
 
-  useEffect(() => {
-    if (urlRef) setReferral(urlRef);
-  }, [urlRef]);
-
   const score = strength(password);
   const labels = ["Too weak", "Weak", "Fair", "Strong", "Excellent"];
   const colors = ["bg-destructive", "bg-destructive", "bg-amber-500", "bg-emerald-500", "bg-emerald-600"];
@@ -76,17 +68,16 @@ function RegisterPage() {
     setError(null);
     setNotice(null);
     if (fullName.trim().length < 2) return setError("Please enter your full name.");
-    if (!email.includes("@")) return setError("Please enter a valid email address.");
-    if (phone.trim().replace(/\D/g, "").length < 9) return setError("Please enter a valid phone number.");
+    const cleanDigits = phone.trim().replace(/\D/g, "");
+    if (cleanDigits.length < 9) return setError("Please enter a valid phone number (e.g. 055 223 1466).");
     if (password.length < 8) return setError("Passwords must be at least 8 characters.");
 
-    const finalReferralCode = isPartnerInvite
-      ? ""
-      : (isRefFromLink ? urlRef : referral).trim().toUpperCase().slice(0, 16);
+    const syntheticEmail = `${cleanDigits}@phone.virtu-iq.live`;
+    const finalReferralCode = isPartnerInvite ? "" : urlRef;
 
     setPending(true);
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: syntheticEmail,
       password,
       options: {
         emailRedirectTo: window.location.origin,
@@ -104,7 +95,7 @@ function RegisterPage() {
     if (isPartnerInvite) {
       if (!data.session) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email: syntheticEmail,
           password,
         });
         if (signInError) return setError(signInError.message);
@@ -116,7 +107,7 @@ function RegisterPage() {
     // Log the new member straight in — the registration fee screen follows.
     if (!data.session) {
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: syntheticEmail,
         password,
       });
       if (signInError) return setError(signInError.message);
@@ -139,7 +130,7 @@ function RegisterPage() {
         <p className="mt-1.5 text-sm text-muted-foreground">
           {isPartnerInvite
             ? "Create your account, then apply to become a Virtu-IQ partner — no registration fee."
-            : "Create your account to continue to registration."}
+            : "Create your account with your phone number to continue."}
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -148,12 +139,8 @@ function RegisterPage() {
             <Input id="name" value={fullName} maxLength={80} onChange={(e) => setFullName(e.target.value)} placeholder="Ama Mensah" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" required />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="phone">Phone number</Label>
-            <Input id="phone" type="tel" autoComplete="tel" value={phone} maxLength={24} onChange={(e) => setPhone(e.target.value)} placeholder="024 000 0000" required />
+            <Input id="phone" type="tel" autoComplete="tel" value={phone} maxLength={24} onChange={(e) => setPhone(e.target.value)} placeholder="055 223 1466" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
@@ -193,45 +180,6 @@ function RegisterPage() {
               </div>
             )}
           </div>
-          {!isPartnerInvite && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="referral">Referral code {isRefFromLink ? "" : "(optional)"}</Label>
-                {isRefFromLink && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-emerald-600 border border-emerald-500/20">
-                    <Lock className="size-3" /> Partner Code Locked
-                  </span>
-                )}
-              </div>
-              <div className="relative">
-                <Input
-                  id="referral"
-                  value={isRefFromLink ? urlRef : referral}
-                  maxLength={16}
-                  readOnly={isRefFromLink}
-                  onChange={(e) => !isRefFromLink && setReferral(e.target.value)}
-                  placeholder="ABCD1234"
-                  className={cn(
-                    isRefFromLink && "bg-muted/60 font-mono font-bold tracking-wider cursor-not-allowed select-none pr-9 text-foreground"
-                  )}
-                />
-                {isRefFromLink && (
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-emerald-600">
-                    <Lock className="size-4" />
-                  </div>
-                )}
-              </div>
-              {isRefFromLink ? (
-                <p className="text-xs text-emerald-700 font-medium">
-                  Partner referral code <span className="font-mono font-bold">{urlRef}</span> is locked to this link.
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Enter a partner referral code if you were invited.
-                </p>
-              )}
-            </div>
-          )}
           {error && (
             <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
