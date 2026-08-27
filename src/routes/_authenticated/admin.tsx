@@ -1102,15 +1102,6 @@ function PartnerManager() {
   );
   const rows = (data ?? []) as MemberRow[];
 
-  const { data: isDefaultAdmin } = useQuery({
-    queryKey: ["is-default-admin", user.id],
-    queryFn: async () => {
-      const { data: ok, error } = await supabase.rpc("is_default_admin", { _user_id: user.id });
-      if (error) throw new Error(error.message);
-      return !!ok;
-    },
-  });
-
   const setAdmin = useMutation({
     mutationFn: async ({ id, make }: { id: string; make: boolean }) => {
       const { error } = await supabase.rpc("admin_set_admin", { _user_id: id, _make: make });

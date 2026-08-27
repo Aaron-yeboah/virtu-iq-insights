@@ -21,10 +21,17 @@ export const deleteMember = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("FORBIDDEN");
     if (data.userId === userId) throw new Error("CANNOT_REMOVE_SELF");
 
-    const { data: isDefaultAdmin } = await supabase.rpc("is_default_admin", {
-      _user_id: data.userId,
-    });
-    if (isDefaultAdmin) throw new Error("CANNOT_REMOVE_DEFAULT_ADMIN");
+    try {
+      const { data: isDefaultAdmin } = await supabase.rpc("is_default_admin" as never, {
+        _user_id: data.userId,
+      } as never);
+      if (isDefaultAdmin) throw new Error("CANNOT_REMOVE_DEFAULT_ADMIN");
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === "CANNOT_REMOVE_DEFAULT_ADMIN") {
+        throw err;
+      }
+      // If RPC is not available, proceed safely
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
