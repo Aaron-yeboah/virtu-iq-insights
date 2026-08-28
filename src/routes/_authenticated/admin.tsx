@@ -197,16 +197,16 @@ function AdminPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const devRate = Number(settings?.developer_commission_rate ?? 65);
-  const devCommission = ((stats?.revenue_ghs ?? 0) * devRate) / 100;
-
-  const adminRate = Number(settings?.admin_commission_rate ?? 25);
-  const adminCommission = ((stats?.revenue_ghs ?? 0) * adminRate) / 100;
-
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayRevenue = (payments ?? [])
     .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === todayStr)
     .reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
+
+  const devRate = Number(settings?.developer_commission_rate ?? 15);
+  const devCommission = (todayRevenue * devRate) / 100;
+
+  const adminRate = Number(settings?.admin_commission_rate ?? 15);
+  const adminCommission = (todayRevenue * adminRate) / 100;
 
   if (rolesLoading) return <p className="text-sm text-muted-foreground">Checking access…</p>;
   if (!isAdmin) {
@@ -1736,8 +1736,8 @@ function AdminSettingsManager() {
     network: settings?.network ?? "MTN MoMo",
     instructions: settings?.instructions ?? "",
     registration_fee_ghs: String(settings?.registration_fee_ghs ?? 50),
-    developer_commission_rate: String(settings?.developer_commission_rate ?? 65),
-    admin_commission_rate: String(settings?.admin_commission_rate ?? 25),
+    developer_commission_rate: String(settings?.developer_commission_rate ?? 15),
+    admin_commission_rate: String(settings?.admin_commission_rate ?? 15),
     default_partner_commission_rate: String(settings?.default_partner_commission_rate ?? 10),
   };
 
@@ -1746,8 +1746,8 @@ function AdminSettingsManager() {
       const number = current.momo_number.trim();
       const name = current.recipient_name.trim();
       const fee = Number(current.registration_fee_ghs) || 50;
-      const devRate = Math.min(100, Math.max(0, Number(current.developer_commission_rate) || 65));
-      const adminRate = Math.min(100, Math.max(0, Number(current.admin_commission_rate) || 25));
+      const devRate = Math.min(100, Math.max(0, Number(current.developer_commission_rate) || 15));
+      const adminRate = Math.min(100, Math.max(0, Number(current.admin_commission_rate) || 15));
       const partnerRate = Math.min(100, Math.max(0, Number(current.default_partner_commission_rate) || 10));
 
       if (number.length < 6 || number.length > 30) throw new Error("Enter a valid payment number.");
