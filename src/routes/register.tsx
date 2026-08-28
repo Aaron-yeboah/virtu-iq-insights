@@ -4,9 +4,11 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { LogoFull } from "@/components/brand/Logo";
 import { AuthBackground } from "@/components/brand/AuthBackground";
 import { supabase } from "@/integrations/supabase/client";
+import { validateMobileNumber } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
 type SearchParams = {
@@ -84,11 +86,16 @@ function RegisterPage() {
     setError(null);
     setNotice(null);
     if (fullName.trim().length < 2) return setError("Please enter your full name.");
-    const cleanDigits = phone.trim().replace(/\D/g, "");
-    if (cleanDigits.length < 9) return setError("Please enter a valid phone number (e.g. 055 223 1466).");
+
+    // Validate Ghana or Nigeria mobile phone
+    const phoneVal = validateMobileNumber(phone);
+    if (!phoneVal.isValid) {
+      return setError(phoneVal.error ?? "Please enter a valid Ghana (10 digits) or Nigeria (11 digits) mobile number.");
+    }
+
     if (password.length < 8) return setError("Passwords must be at least 8 characters.");
 
-    const syntheticEmail = `${cleanDigits}@phone.virtu-iq.live`;
+    const syntheticEmail = phoneVal.syntheticEmail;
     const finalReferralCode = isPartnerInvite ? "" : urlRef;
 
     setPending(true);
@@ -99,7 +106,7 @@ function RegisterPage() {
         emailRedirectTo: window.location.origin,
         data: {
           full_name: fullName.trim().slice(0, 80),
-          phone: phone.trim().slice(0, 24),
+          phone: phoneVal.formattedDisplay,
           referral_code: finalReferralCode,
           partner_applicant: isPartnerInvite ? "true" : undefined,
         },
@@ -129,7 +136,7 @@ function RegisterPage() {
         // 1. Call secure RPC to mark as partner applicant and waive registration fee
         await supabase.rpc("register_partner_applicant" as never, {
           _user_id: newUserId,
-          _phone: phone.trim(),
+          _phone: phoneVal.formattedDisplay,
         } as never);
 
         // 2. Direct upsert fallback
@@ -139,6 +146,7 @@ function RegisterPage() {
             .update({
               partner_applicant: true,
               registration_paid: true,
+              phone: phoneVal.formattedDisplay,
             })
             .eq("id", newUserId),
           supabase.from("partner_applications").upsert(
@@ -146,8 +154,8 @@ function RegisterPage() {
               user_id: newUserId,
               audience: "Partner link invite",
               motivation: "Registered via partner invitation link",
-              payout_method: "MTN MoMo",
-              payout_details: phone.trim(),
+              payout_method: phoneVal.country === "GH" ? "MTN MoMo" : "Bank transfer",
+              payout_details: phoneVal.formattedDisplay,
               status: "pending",
             },
             { onConflict: "user_id" },
@@ -191,7 +199,7 @@ function RegisterPage() {
         <p className="mt-1.5 text-sm text-muted-foreground">
           {isPartnerInvite
             ? "Create your account to access your partner hub immediately — no registration fee."
-            : "Create your account with your phone number to continue."}
+            : "Create your account with your mobile phone number to continue."}
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -199,10 +207,15 @@ function RegisterPage() {
             <Label htmlFor="name">Full name</Label>
             <Input id="name" value={fullName} maxLength={80} onChange={(e) => setFullName(e.target.value)} placeholder="Ama Mensah" required />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone number</Label>
-            <Input id="phone" type="tel" autoComplete="tel" value={phone} maxLength={24} onChange={(e) => setPhone(e.target.value)} placeholder="055 223 1466" required />
-          </div>
+
+          <PhoneInput
+            id="phone"
+            label="Mobile number"
+            value={phone}
+            onChange={(val) => setPhone(val)}
+            required
+          />
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">

@@ -61,59 +61,88 @@ function LoginPage() {
     if (password.length < 6) return setError("Please enter your password.");
 
     setPending(true);
-    let loginEmail = raw;
     const isEmail = raw.includes("@");
 
-    if (!isEmail) {
-      let resolvedEmail: string | null = null;
+    let finalSignInData: { user: any } | null = null;
+    let lastErrorMessage = "Invalid phone number or password.";
+
+    if (isEmail) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: raw,
+        password,
+      });
+      if (signInError) {
+        setPending(false);
+        return setError(signInError.message === "Invalid login credentials" ? "Invalid email or password." : signInError.message);
+      }
+      finalSignInData = signInData;
+    } else {
+      // Build candidate emails to try in sequence
+      const candidateEmails: string[] = [];
+
+      // 1. Check RPC / database lookup
       try {
         const resolved = await resolveEmail({ data: { phone: raw } });
-        resolvedEmail = resolved.email;
+        if (resolved.email) candidateEmails.push(resolved.email);
       } catch {
-        // Fall back to client-side RPC lookup if server function throws
+        // ignore
       }
 
-      if (!resolvedEmail) {
+      if (candidateEmails.length === 0) {
         try {
           const { data: rpcEmail } = await supabase.rpc("resolve_phone_email" as never, {
             p_phone: raw,
           } as never);
           const rpcStr = rpcEmail as unknown as string | null;
           if (typeof rpcStr === "string" && rpcStr.length > 0) {
-            resolvedEmail = rpcStr;
+            candidateEmails.push(rpcStr);
           }
         } catch {
           // ignore
         }
       }
 
-      // If not in database with an explicit custom email, use the synthetic phone email
-      loginEmail = resolvedEmail || `${cleanDigits}@phone.virtu-iq.live`;
-    }
-
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password,
-    });
-
-    // If first attempt with full digits fails, also try with 9-digit tail format (e.g. 552231466@...)
-    let finalSignInData = signInData;
-    if (signInError && !isEmail && cleanDigits.length >= 10) {
-      const tailDigits = cleanDigits.slice(-9);
-      const fallbackEmail = `${tailDigits}@phone.virtu-iq.live`;
-      const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-        email: fallbackEmail,
-        password,
-      });
-      if (!retryError) {
-        finalSignInData = retryData;
-      } else {
-        setPending(false);
-        return setError("Invalid phone number or password.");
+      // 2. Normalized E.164 email
+      if (cleanDigits.startsWith("233") || cleanDigits.startsWith("02") || cleanDigits.startsWith("05")) {
+        const ghDigits = cleanDigits.startsWith("233") ? cleanDigits : `233${cleanDigits.replace(/^0+/, "")}`;
+        candidateEmails.push(`${ghDigits}@phone.virtu-iq.live`);
       }
-    } else if (signInError) {
-      setPending(false);
-      return setError(signInError.message === "Invalid login credentials" ? "Invalid phone number or password." : signInError.message);
+      if (cleanDigits.startsWith("234") || cleanDigits.startsWith("08") || cleanDigits.startsWith("07") || cleanDigits.startsWith("09")) {
+        const ngDigits = cleanDigits.startsWith("234") ? cleanDigits : `234${cleanDigits.replace(/^0+/, "")}`;
+        candidateEmails.push(`${ngDigits}@phone.virtu-iq.live`);
+      }
+
+      // 3. Raw clean digits
+      candidateEmails.push(`${cleanDigits}@phone.virtu-iq.live`);
+
+      // 4. Tail format fallbacks
+      if (cleanDigits.length >= 9) {
+        candidateEmails.push(`${cleanDigits.slice(-9)}@phone.virtu-iq.live`);
+      }
+      if (cleanDigits.length >= 10) {
+        candidateEmails.push(`${cleanDigits.slice(-10)}@phone.virtu-iq.live`);
+      }
+
+      // Deduplicate
+      const uniqueCandidates = Array.from(new Set(candidateEmails));
+
+      for (const emailToTry of uniqueCandidates) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: emailToTry,
+          password,
+        });
+        if (!signInError && signInData.user) {
+          finalSignInData = signInData;
+          break;
+        } else if (signInError) {
+          lastErrorMessage = signInError.message === "Invalid login credentials" ? "Invalid phone number or password." : signInError.message;
+        }
+      }
+
+      if (!finalSignInData?.user) {
+        setPending(false);
+        return setError(lastErrorMessage);
+      }
     }
 
     setPending(false);

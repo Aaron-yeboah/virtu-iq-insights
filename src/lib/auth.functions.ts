@@ -28,15 +28,17 @@ export const resolveLoginEmail = createServerFn({ method: "POST" })
     // Fallback: Admin client query if environment variable is available
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const tail = digits.slice(-9);
+      const tail9 = digits.slice(-9);
+      const tail10 = digits.slice(-10);
       const { data: rows } = await supabaseAdmin
         .from("profiles")
         .select("email, phone")
         .not("phone", "is", null)
-        .limit(1000);
-      const match = (rows ?? []).find(
-        (r) => (r.phone ?? "").replace(/\D/g, "").slice(-9) === tail,
-      );
+        .limit(2000);
+      const match = (rows ?? []).find((r) => {
+        const rDigits = (r.phone ?? "").replace(/\D/g, "");
+        return rDigits.endsWith(tail9) || rDigits.endsWith(tail10) || rDigits === digits;
+      });
       if (match?.email) return { email: match.email };
     } catch {
       // Admin client not configured
