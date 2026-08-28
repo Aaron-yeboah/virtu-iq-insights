@@ -37,6 +37,12 @@ export const Route = createFileRoute("/_authenticated")({
     const profile = profileRes.data ?? null;
     const path = location.pathname;
 
+    // If non-admin user has no profile in the DB, they were deleted by an admin. Auto-evict!
+    if (!isAdmin && !profile) {
+      await supabase.auth.signOut();
+      throw redirect({ to: "/login" });
+    }
+
     const isPartnerApplicant =
       profile?.partner_applicant === true ||
       authUser.user_metadata?.["partner_applicant"] === "true" ||

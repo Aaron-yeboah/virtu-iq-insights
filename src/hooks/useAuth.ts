@@ -7,15 +7,56 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
+    async function checkAndValidateSession(currentSession: Session | null) {
+      if (!currentSession?.user) {
+        if (active) {
+          setSession(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      // Verify that the user profile actually exists in the database
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", currentSession.user.id)
+          .maybeSingle();
+
+        if (!profile) {
+          // Ghost/zombie session: user was deleted by admin. Auto-evict!
+          await supabase.auth.signOut();
+          if (active) {
+            setSession(null);
+            setLoading(false);
+          }
+          return;
+        }
+      } catch {
+        // network issue, keep cached session
+      }
+
+      if (active) {
+        setSession(currentSession);
+        setLoading(false);
+      }
+    }
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
-      setLoading(false);
+      void checkAndValidateSession(next);
     });
+
     void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
+      void checkAndValidateSession(data.session);
     });
-    return () => sub.subscription.unsubscribe();
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const user: User | null = session?.user ?? null;

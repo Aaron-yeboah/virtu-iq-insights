@@ -66,8 +66,20 @@ function RegisterPage() {
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (data.session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", data.session.user.id)
+          .maybeSingle();
+
+        if (!profile) {
+          // Zombie session from a deleted account: wipe it so registration is fresh!
+          await supabase.auth.signOut();
+          return;
+        }
+
         if (isPartnerInvite) {
           navigate({ to: "/partner-apply", replace: true });
         } else {
@@ -99,6 +111,10 @@ function RegisterPage() {
     const finalReferralCode = isPartnerInvite ? "" : urlRef;
 
     setPending(true);
+
+    // Clear any previous session first so new signup is 100% clean
+    await supabase.auth.signOut().catch(() => {});
+
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: syntheticEmail,
       password,

@@ -35,6 +35,18 @@ function LoginPage() {
   useEffect(() => {
     void supabase.auth.getSession().then(async ({ data }) => {
       if (data.session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", data.session.user.id)
+          .maybeSingle();
+
+        if (!profile) {
+          // Zombie session from a deleted account: wipe it!
+          await supabase.auth.signOut();
+          return;
+        }
+
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
