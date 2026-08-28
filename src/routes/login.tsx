@@ -99,26 +99,12 @@ function LoginPage() {
       // Build candidate emails to try in sequence
       const candidateEmails: string[] = [];
 
-      // 1. Check RPC / database lookup
+      // 1. Check server resolver (safe server-side resolution)
       try {
         const resolved = await resolveEmail({ data: { phone: raw } });
         if (resolved.email) candidateEmails.push(resolved.email);
       } catch {
         // ignore
-      }
-
-      if (candidateEmails.length === 0) {
-        try {
-          const { data: rpcEmail } = await supabase.rpc("resolve_phone_email" as never, {
-            p_phone: raw,
-          } as never);
-          const rpcStr = rpcEmail as unknown as string | null;
-          if (typeof rpcStr === "string" && rpcStr.length > 0) {
-            candidateEmails.push(rpcStr);
-          }
-        } catch {
-          // ignore
-        }
       }
 
       // 2. Normalized E.164 email
@@ -131,8 +117,11 @@ function LoginPage() {
         candidateEmails.push(`${ngDigits}@phone.virtu-iq.live`);
       }
 
-      // 3. Raw clean digits
+      // 3. Raw clean digits & zero-trimmed digits
       candidateEmails.push(`${cleanDigits}@phone.virtu-iq.live`);
+      if (cleanDigits.startsWith("0")) {
+        candidateEmails.push(`${cleanDigits.replace(/^0+/, "")}@phone.virtu-iq.live`);
+      }
 
       // 4. Tail format fallbacks
       if (cleanDigits.length >= 9) {
