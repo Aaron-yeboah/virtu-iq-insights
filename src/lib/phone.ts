@@ -15,7 +15,7 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     name: "Ghana",
     dialCode: "+233",
     flag: "🇬🇭",
-    example: "055 223 1466",
+    example: "024 123 4567",
     localLength: 10,
   },
   NG: {
@@ -134,7 +134,7 @@ export function validateMobileNumber(
         e164Digits: "233" + cleanDigits.slice(1),
         syntheticEmail: `233${cleanDigits.slice(1)}@phone.virtu-iq.live`,
         telco: null,
-        error: "Ghana phone numbers must have 10 digits (e.g. 055 223 1466).",
+        error: "Ghana phone numbers must have 10 digits (e.g. 024 123 4567).",
       };
     }
 

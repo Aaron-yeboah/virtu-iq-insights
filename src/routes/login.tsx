@@ -75,7 +75,7 @@ function LoginPage() {
     const raw = identifier.trim();
     const cleanDigits = raw.replace(/\D/g, "");
     if (cleanDigits.length < 9) {
-      return setError("Please enter a valid phone number (e.g. 055 223 1466).");
+      return setError("Please enter a valid phone number (e.g. 024 123 4567).");
     }
     if (password.length < 6) return setError("Please enter your password.");
 
@@ -189,7 +189,7 @@ function LoginPage() {
               autoComplete="tel"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="055 223 1466"
+              placeholder="024 123 4567"
               required
             />
           </div>
