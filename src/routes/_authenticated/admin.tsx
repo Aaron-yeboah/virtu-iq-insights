@@ -158,20 +158,23 @@ function AdminPage() {
   const { data: stats } = useQuery({
     ...adminStatsQuery(),
     enabled: isAdmin,
-    refetchInterval: 1000,
+    staleTime: 30_000,
     refetchOnWindowFocus: true,
-    refetchOnMount: "always",
   });
   const { data: payments } = useQuery({
     ...adminPaymentsQuery(),
     enabled: isAdmin,
-    refetchInterval: 1000,
+    staleTime: 15_000,
     refetchOnWindowFocus: true,
-    refetchOnMount: "always",
   });
-  const { data: members } = useQuery({ ...adminMemberListQuery({}), enabled: isAdmin, refetchInterval: 2000 });
-  const { data: logs } = useQuery({ ...auditLogsQuery(), enabled: isAdmin });
-  const { data: settings } = useQuery({ ...paymentSettingsQuery(), enabled: isAdmin });
+  const { data: members } = useQuery({
+    ...adminMemberListQuery({}),
+    enabled: isAdmin,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+  const { data: logs } = useQuery({ ...auditLogsQuery(), enabled: isAdmin, staleTime: 30_000 });
+  const { data: settings } = useQuery({ ...paymentSettingsQuery(), enabled: isAdmin, staleTime: 60_000 });
 
   const reviewPayment = useMutation({
     mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
@@ -1517,7 +1520,8 @@ function PartnerApplications() {
   const queryClient = useQueryClient();
   const { data, isFetching } = useQuery({
     ...adminPartnerApplicationsQuery(),
-    refetchInterval: 8000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
   const rows = (data ?? []) as AdminApplicationRow[];
 

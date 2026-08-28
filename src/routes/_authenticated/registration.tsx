@@ -10,6 +10,7 @@ import { LogoFull, LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
 import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
 import { supabase } from "@/integrations/supabase/client";
 import { ghs, paymentSettingsQuery, profileQuery, registrationPaymentQuery } from "@/lib/data";
+import { checkPaymentRateLimit, formatRetryAfter } from "@/lib/rateLimit";
 
 export const Route = createFileRoute("/_authenticated/registration")({
   head: () => ({
@@ -102,6 +103,11 @@ function RegistrationFeePage() {
 
   const submit = useMutation({
     mutationFn: async () => {
+      const rl = checkPaymentRateLimit(user.id);
+      if (!rl.allowed) {
+        throw new Error(`Submission limit reached (max 7 per hour). Please wait ${formatRetryAfter(rl.retryAfterSeconds)} before submitting again.`);
+      }
+
       const name = senderName.trim();
       if (name.length < 2 || name.length > 80) {
         throw new Error("Enter the MoMo name on the account you paid from (2-80 characters).");
@@ -117,7 +123,12 @@ function RegistrationFeePage() {
         sender_name: name,
         reference: ref || "Not provided",
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        if (error.message.includes("RATE_LIMITED")) {
+          throw new Error("Too many payment submissions (max 7 per hour). Please wait before trying again.");
+        }
+        throw new Error(error.message);
+      }
     },
     onSuccess: async () => {
       void supabase.channel("admin-realtime-websocket").send({

@@ -40,6 +40,7 @@ import {
   profileQuery,
   verdictLimitQuery,
 } from "@/lib/data";
+import { checkPaymentRateLimit, formatRetryAfter } from "@/lib/rateLimit";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/credits")({
@@ -321,6 +322,11 @@ function UpgradeDialog() {
 
   const submit = useMutation({
     mutationFn: async () => {
+      const rl = checkPaymentRateLimit(user.id);
+      if (!rl.allowed) {
+        throw new Error(`Submission limit reached (max 7 per hour). Please wait ${formatRetryAfter(rl.retryAfterSeconds)} before submitting again.`);
+      }
+
       if (!pkg) throw new Error("Choose a package first.");
       const name = senderName.trim();
       if (name.length < 2 || name.length > 80) {
@@ -340,7 +346,12 @@ function UpgradeDialog() {
         })
         .select("id")
         .single();
-      if (error) throw new Error(error.message);
+      if (error) {
+        if (error.message.includes("RATE_LIMITED")) {
+          throw new Error("Too many payment submissions (max 7 per hour). Please wait before trying again.");
+        }
+        throw new Error(error.message);
+      }
       return data.id as string;
     },
     onSuccess: async (id: string) => {

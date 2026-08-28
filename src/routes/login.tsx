@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveLoginEmail } from "@/lib/auth.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { AuthBackground } from "@/components/brand/AuthBackground";
+import { checkLoginRateLimit, formatRetryAfter } from "@/lib/rateLimit";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -65,6 +66,12 @@ function LoginPage() {
     e.preventDefault();
     setError(null);
     setNotice(null);
+
+    const rl = checkLoginRateLimit();
+    if (!rl.allowed) {
+      return setError(`Too many login attempts. Please wait ${formatRetryAfter(rl.retryAfterSeconds)} before trying again.`);
+    }
+
     const raw = identifier.trim();
     const cleanDigits = raw.replace(/\D/g, "");
     if (cleanDigits.length < 9) {

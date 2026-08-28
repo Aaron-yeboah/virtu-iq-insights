@@ -29,7 +29,7 @@ function PartnerPage() {
   const { user } = Route.useRouteContext();
   const [copied, setCopied] = useState(false);
   const { data: profile } = useQuery(profileQuery(user.id));
-  const { data: stats } = useQuery({ ...partnerStatsQuery(user.id), refetchInterval: 15000 });
+  const { data: stats } = useQuery({ ...partnerStatsQuery(user.id), staleTime: 30_000, refetchOnWindowFocus: true });
   const { data: commissions } = useQuery(commissionsQuery(user.id));
 
   const referralLink =

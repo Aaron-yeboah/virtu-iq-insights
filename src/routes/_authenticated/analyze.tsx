@@ -13,6 +13,7 @@ import { getFreshAccessToken } from "@/lib/auth-bearer";
 import { profileQuery, verdictLimitQuery } from "@/lib/data";
 import { usePaymentRealtime } from "@/hooks/usePaymentRealtime";
 import { compressImage } from "@/lib/image-compress";
+import { checkAnalysisRateLimit, formatRetryAfter } from "@/lib/rateLimit";
 import { LogoSymbol } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +64,11 @@ function AnalyzePage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      const rl = checkAnalysisRateLimit(user.id);
+      if (!rl.allowed) {
+        throw new Error(`Please wait ${formatRetryAfter(rl.retryAfterSeconds)} before submitting another analysis.`);
+      }
+
       if ((profile?.credits ?? 0) < 1) throw new Error("INSUFFICIENT_CREDITS");
       if (!file) throw new Error("Select a football screenshot first.");
       if (!file.type.startsWith("image/")) throw new Error("Only image files are supported.");

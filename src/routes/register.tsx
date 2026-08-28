@@ -9,6 +9,7 @@ import { LogoFull } from "@/components/brand/Logo";
 import { AuthBackground } from "@/components/brand/AuthBackground";
 import { supabase } from "@/integrations/supabase/client";
 import { validateMobileNumber } from "@/lib/phone";
+import { checkRegisterRateLimit, formatRetryAfter } from "@/lib/rateLimit";
 import { cn } from "@/lib/utils";
 
 type SearchParams = {
@@ -97,6 +98,12 @@ function RegisterPage() {
     e.preventDefault();
     setError(null);
     setNotice(null);
+
+    const rl = checkRegisterRateLimit();
+    if (!rl.allowed) {
+      return setError(`Too many registration attempts. Please wait ${formatRetryAfter(rl.retryAfterSeconds)} before trying again.`);
+    }
+
     if (fullName.trim().length < 2) return setError("Please enter your full name.");
 
     // Validate Ghana or Nigeria mobile phone

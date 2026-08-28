@@ -33,7 +33,8 @@ function PartnerApplyPage() {
   const queryClient = useQueryClient();
   const { data: application, isLoading } = useQuery({
     ...partnerApplicationQuery(user.id),
-    refetchInterval: 4000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   const [audience, setAudience] = useState("");
