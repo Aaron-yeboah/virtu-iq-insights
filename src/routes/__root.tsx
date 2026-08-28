@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SplashScreen } from "../components/SplashScreen";
 import { Toaster } from "../components/ui/sonner";
 import { supabase } from "../integrations/supabase/client";
+import { isIOS } from "../hooks/useIsIOS";
 
 function NotFoundComponent() {
   return (
@@ -171,6 +172,12 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && isIOS()) {
+      document.documentElement.classList.add("ios-device");
+    }
+  }, []);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {

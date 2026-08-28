@@ -483,4 +483,42 @@
   will-change: opacity, transform;
 }
 
+/* ══════════════════════════════════════════
+   iOS LUXURY GLOSSY CARDS (iPhone / iPad)
+   Frosted glass sheen, specular edge reflection, and subtle elevation
+═══════════════════════════════════════════ */
+
+.ios-device .bg-card,
+.ios-device [data-slot="card"],
+.ios-device .card-glossy {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.02),
+    0 12px 36px -10px rgba(25, 30, 45, 0.08),
+    0 4px 12px -2px rgba(228, 24, 39, 0.03) !important;
+}
+
+/* Glossy terminal card & dark elements on iOS */
+.ios-device .bg-slate-950,
+.ios-device .bg-slate-900\/90 {
+  background: rgba(8, 12, 22, 0.92) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow:
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.22),
+    0 20px 48px -12px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Glossy inputs & headers on iOS */
+.ios-device header.sticky {
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+
 
