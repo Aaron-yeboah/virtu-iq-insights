@@ -215,8 +215,8 @@ function RegisterPage() {
           <LogoFull className="h-7" />
         </div>
       </Link>
-      <div className="mt-8 rounded-xl border border-primary/30 bg-card p-6 shadow-xl ring-1 ring-primary/10 sm:p-8">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+      <div className="mt-6 sm:mt-8 rounded-xl border border-primary/30 bg-card p-4.5 sm:p-8 shadow-xl ring-1 ring-primary/10">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
           {isPartnerInvite ? "Partner registration" : "Create your account"}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">

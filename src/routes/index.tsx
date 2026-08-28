@@ -243,7 +243,8 @@ function TerminalHackCard() {
 
   return (
     <div
-      className="rounded-xl p-3 sm:p-6 relative overflow-hidden font-mono bg-slate-950 border border-emerald-500/40 shadow-2xl text-slate-100"
+      className="w-full max-w-md lg:max-w-none mx-auto rounded-xl p-3 sm:p-5 relative overflow-hidden font-mono bg-slate-950 border border-emerald-500/40 shadow-2xl text-slate-100"
+      style={{ isolation: "isolate" }}
     >
       {/* Scan line */}
       <div className="animate-scan-line" />
@@ -257,55 +258,55 @@ function TerminalHackCard() {
       </div>
 
       {/* Terminal header bar */}
-      <div className="flex items-center gap-1.5 mb-3 sm:mb-4 pb-3 border-b border-slate-800 min-w-0">
-        <span className="size-2.5 shrink-0 rounded-full bg-red-500" />
-        <span className="size-2.5 shrink-0 rounded-full bg-yellow-500" />
-        <span className="size-2.5 shrink-0 rounded-full bg-emerald-500" />
-        <span className="ml-2 text-[9px] sm:text-[10px] tracking-wider truncate flex-1 min-w-0 text-emerald-400">
+      <div className="flex items-center gap-1.5 mb-2.5 sm:mb-4 pb-2 sm:pb-3 border-b border-slate-800 min-w-0">
+        <span className="size-2 sm:size-2.5 shrink-0 rounded-full bg-red-500" />
+        <span className="size-2 sm:size-2.5 shrink-0 rounded-full bg-yellow-500" />
+        <span className="size-2 sm:size-2.5 shrink-0 rounded-full bg-emerald-500" />
+        <span className="ml-1 sm:ml-2 text-[8.5px] sm:text-[10px] tracking-wider truncate flex-1 min-w-0 text-emerald-400">
           root@virtu-iq:~$ ./breach_sportybet.sh
         </span>
         <span className="shrink-0 inline-block w-1.5 h-3 bg-emerald-400 animate-terminal-cursor" />
       </div>
 
       {/* Status row */}
-      <div className="flex items-center justify-between gap-2 flex-wrap mb-3 sm:mb-4 relative">
-        <div className="flex items-center gap-1.5">
-          <span className="size-2 shrink-0 rounded-full bg-emerald-500 animate-status-blink" />
-          <span className="text-[10px] sm:text-xs font-bold tracking-widest text-emerald-400">
+      <div className="flex items-center justify-between gap-1.5 mb-2.5 sm:mb-4 relative">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="size-1.5 sm:size-2 shrink-0 rounded-full bg-emerald-500 animate-status-blink" />
+          <span className="text-[9px] sm:text-xs font-bold tracking-wider sm:tracking-widest text-emerald-400 truncate">
             BREACH ACTIVE
           </span>
         </div>
-        <Badge className="text-[9px] sm:text-[10px] gap-1 font-mono bg-red-500/15 border-red-500/40 text-red-400 shrink-0">
-          <AlertTriangle className="size-3" />
-          3 OUTCOMES EXPOSED
+        <Badge className="text-[8px] sm:text-[10px] gap-1 font-mono bg-red-500/15 border-red-500/40 text-red-400 shrink-0 px-1.5 py-0.5">
+          <AlertTriangle className="size-2.5 sm:size-3" />
+          3 EXPOSED
         </Badge>
       </div>
 
       {/* Outcome rows */}
-      <div className="space-y-2 sm:space-y-3 relative">
+      <div className="space-y-1.5 sm:space-y-3 relative">
         {outcomes.map((v, i) => (
           <div
             key={v.game}
-            className="rounded-lg p-2.5 sm:p-3 transition-all bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50"
+            className="rounded-lg p-2 sm:p-3 transition-all bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50"
             style={{
               animation: `slide-up-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${0.1 + i * 0.15}s both`,
             }}
           >
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <p className="text-[8px] sm:text-[9px] tracking-wider truncate text-slate-400">
+                <p className="text-[7.5px] sm:text-[9px] tracking-wider truncate text-slate-400">
                   {v.game} · {v.match}
                 </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-white">
+                <p className="mt-0.5 text-[11px] sm:text-sm font-bold text-white truncate">
                   {v.result}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/40 text-emerald-300">
-                  <Check className="size-2.5" />
+                <span className="inline-flex items-center gap-0.5 sm:gap-1 rounded px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[7.5px] sm:text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/40 text-emerald-300">
+                  <Check className="size-2 sm:size-2.5" />
                   {v.status}
                 </span>
-                <p className="mt-0.5 text-[9px] sm:text-[10px] font-bold text-emerald-400">
+                <p className="mt-0.5 text-[7.5px] sm:text-[10px] font-bold text-emerald-400">
                   @{v.odds}
                 </p>
               </div>
@@ -315,23 +316,23 @@ function TerminalHackCard() {
       </div>
 
       {/* Summary bar */}
-      <div className="mt-3 sm:mt-4 rounded-lg p-2.5 sm:p-3 border bg-red-950/20 border-red-500/30">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-red-400">
-            <Cpu className="size-3.5 shrink-0" />
+      <div className="mt-2.5 sm:mt-4 rounded-lg p-2 sm:p-3 border bg-red-950/20 border-red-500/30">
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-red-400 min-w-0">
+            <Cpu className="size-3 sm:size-3.5 shrink-0" />
             <span className="truncate">SYSTEM ACCESS: GRANTED</span>
           </div>
-          <span className="text-[9px] sm:text-[10px] font-bold shrink-0 text-emerald-400">
+          <span className="text-[8px] sm:text-[10px] font-bold shrink-0 text-emerald-400">
             ✓ EXPOSED
           </span>
         </div>
-        <div className="mt-2 h-1 sm:h-1.5 overflow-hidden rounded-full bg-red-950/50">
+        <div className="mt-1.5 sm:mt-2 h-1 sm:h-1.5 overflow-hidden rounded-full bg-red-950/50">
           <div
             className="h-full rounded-full animate-hack-bar bg-gradient-to-r from-red-500 to-emerald-400"
           />
         </div>
-        <p className="mt-1.5 text-[9px] sm:text-[10px] text-slate-400">
-          Next breach cycle: <span className="text-emerald-400">00:03:47</span>
+        <p className="mt-1 sm:mt-1.5 text-[7.5px] sm:text-[10px] text-slate-400">
+          Next breach cycle: <span className="text-emerald-400 font-bold">00:03:47</span>
         </p>
       </div>
     </div>
@@ -340,9 +341,7 @@ function TerminalHackCard() {
 
 function Index() {
   return (
-    <div className="min-h-screen relative overflow-x-hidden bg-background text-foreground">
-      {/* Global logo watermark */}
-      <LogoWatermark />
+    <div className="min-h-screen relative bg-background text-foreground" style={{ overflowX: "clip" }}>
 
       <SiteNavbar />
       <LiveTicker />
@@ -350,8 +349,6 @@ function Index() {
       <main className="relative">
         {/* ── HERO ── */}
         <section className="relative overflow-hidden border-b border-border/60 bg-white">
-
-
           {/* Red radial ambient glow */}
           <div
             className="pointer-events-none absolute inset-0"
@@ -369,26 +366,26 @@ function Index() {
 
           <FloatingParticles />
 
-          <div className="relative mx-auto grid max-w-6xl items-center gap-8 sm:gap-12 px-4 py-10 sm:py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
+          <div className="relative mx-auto grid max-w-6xl items-center gap-6 sm:gap-12 px-4 py-8 sm:py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
             {/* Left column */}
-            <div className="animate-rise relative">
+            <div className="animate-rise relative text-center lg:text-left">
               {/* Breach badge */}
-              <div className="mb-5">
-                <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1.5 font-mono text-xs font-bold tracking-widest text-primary shadow-sm">
-                  <span className="size-2 rounded-full bg-primary animate-status-blink" />
+              <div className="mb-3 sm:mb-5 flex justify-center lg:justify-start">
+                <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 sm:px-3.5 sm:py-1.5 font-mono text-[10px] sm:text-xs font-bold tracking-wider sm:tracking-widest text-primary shadow-xs">
+                  <span className="size-1.5 sm:size-2 rounded-full bg-primary animate-status-blink shrink-0" />
                   SYSTEM BREACH ACTIVE
                 </span>
               </div>
 
-              {/* Main headline with glitch */}
-              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-6xl leading-tight text-slate-950">
+              {/* Main headline */}
+              <h1 className="text-[22px] xs:text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.18] text-slate-950">
                 Instant Virtuals.{" "}
                 <GlitchText className="text-primary">
                   Outcome Exposed.
                 </GlitchText>
               </h1>
 
-              <p className="mt-5 max-w-xl text-base leading-relaxed sm:text-lg text-slate-700 font-medium">
+              <p className="mt-3 sm:mt-5 mx-auto lg:mx-0 max-w-xl text-xs sm:text-base md:text-lg leading-relaxed text-slate-700 font-medium">
                 Our proprietary algorithm penetrates the{" "}
                 <span className="font-bold text-emerald-700">
                   SportyBet instant virtual engine
@@ -396,16 +393,17 @@ function Index() {
                 — delivering the next match outcome before the game even loads. No guesswork. Just exposed results.
               </p>
 
-              <div className="mt-6 sm:mt-8 flex flex-col gap-3 sm:flex-row">
+              {/* CTA buttons */}
+              <div className="mt-4 sm:mt-8 flex flex-col items-center lg:items-start gap-2 sm:gap-3 sm:flex-row sm:justify-center lg:justify-start">
                 <Button
                   size="lg"
-                  className="relative overflow-hidden group font-mono font-bold tracking-widest bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25"
+                  className="w-full sm:w-auto h-10 sm:h-12 relative overflow-hidden group font-mono font-bold text-xs sm:text-sm tracking-wider sm:tracking-widest bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 justify-center"
                   asChild
                 >
                   <Link to="/register">
-                    <span className="relative z-10 flex items-center gap-2">
+                    <span className="relative z-10 flex items-center justify-center gap-2">
                       HACK THE OUTCOME{" "}
-                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 shrink-0" />
                     </span>
                   </Link>
                 </Button>
@@ -413,41 +411,41 @@ function Index() {
                   size="lg"
                   variant="outline"
                   asChild
-                  className="font-mono border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold"
+                  className="w-full sm:w-auto h-10 sm:h-12 font-mono border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold text-xs sm:text-sm justify-center"
                 >
                   <a href="#how-it-works">
-                    <Terminal className="mr-2 size-4 text-emerald-600" />
+                    <Terminal className="mr-2 size-4 text-emerald-600 shrink-0" />
                     ENTER THE SYSTEM
                   </a>
                 </Button>
               </div>
 
               {/* Animated stats */}
-              <dl className="mt-6 sm:mt-10 grid grid-cols-3 gap-3 sm:gap-6 border-t border-slate-200 pt-6">
-                <div>
-                  <dt className="text-xl sm:text-2xl font-extrabold font-mono text-slate-950">
+              <dl className="mt-5 sm:mt-10 grid grid-cols-3 gap-1.5 sm:gap-6 border-t border-slate-200 pt-4 sm:pt-6">
+                <div className="text-center lg:text-left">
+                  <dt className="text-base sm:text-2xl font-extrabold font-mono text-slate-950">
                     <AnimatedCounter end={99} suffix="%" className="tabular-nums" />
                   </dt>
-                  <dd className="text-[11px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Accuracy rate</dd>
+                  <dd className="text-[9px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Accuracy</dd>
                 </div>
-                <div>
-                  <dt className="text-xl sm:text-2xl font-extrabold font-mono text-slate-950">
+                <div className="text-center lg:text-left">
+                  <dt className="text-base sm:text-2xl font-extrabold font-mono text-slate-950">
                     <AnimatedCounter end={14} suffix="K+" className="tabular-nums" />
                   </dt>
-                  <dd className="text-[11px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Exposed</dd>
+                  <dd className="text-[9px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Exposed</dd>
                 </div>
-                <div>
-                  <dt className="flex items-center gap-1.5 text-xl sm:text-2xl font-extrabold font-mono text-slate-950">
-                    <span className="size-2.5 shrink-0 rounded-full bg-emerald-600 animate-status-blink" />
+                <div className="text-center lg:text-left">
+                  <dt className="flex items-center justify-center lg:justify-start gap-1 text-base sm:text-2xl font-extrabold font-mono text-slate-950">
+                    <span className="size-1.5 sm:size-2 shrink-0 rounded-full bg-emerald-600 animate-status-blink" />
                     24/7
                   </dt>
-                  <dd className="text-[11px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Always live</dd>
+                  <dd className="text-[9px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Always live</dd>
                 </div>
               </dl>
             </div>
 
             {/* Right column — terminal card */}
-            <div className="animate-rise">
+            <div className="animate-rise mt-4 sm:mt-0 w-full min-w-0 flex justify-center">
               <TerminalHackCard />
             </div>
           </div>

@@ -3,7 +3,7 @@ import { LogoSymbol } from "@/components/brand/Logo";
 
 export function AuthBackground({ children }: { children: ReactNode }) {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12 bg-gradient-to-br from-[#B50D19] via-[#E41827] to-[#7F0A12]">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-3 py-6 sm:px-4 sm:py-12 bg-gradient-to-br from-[#B50D19] via-[#E41827] to-[#7F0A12]">
       {/* Dynamic Animated Grid Pattern */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.14] bg-[radial-gradient(#ffffff_1.2px,transparent_1.2px)] [background-size:28px_28px] animate-grid-drift"

@@ -24,11 +24,11 @@ export function SiteNavbar() {
         boxShadow: "0 4px 18px rgba(25, 30, 45, 0.15)",
       }}
     >
-      <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-13 sm:h-16 max-w-6xl items-center justify-between px-3 sm:px-6">
         {/* Logo with white background badge */}
-        <Link to="/" aria-label="Virtu-IQ home" className="flex items-center gap-2.5 group shrink-0">
-          <div className="flex items-center rounded-lg bg-white px-2.5 py-1 shadow-sm transition-transform group-hover:scale-[1.02]">
-            <LogoSymbol className="h-7 sm:h-8 object-contain" />
+        <Link to="/" aria-label="Virtu-IQ home" className="flex items-center gap-2 group shrink-0">
+          <div className="flex items-center rounded-lg bg-white px-2 py-0.5 sm:px-2.5 sm:py-1 shadow-xs transition-transform group-hover:scale-[1.02]">
+            <LogoSymbol className="h-6 sm:h-8 object-contain" />
           </div>
           <span className="hidden sm:flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white border-white/40 bg-white/10">
             <Terminal className="size-2.5 text-white" />
@@ -68,28 +68,28 @@ export function SiteNavbar() {
         </div>
 
         {/* Mobile & Tablet CTA */}
-        <div className="flex items-center gap-1.5 sm:gap-2 lg:hidden">
+        <div className="flex items-center gap-1 sm:gap-2 lg:hidden shrink-0">
           {!loading && !isAuthenticated && (
             <>
               <Button
                 asChild
                 size="sm"
                 variant="outline"
-                className="h-8 border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white text-xs font-bold px-2.5 sm:px-3"
+                className="h-7.5 sm:h-8 border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white text-[11px] sm:text-xs font-bold px-2 sm:px-3"
               >
                 <Link to="/login">Log In</Link>
               </Button>
               <Button
                 asChild
                 size="sm"
-                className="h-8 bg-gradient-to-b from-[#26AF53] to-[#1F9E48] border border-[#2BBE5C] text-white font-bold text-xs px-2.5 sm:px-3"
+                className="h-7.5 sm:h-8 bg-gradient-to-b from-[#26AF53] to-[#1F9E48] border border-[#2BBE5C] text-white font-bold text-[11px] sm:text-xs px-2 sm:px-3"
               >
                 <Link to="/register">JOIN</Link>
               </Button>
             </>
           )}
           {!loading && isAuthenticated && (
-            <Button asChild size="sm" className="h-8 bg-emerald-600 text-white font-bold text-xs px-3">
+            <Button asChild size="sm" className="h-7.5 sm:h-8 bg-emerald-600 text-white font-bold text-[11px] sm:text-xs px-2.5 sm:px-3">
               <Link to="/dashboard">Dashboard</Link>
             </Button>
           )}
@@ -99,9 +99,9 @@ export function SiteNavbar() {
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
-            className="inline-flex size-9 sm:size-10 items-center justify-center rounded-md text-white hover:bg-white/10 transition-colors ml-1 touch-manipulation"
+            className="inline-flex size-8 sm:size-10 items-center justify-center rounded-md text-white hover:bg-white/10 transition-colors ml-0.5 touch-manipulation"
           >
-            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+            {open ? <X className="size-4.5 sm:size-5" /> : <Menu className="size-4.5 sm:size-5" />}
           </button>
         </div>
       </div>

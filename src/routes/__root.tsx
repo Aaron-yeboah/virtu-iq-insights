@@ -85,19 +85,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Virtu-IQ — AI Visual Analytics" },
+      { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" },
+      { name: "color-scheme", content: "light" },
+      { name: "supported-color-schemes", content: "light" },
+      { name: "theme-color", content: "#E41827" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "format-detection", content: "telephone=no" },
+      { title: "Virtu-IQ — Instant Virtuals Outcome Exposed" },
       {
         name: "description",
         content:
-          "Virtu-IQ turns screenshots into intelligent, structured insight reports using AI image analysis.",
+          "Virtu-IQ exposes the next SportyBet instant virtual outcome before the game loads. Upload your screenshot, hack the result, play with certainty.",
       },
       { name: "author", content: "Virtu-IQ" },
-      { name: "theme-color", content: "#ffffff" },
-      { property: "og:title", content: "Virtu-IQ — AI Visual Analytics" },
+      { property: "og:title", content: "Virtu-IQ — Instant Virtuals Outcome Exposed" },
       {
         property: "og:description",
-        content: "Upload visual information and let Virtu-IQ's AI analyze and explain what it sees.",
+        content: "Our proprietary algorithm penetrates the SportyBet instant virtual engine and delivers the next outcome before the game loads.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

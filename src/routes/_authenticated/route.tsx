@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app/AppShell";
 import { LogoSymbol } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
+import { useIsIOS } from "@/hooks/useIsIOS";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -110,18 +112,21 @@ function AuthenticatedError({ reset }: { error: Error; reset: () => void }) {
 function AuthenticatedLayout() {
   const { user, isAdmin, isPartner } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isIOS = useIsIOS();
 
   if (pathname === "/registration" || pathname === "/partner-apply") {
     return (
-      <div className="min-h-screen bg-secondary/30 px-4 py-8 sm:px-6 sm:py-12">
+      <div className={cn("min-h-screen bg-secondary/30 px-3 py-6 sm:px-6 sm:py-12", isIOS && "ios-page-enter")}>
         <Outlet />
       </div>
     );
   }
 
   return (
-    <AppShell userId={user.id} isAdmin={isAdmin} isPartner={isPartner}>
-      <Outlet />
-    </AppShell>
+    <div className={isIOS ? "ios-page-enter" : undefined}>
+      <AppShell userId={user.id} isAdmin={isAdmin} isPartner={isPartner}>
+        <Outlet />
+      </AppShell>
+    </div>
   );
 }

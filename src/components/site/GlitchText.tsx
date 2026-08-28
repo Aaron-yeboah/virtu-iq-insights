@@ -4,44 +4,33 @@ import { cn } from "@/lib/utils";
 interface GlitchTextProps {
   children: ReactNode;
   className?: string;
-  /** If true, glitch runs continuously; otherwise only on hover */
+  /** If true, animation runs continuously; otherwise only on hover */
   always?: boolean;
 }
 
 /**
- * GlitchText — Renders a headline with a colour-split glitch animation.
- * Uses two absolutely-positioned copies of the text:
- *   - layer-1: green, clipped and skewed on one axis
- *   - layer-2: red, clipped and skewed on the other axis
- * The main text flickers via animate-glitch-flicker.
+ * GlitchText — Renders headline text with a professional shimmer animation.
+ * A subtle highlight sweep glides across the text continuously,
+ * giving a premium "data breach" aesthetic without chaotic flickering.
  */
 export function GlitchText({ children, className, always = true }: GlitchTextProps) {
   return (
     <span
       className={cn(
         "relative inline-block select-none",
-        always && "animate-glitch-flicker",
         className
       )}
+      style={{
+        backgroundImage: "linear-gradient(110deg, currentColor 35%, rgba(255,255,255,0.85) 50%, currentColor 65%)",
+        backgroundSize: "250% 100%",
+        WebkitBackgroundClip: "text",
+        backgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        animation: always ? "shimmer-text 3s ease-in-out infinite" : "none",
+      }}
     >
-      {/* Green glitch layer */}
-      <span
-        aria-hidden
-        className="glitch-layer-1 pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        {children}
-      </span>
-
-      {/* Red glitch layer */}
-      <span
-        aria-hidden
-        className="glitch-layer-2 pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        {children}
-      </span>
-
-      {/* Real visible text */}
-      <span className="relative">{children}</span>
+      {children}
     </span>
   );
 }
+

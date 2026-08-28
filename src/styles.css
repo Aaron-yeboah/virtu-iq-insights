@@ -68,6 +68,8 @@
 
 /* ── WHITE & SPORTYBET RED THEME — Virtual Oracle style ── */
 :root {
+  color-scheme: light;
+  forced-color-adjust: none;
   --radius: 0.5rem;
   --brand: oklch(0.53 0.22 27);
   --brand-deep: oklch(0.43 0.22 27);
@@ -113,6 +115,8 @@
 }
 
 .dark {
+  color-scheme: light;
+  forced-color-adjust: none;
   --background: oklch(0.97 0.005 240);
   --foreground: oklch(0.18 0.01 270);
   --card: oklch(1 0 0);
@@ -143,11 +147,30 @@
 }
 
 @layer base {
-  * {
+  *, ::before, ::after {
     border-color: var(--color-border);
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: light;
+    forced-color-adjust: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
+    width: 100%;
+    min-width: 320px;
   }
 
   body {
+    color-scheme: light;
+    forced-color-adjust: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
+    width: 100%;
+    min-width: 320px;
+    -webkit-tap-highlight-color: transparent;
     background-color: var(--color-background);
     background-image:
       radial-gradient(1100px 620px at 50% -240px, rgba(228,24,39,.12), transparent 62%),
@@ -156,6 +179,11 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Prevent text overflow distortions on small mobile screens */
+  p, h1, h2, h3, h4, h5, h6, span, a, div, td, th {
+    overflow-wrap: break-word;
   }
 }
 
@@ -415,13 +443,44 @@
   animation: hack-bar 2.5s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* ── Glitch text helper classes (used in GlitchText component) ── */
-.glitch-layer-1 {
-  animation: glitch-clip-1 3s infinite linear;
-  color: oklch(0.72 0.22 142);
+/* ── Shimmer text animation (used in GlitchText component) ── */
+@keyframes shimmer-text {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: -50% 50%; }
 }
 
-.glitch-layer-2 {
-  animation: glitch-clip-2 2.2s infinite linear;
-  color: oklch(0.53 0.22 27);
+/* ── Mobile responsiveness helpers ── */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
+
+@media (max-width: 640px) {
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
+}
+
+/* ══════════════════════════════════════════
+   iOS-EXCLUSIVE TRANSITIONS & FEEL
+   (Activated on iPhone / iPad — Android stays instant)
+═══════════════════════════════════════════ */
+
+@keyframes ios-page-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.988) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.ios-page-enter {
+  animation: ios-page-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
+}
+
+

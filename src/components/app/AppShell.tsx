@@ -141,12 +141,12 @@ export function AppShell({
         </button>
       </aside>
 
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/90 px-4 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-40 flex h-14 sm:h-16 items-center justify-between border-b border-border bg-background/90 px-3 sm:px-4 backdrop-blur lg:hidden">
         <Link to="/" aria-label="Virtu-IQ home">
-          <LogoSymbol className="h-8" />
+          <LogoSymbol className="h-7 sm:h-8" />
         </Link>
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-foreground">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="rounded-full bg-secondary px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm font-semibold text-foreground">
             {partnerOnly ? "Partner" : `${profile?.credits ?? 0} credits`}
           </span>
           <button
@@ -154,7 +154,7 @@ export function AppShell({
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
-            className="inline-flex size-11 items-center justify-center rounded-md text-foreground hover:bg-accent touch-manipulation"
+            className="inline-flex size-9 sm:size-11 items-center justify-center rounded-md text-foreground hover:bg-accent touch-manipulation"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -167,9 +167,9 @@ export function AppShell({
           <div
             aria-hidden="true"
             onClick={() => setOpen(false)}
-            className="fixed inset-0 top-16 z-40 bg-background/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 top-14 sm:top-16 z-40 bg-background/60 backdrop-blur-sm lg:hidden"
           />
-          <div className="fixed inset-x-0 top-16 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-border bg-card px-4 py-4 shadow-lg lg:hidden">
+          <div className="fixed inset-x-0 top-14 sm:top-16 z-50 max-h-[calc(100vh-3.5rem)] sm:max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-border bg-card px-4 py-4 shadow-lg lg:hidden">
             {navList}
             <button
               type="button"
@@ -182,7 +182,7 @@ export function AppShell({
         </>
       )}
 
-      <main className="px-4 py-6 sm:px-6 lg:ml-64 lg:px-10 lg:py-10">{children}</main>
+      <main className="px-3 py-4 sm:px-6 lg:ml-64 lg:px-10 lg:py-10">{children}</main>
     </div>
   );
 }
