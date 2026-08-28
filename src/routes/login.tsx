@@ -99,15 +99,12 @@ function LoginPage() {
       // Build candidate emails to try in sequence
       const candidateEmails: string[] = [];
 
-      // 1. Check server resolver (safe server-side resolution)
-      try {
-        const resolved = await resolveEmail({ data: { phone: raw } });
-        if (resolved.email) candidateEmails.push(resolved.email);
-      } catch {
-        // ignore
+      // 1. Normalized zero-trimmed digits (e.g. 552231466@phone.virtu-iq.live)
+      if (cleanDigits.startsWith("0")) {
+        candidateEmails.push(`${cleanDigits.replace(/^0+/, "")}@phone.virtu-iq.live`);
       }
 
-      // 2. Normalized E.164 email
+      // 2. Normalized E.164 email (e.g. 233552231466@phone.virtu-iq.live)
       if (cleanDigits.startsWith("233") || cleanDigits.startsWith("02") || cleanDigits.startsWith("05")) {
         const ghDigits = cleanDigits.startsWith("233") ? cleanDigits : `233${cleanDigits.replace(/^0+/, "")}`;
         candidateEmails.push(`${ghDigits}@phone.virtu-iq.live`);
@@ -117,13 +114,18 @@ function LoginPage() {
         candidateEmails.push(`${ngDigits}@phone.virtu-iq.live`);
       }
 
-      // 3. Raw clean digits & zero-trimmed digits
+      // 3. Raw clean digits
       candidateEmails.push(`${cleanDigits}@phone.virtu-iq.live`);
-      if (cleanDigits.startsWith("0")) {
-        candidateEmails.push(`${cleanDigits.replace(/^0+/, "")}@phone.virtu-iq.live`);
+
+      // 4. Check server resolver (safe server-side resolution)
+      try {
+        const resolved = await resolveEmail({ data: { phone: raw } });
+        if (resolved.email) candidateEmails.push(resolved.email);
+      } catch {
+        // ignore
       }
 
-      // 4. Tail format fallbacks
+      // 5. Tail format fallbacks
       if (cleanDigits.length >= 9) {
         candidateEmails.push(`${cleanDigits.slice(-9)}@phone.virtu-iq.live`);
       }
@@ -143,7 +145,9 @@ function LoginPage() {
           finalSignInData = signInData;
           break;
         } else if (signInError) {
-          lastErrorMessage = signInError.message === "Invalid login credentials" ? "Invalid phone number or password." : signInError.message;
+          lastErrorMessage = (signInError.message === "Invalid login credentials" || signInError.message.includes("Database error"))
+            ? "Invalid phone number or password."
+            : signInError.message;
         }
       }
 
