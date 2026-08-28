@@ -367,10 +367,10 @@ function Index() {
           <FloatingParticles />
 
           <div className="relative mx-auto grid max-w-6xl items-center gap-6 sm:gap-12 px-4 py-8 sm:py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
-            {/* Left column */}
-            <div className="animate-rise relative text-center lg:text-left">
+            {/* Left column — left aligned */}
+            <div className="animate-rise relative text-left">
               {/* Breach badge */}
-              <div className="mb-3 sm:mb-5 flex justify-center lg:justify-start">
+              <div className="mb-3 sm:mb-5 flex justify-start">
                 <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 sm:px-3.5 sm:py-1.5 font-mono text-[10px] sm:text-xs font-bold tracking-wider sm:tracking-widest text-primary shadow-xs">
                   <span className="size-1.5 sm:size-2 rounded-full bg-primary animate-status-blink shrink-0" />
                   SYSTEM BREACH ACTIVE
@@ -385,7 +385,7 @@ function Index() {
                 </GlitchText>
               </h1>
 
-              <p className="mt-3 sm:mt-5 mx-auto lg:mx-0 max-w-xl text-xs sm:text-base md:text-lg leading-relaxed text-slate-700 font-medium">
+              <p className="mt-3 sm:mt-5 max-w-xl text-xs sm:text-base md:text-lg leading-relaxed text-slate-700 font-medium text-left">
                 Our proprietary algorithm penetrates the{" "}
                 <span className="font-bold text-emerald-700">
                   SportyBet instant virtual engine
@@ -394,7 +394,7 @@ function Index() {
               </p>
 
               {/* CTA buttons */}
-              <div className="mt-4 sm:mt-8 flex flex-col items-center lg:items-start gap-2 sm:gap-3 sm:flex-row sm:justify-center lg:justify-start">
+              <div className="mt-4 sm:mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-3">
                 <Button
                   size="lg"
                   className="w-full sm:w-auto h-10 sm:h-12 relative overflow-hidden group font-mono font-bold text-xs sm:text-sm tracking-wider sm:tracking-widest bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 justify-center"
@@ -421,21 +421,21 @@ function Index() {
               </div>
 
               {/* Animated stats */}
-              <dl className="mt-5 sm:mt-10 grid grid-cols-3 gap-1.5 sm:gap-6 border-t border-slate-200 pt-4 sm:pt-6">
-                <div className="text-center lg:text-left">
+              <dl className="mt-5 sm:mt-10 grid grid-cols-3 gap-2 sm:gap-6 border-t border-slate-200 pt-4 sm:pt-6">
+                <div className="text-left">
                   <dt className="text-base sm:text-2xl font-extrabold font-mono text-slate-950">
                     <AnimatedCounter end={99} suffix="%" className="tabular-nums" />
                   </dt>
                   <dd className="text-[9px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Accuracy</dd>
                 </div>
-                <div className="text-center lg:text-left">
+                <div className="text-left">
                   <dt className="text-base sm:text-2xl font-extrabold font-mono text-slate-950">
                     <AnimatedCounter end={14} suffix="K+" className="tabular-nums" />
                   </dt>
                   <dd className="text-[9px] sm:text-xs font-mono font-semibold text-slate-600 mt-0.5">Exposed</dd>
                 </div>
-                <div className="text-center lg:text-left">
-                  <dt className="flex items-center justify-center lg:justify-start gap-1 text-base sm:text-2xl font-extrabold font-mono text-slate-950">
+                <div className="text-left">
+                  <dt className="flex items-center justify-start gap-1 text-base sm:text-2xl font-extrabold font-mono text-slate-950">
                     <span className="size-1.5 sm:size-2 shrink-0 rounded-full bg-emerald-600 animate-status-blink" />
                     24/7
                   </dt>

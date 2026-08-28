@@ -9,28 +9,38 @@ interface GlitchTextProps {
 }
 
 /**
- * GlitchText — Renders headline text with a professional shimmer animation.
- * A subtle highlight sweep glides across the text continuously,
- * giving a premium "data breach" aesthetic without chaotic flickering.
+ * GlitchText — Renders headline text with active glitch animations
+ * moving around and across the letters (cyan/green and red dual split).
  */
 export function GlitchText({ children, className, always = true }: GlitchTextProps) {
   return (
     <span
       className={cn(
-        "relative inline-block select-none",
+        "relative inline-block select-none font-black",
+        always && "animate-glitch-flicker",
         className
       )}
-      style={{
-        backgroundImage: "linear-gradient(110deg, currentColor 35%, rgba(255,255,255,0.85) 50%, currentColor 65%)",
-        backgroundSize: "250% 100%",
-        WebkitBackgroundClip: "text",
-        backgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        animation: always ? "shimmer-text 3s ease-in-out infinite" : "none",
-      }}
     >
-      {children}
+      {/* Green glitch layer moving around the letters */}
+      <span
+        aria-hidden
+        className="glitch-layer-1 pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        {children}
+      </span>
+
+      {/* Red glitch layer moving around the letters */}
+      <span
+        aria-hidden
+        className="glitch-layer-2 pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        {children}
+      </span>
+
+      {/* Real visible text */}
+      <span className="relative inline">{children}</span>
     </span>
   );
 }
+
 

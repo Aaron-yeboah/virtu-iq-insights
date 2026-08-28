@@ -443,10 +443,15 @@
   animation: hack-bar 2.5s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* ── Shimmer text animation (used in GlitchText component) ── */
-@keyframes shimmer-text {
-  0%   { background-position: 100% 50%; }
-  100% { background-position: -50% 50%; }
+/* ── Glitch text animation layers (moving around the letters) ── */
+.glitch-layer-1 {
+  animation: glitch-clip-1 2.8s infinite linear;
+  color: oklch(0.62 0.20 142);
+}
+
+.glitch-layer-2 {
+  animation: glitch-clip-2 2.2s infinite linear;
+  color: oklch(0.53 0.22 27);
 }
 
 /* ── Mobile responsiveness helpers ── */
