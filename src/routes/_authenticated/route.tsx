@@ -71,7 +71,7 @@ export const Route = createFileRoute("/_authenticated")({
       registrationPaid = profile?.registration_paid ?? false;
       if (!registrationPaid && path !== "/registration") throw redirect({ to: "/registration" });
     }
-    if (registrationPaid && path === "/registration") throw redirect({ to: "/dashboard" });
+    if (registrationPaid && path === "/registration") throw redirect({ to: "/credits" });
 
     return { user: authUser, roles, isAdmin, isPartner, registrationPaid };
   },

@@ -95,7 +95,7 @@ function RegistrationFeePage() {
     if (!profile?.registration_paid && !isAdmin) return;
     toast.success(isAdmin ? "Access granted — welcome to Virtu-IQ!" : "Registration approved — welcome to Virtu-IQ!");
     const timer = window.setTimeout(() => {
-      void navigate({ to: "/dashboard", replace: true });
+      void navigate({ to: "/credits", replace: true });
     }, 1400);
     return () => window.clearTimeout(timer);
   }, [profile?.registration_paid, isAdmin, isPartner, isPartnerApplicant, navigate]);
