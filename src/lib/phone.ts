@@ -229,3 +229,117 @@ export function formatNigeriaNumber(digits: string): string {
   if (clean.length <= 7) return `${clean.slice(0, 4)} ${clean.slice(4)}`;
   return `${clean.slice(0, 4)} ${clean.slice(4, 7)} ${clean.slice(7)}`;
 }
+
+/**
+ * Checks whether an email string is a synthetic phone-login email.
+ */
+export function isSyntheticPhoneEmail(email?: string | null): boolean {
+  if (!email || typeof email !== "string") return false;
+  const clean = email.trim().toLowerCase();
+  if (
+    clean.includes("@phone.virtu-iq.live") ||
+    clean.includes("@virtu-iq.live") ||
+    clean.includes("@virtu.live") ||
+    clean.includes("@phone.virtu.live") ||
+    clean.includes("@phone.virtu-iq") ||
+    clean.includes("@virtu")
+  ) {
+    return true;
+  }
+  // Any email where the part before @ is purely numbers and domain has 'phone' or 'virtu'
+  return /^(\+?\d{7,15})@.*(virtu|phone).*/i.test(clean);
+}
+
+/**
+ * Extracts and formats the phone number from a synthetic email or raw phone string.
+ * e.g. "233552231466@phone.virtu-iq.live" -> "055 223 1466"
+ * e.g. "0552231466@phone.virtu-iq.live" -> "055 223 1466"
+ * e.g. "552231466@phone.virtu-iq.live" -> "055 223 1466"
+ * e.g. "2348031234567@phone.virtu-iq.live" -> "0803 123 4567"
+ * Returns null if the input is not a synthetic phone email.
+ */
+export function extractPhoneFromSyntheticEmail(email?: string | null): string | null {
+  if (!email || typeof email !== "string" || !isSyntheticPhoneEmail(email)) return null;
+  const rawLocal = (email.split("@")[0] ?? "").replace(/\D/g, "");
+  if (!rawLocal) return null;
+
+  // Ghana with country code (233XXXXXXXXX -> 12 digits)
+  if (rawLocal.startsWith("233") && rawLocal.length === 12) {
+    const local = "0" + rawLocal.slice(3);
+    return formatGhanaNumber(local);
+  }
+  // Nigeria with country code (234XXXXXXXXXX -> 13 digits)
+  if (rawLocal.startsWith("234") && rawLocal.length === 13) {
+    const local = "0" + rawLocal.slice(3);
+    return formatNigeriaNumber(local);
+  }
+  // Ghana without country code (0XXXXXXXXX -> 10 digits)
+  if (rawLocal.length === 10 && rawLocal.startsWith("0")) {
+    return formatGhanaNumber(rawLocal);
+  }
+  // Ghana 9 digits missing leading 0 (XXXXXXXXX -> 9 digits)
+  if (rawLocal.length === 9) {
+    return formatGhanaNumber("0" + rawLocal);
+  }
+  // Nigeria without country code (0XXXXXXXXXX -> 11 digits)
+  if (rawLocal.length === 11 && rawLocal.startsWith("0")) {
+    return formatNigeriaNumber(rawLocal);
+  }
+  // Nigeria 10 digits missing leading 0 (XXXXXXXXXX -> 10 digits and starts with 7, 8, 9)
+  if (rawLocal.length === 10 && /^[789]/.test(rawLocal)) {
+    return formatNigeriaNumber("0" + rawLocal);
+  }
+
+  // Fallback: format if 10 or 11 digits
+  if (rawLocal.length === 10) return formatGhanaNumber(rawLocal);
+  if (rawLocal.length === 11) return formatNigeriaNumber(rawLocal);
+
+  return rawLocal;
+}
+
+/**
+ * Returns a human-friendly display string for an email/phone.
+ * If the email is a synthetic phone email, returns the formatted phone number (e.g. "055 223 1466").
+ * Otherwise, returns the real email (or fallback).
+ */
+export function displayEmailOrPhone(
+  email?: string | null,
+  phone?: string | null,
+  fallback = "—"
+): string {
+  if (phone && phone.trim().length > 0) {
+    return phone.trim();
+  }
+  if (!email || typeof email !== "string") return fallback;
+  const extracted = extractPhoneFromSyntheticEmail(email);
+  if (extracted) return extracted;
+  return email.trim();
+}
+
+/**
+ * Returns a clean user display label from full_name, email, phone, or default.
+ * If the name is missing and email is synthetic, formats it as the phone number instead of displaying "@virtu.live".
+ */
+export function displayUserName(
+  fullName?: string | null,
+  email?: string | null,
+  phone?: string | null,
+  fallback = "Member"
+): string {
+  if (fullName && fullName.trim().length > 0) {
+    return fullName.trim();
+  }
+  return displayEmailOrPhone(email, phone, fallback);
+}
+
+/**
+ * Cleans any value for frontend display. If it's a synthetic email string, strips the domain and formats the phone number.
+ */
+export function cleanDisplayValue(value: unknown): unknown {
+  if (typeof value === "string") {
+    const extracted = extractPhoneFromSyntheticEmail(value);
+    if (extracted) return extracted;
+  }
+  return value;
+}
+

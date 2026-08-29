@@ -280,7 +280,7 @@ export const auditLogsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("audit_logs")
-        .select("id, action, entity, entity_id, meta, created_at")
+        .select("id, action, actor_id, entity, entity_id, meta, created_at")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;

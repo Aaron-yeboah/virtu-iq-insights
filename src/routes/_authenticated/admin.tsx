@@ -23,6 +23,13 @@ import { PageHeader } from "@/components/app/AppShell";
 import { LogoSymbol } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteMember, explodePlatformData } from "@/lib/admin.functions";
+import {
+  cleanDisplayValue,
+  displayEmailOrPhone,
+  displayUserName,
+  isSyntheticPhoneEmail,
+  extractPhoneFromSyntheticEmail,
+} from "@/lib/phone";
 import { useServerFn } from "@tanstack/react-start";
 import {
   CalendarDays,
@@ -377,7 +384,15 @@ function AdminPage() {
   );
 }
 
-type AuditLog = { id: string; action: string; entity: string; created_at: string };
+type AuditLog = {
+  id: string;
+  action: string;
+  actor_id: string | null;
+  entity: string;
+  entity_id: string | null;
+  meta: unknown;
+  created_at: string;
+};
 
 function RemoveMember({ userId, label }: { userId: string; label: string }) {
   const queryClient = useQueryClient();
@@ -458,38 +473,247 @@ function RemoveMember({ userId, label }: { userId: string; label: string }) {
   );
 }
 
+/** Returns Badge className matching the payments list colour convention:
+ *  blue = approved/verified/granted  |  red = removed/deleted/exploded/reject  |  amber = updated/changed/pending  |  primary = everything else
+ */
+function actionBadgeClass(action: string): string {
+  if (
+    action.includes("removed") ||
+    action.includes("deleted") ||
+    action.includes("exploded") ||
+    action.includes("reject")
+  )
+    return "bg-red-600 text-white hover:bg-red-700";
+  if (
+    action.includes("approved") ||
+    action.includes("verified") ||
+    action.includes("granted")
+  )
+    return "bg-blue-600 text-white hover:bg-blue-700";
+  if (
+    action.includes("updated") ||
+    action.includes("changed") ||
+    action.includes("modified") ||
+    action.includes("pending")
+  )
+    return "bg-amber-500 text-white hover:bg-amber-600";
+  return "bg-primary text-primary-foreground hover:bg-primary/90";
+}
+
+function MetaTable({ meta }: { meta: unknown }) {
+  if (!meta || typeof meta !== "object" || Array.isArray(meta)) return null;
+  const entries = Object.entries(meta as Record<string, unknown>);
+  if (entries.length === 0) return null;
+  return (
+    <table className="mt-2 w-full text-xs">
+      <tbody>
+        {entries.map(([k, v]) => {
+          let displayVal: string;
+          if (typeof v === "object" && v !== null) {
+            displayVal = JSON.stringify(v, null, 2);
+          } else if (typeof v === "string") {
+            displayVal = String(cleanDisplayValue(v) ?? "—");
+          } else {
+            displayVal = String(v ?? "—");
+          }
+          return (
+            <tr key={k} className="border-t border-border/50 first:border-t-0">
+              <td className="py-0.5 pr-3 font-medium text-muted-foreground w-1/3 align-top">{k}</td>
+              <td className="py-0.5 break-all text-foreground/90 font-mono">
+                {displayVal}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 function AuditLogList({ logs }: { logs: AuditLog[] }) {
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? logs : logs.slice(0, 12);
+  const [search, setSearch] = useState("");
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return logs;
+    return logs.filter(
+      (l) =>
+        l.action.toLowerCase().includes(q) ||
+        l.entity.toLowerCase().includes(q) ||
+        (l.entity_id ?? "").toLowerCase().includes(q) ||
+        (l.actor_id ?? "").toLowerCase().includes(q) ||
+        JSON.stringify(l.meta ?? {}).toLowerCase().includes(q),
+    );
+  }, [logs, search]);
+
+  const visible = expanded ? filtered : filtered.slice(0, 15);
+
+  const toggleRow = (id: string) =>
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      {logs.length === 0 && <p className="p-5 text-sm text-muted-foreground">No admin activity recorded yet.</p>}
-      <div className="divide-y divide-border">
-        {visible.map((l) => (
-          <div key={l.id} className="p-4">
-            <p className="text-sm font-medium text-foreground">{l.action}</p>
-            <p className="text-xs text-muted-foreground">
-              {l.entity} · {new Date(l.created_at).toLocaleString()}
-            </p>
-          </div>
-        ))}
+    <div className="space-y-4">
+      {/* Search + count row — matches PaymentsList */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 sm:max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by action, entity, ID, actor or metadata…"
+            aria-label="Search audit logs"
+            className="pl-9"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground shrink-0">
+          Showing <span className="font-semibold text-foreground">{visible.length}</span> of{" "}
+          <span className="font-semibold text-foreground">{filtered.length}</span> log{filtered.length === 1 ? "" : "s"}
+        </p>
       </div>
-      {logs.length > 12 && (
-        <div className="border-t border-border p-3">
+
+      {/* Card — matches the payments rounded-xl border card */}
+      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        {logs.length === 0 && (
+          <p className="p-5 text-sm text-muted-foreground">No admin activity recorded yet.</p>
+        )}
+        {logs.length > 0 && filtered.length === 0 && (
+          <p className="p-5 text-sm text-muted-foreground">No logs match your search.</p>
+        )}
+
+        {visible.map((l) => {
+          const isOpen = expandedIds.has(l.id);
+          const hasMeta =
+            l.meta !== null &&
+            typeof l.meta === "object" &&
+            !Array.isArray(l.meta) &&
+            Object.keys(l.meta).length > 0;
+          const date = new Date(l.created_at);
+          const hasDetail = !!(hasMeta || l.entity_id || l.actor_id);
+          return (
+            <div key={l.id} className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+              {/* Left: primary info */}
+              <div className="min-w-0 space-y-1">
+                {/* Action + entity chip */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-base font-bold text-foreground">{l.action}</p>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                    {l.entity}
+                  </span>
+                </div>
+
+                {/* Actor / entity-id preview */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                  {l.actor_id && (
+                    <span className="text-muted-foreground">
+                      Actor:{" "}
+                      <strong className="text-foreground font-semibold font-mono">
+                        {l.actor_id.slice(0, 8)}…
+                      </strong>
+                    </span>
+                  )}
+                  {l.entity_id && (
+                    <span className="text-muted-foreground">
+                      Entity ID:{" "}
+                      <strong className="text-foreground font-semibold font-mono">
+                        {l.entity_id.slice(0, 8)}…
+                      </strong>
+                    </span>
+                  )}
+                </div>
+
+                {/* Timestamp */}
+                <p className="text-xs text-muted-foreground">
+                  {date.toLocaleString()} · Log: {l.id.slice(0, 8)}
+                </p>
+
+                {/* Show-details toggle */}
+                {hasDetail && (
+                  <button
+                    type="button"
+                    className="mt-1 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => toggleRow(l.id)}
+                    aria-expanded={isOpen}
+                  >
+                    <ChevronDown
+                      className="size-3 transition-transform duration-150"
+                      style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                    />
+                    {isOpen ? "Hide details" : "Show details"}
+                  </button>
+                )}
+
+                {/* Expanded detail panel */}
+                {isOpen && (
+                  <div className="mt-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2.5 text-xs space-y-2">
+                    <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+                      <div>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Log ID</span>
+                        <p className="mt-0.5 break-all font-mono text-foreground/80">{l.id}</p>
+                      </div>
+                      {l.actor_id && (
+                        <div>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Actor (user ID)</span>
+                          <p className="mt-0.5 break-all font-mono text-foreground/80">{l.actor_id}</p>
+                        </div>
+                      )}
+                      {l.entity_id && (
+                        <div>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Entity ID</span>
+                          <p className="mt-0.5 break-all font-mono text-foreground/80">{l.entity_id}</p>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Timestamp (ISO)</span>
+                        <p className="mt-0.5 font-mono text-foreground/80">{date.toISOString()}</p>
+                      </div>
+                    </div>
+                    {hasMeta && (
+                      <div className="border-t border-border/50 pt-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Metadata</span>
+                        <MetaTable meta={l.meta as Record<string, unknown>} />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right: status badge — same style as payments */}
+              <Badge
+                className={cn(
+                  "w-fit font-bold uppercase tracking-wider text-[11px] px-2.5 py-0.5 shadow-xs border-transparent shrink-0",
+                  actionBadgeClass(l.action),
+                )}
+              >
+                {l.action.split(".").pop()}
+              </Badge>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Show-more — matches PaymentsList outline-button footer */}
+      {filtered.length > 15 && (
+        <div className="flex justify-center pt-2">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="w-full flex items-center justify-center gap-1.5 font-medium"
             onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1.5"
           >
             {expanded ? (
               <>
-                <ChevronUp className="size-4" /> Collapse (show top 12)
+                <ChevronUp className="size-4" /> Show fewer
               </>
             ) : (
               <>
-                <ChevronDown className="size-4" /> Show all {logs.length} logs ({logs.length - 12} more)
+                <ChevronDown className="size-4" /> Show all {filtered.length} logs ({filtered.length - 15} more)
               </>
             )}
           </Button>
@@ -711,9 +935,9 @@ function PaymentsList({
                     <span className="text-muted-foreground">
                       Account:{" "}
                       <strong className="text-foreground font-semibold">
-                        {member.full_name || "Unnamed"}
+                        {displayUserName(member.full_name, member.email, member.phone, "Unnamed")}
                       </strong>{" "}
-                      ({member.phone || member.email || "No phone"})
+                      ({displayEmailOrPhone(member.email, member.phone, "No phone")})
                     </span>
                   )}
                 </div>
@@ -883,7 +1107,10 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
           </p>
         )}
         {visible.map((m) => {
-          const nameDisplay = m.full_name || m.email || "Member";
+          const nameDisplay = displayUserName(m.full_name, m.email, m.phone, "Member");
+          const isSynthetic = isSyntheticPhoneEmail(m.email);
+          const phoneDisplay = m.phone || (isSynthetic ? extractPhoneFromSyntheticEmail(m.email) : null);
+          const realEmail = !isSynthetic && m.email ? m.email : null;
           const initials = nameDisplay
             .split(" ")
             .map((n) => n[0])
@@ -901,7 +1128,7 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-foreground text-sm truncate">
-                      {m.full_name || m.email}
+                      {nameDisplay}
                     </span>
                     {isNew && (
                       <span className="inline-flex items-center rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-bold text-white tracking-wider animate-pulse">
@@ -920,12 +1147,14 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Mail className="size-3 text-muted-foreground/70" /> {m.email}
-                    </span>
-                    {m.phone && (
+                    {phoneDisplay && (
                       <span className="flex items-center gap-1">
-                        <Phone className="size-3 text-muted-foreground/70" /> {m.phone}
+                        <Phone className="size-3 text-muted-foreground/70" /> {phoneDisplay}
+                      </span>
+                    )}
+                    {realEmail && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="size-3 text-muted-foreground/70" /> {realEmail}
                       </span>
                     )}
                     <span className="rounded bg-muted/60 px-1.5 py-0.5 text-[11px] font-mono font-medium">
@@ -961,9 +1190,9 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center">
-                <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} currentVerdicts={m.max_verdicts} currentCredits={m.credits} />
+                <CreditAdjuster userId={m.id} label={nameDisplay} currentVerdicts={m.max_verdicts} currentCredits={m.credits} />
                 {m.id !== currentUserId && (
-                  <RemoveMember userId={m.id} label={m.full_name ?? m.email ?? "this member"} />
+                  <RemoveMember userId={m.id} label={nameDisplay} />
                 )}
               </div>
             </div>
@@ -1394,8 +1623,8 @@ function PartnerPayouts() {
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">{p.full_name ?? p.email}</p>
-                    <p className="break-all text-xs text-muted-foreground mt-0.5">{p.email}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{displayUserName(p.full_name, p.email, undefined, "Partner")}</p>
+                    <p className="break-all text-xs text-muted-foreground mt-0.5">{displayEmailOrPhone(p.email)}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                       <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium text-foreground">
                         Code: {p.referral_code}
@@ -1409,7 +1638,7 @@ function PartnerPayouts() {
                     variant="ghost"
                     className="size-8 shrink-0 p-0 text-muted-foreground hover:text-foreground"
                     title="View Payout History"
-                    onClick={() => setSelectedPartnerPayouts({ id: p.id, name: p.full_name ?? p.email ?? "Partner" })}
+                    onClick={() => setSelectedPartnerPayouts({ id: p.id, name: displayUserName(p.full_name, p.email, undefined, "Partner") })}
                   >
                     <Clock className="size-4" />
                   </Button>
@@ -1686,7 +1915,7 @@ function PartnerManager() {
           <div key={m.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
-                <span className="truncate font-semibold">{m.full_name ?? m.email}</span>
+                <span className="truncate font-semibold">{displayUserName(m.full_name, m.email, m.phone, "Member")}</span>
                 {m.is_admin && (
                   <Badge className="shrink-0 bg-primary text-primary-foreground font-bold tracking-wider text-[10px] px-2 py-0.5">
                     ADMIN
@@ -1699,7 +1928,7 @@ function PartnerManager() {
                 )}
               </div>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {m.email}
+                {displayEmailOrPhone(m.email, m.phone)}
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 Code: <span className="font-mono font-medium">{m.referral_code}</span> · Spent: {ghs(m.spent_ghs)}
@@ -1720,7 +1949,7 @@ function PartnerManager() {
                   className="flex-1 sm:flex-none"
                   onClick={() => {
                     setPartnerId(m.id);
-                    setPartnerName(m.full_name ?? m.email ?? "partner");
+                    setPartnerName(displayUserName(m.full_name, m.email, m.phone, "partner"));
                     setOnlyPartners(false);
                     setSearch("");
                   }}
@@ -1871,7 +2100,7 @@ function PartnerApplications() {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
-                  <span className="truncate">{a.full_name ?? a.email ?? "Applicant"}</span>
+                  <span className="truncate">{displayUserName(a.full_name, a.email, a.phone, "Applicant")}</span>
                   {a.status !== "pending" && (
                     <Badge
                       className={cn(
@@ -1887,7 +2116,7 @@ function PartnerApplications() {
                     </Badge>
                   )}
                 </div>
-                <p className="mt-0.5 break-all text-xs text-muted-foreground">{a.email}</p>
+                <p className="mt-0.5 break-all text-xs text-muted-foreground">{displayEmailOrPhone(a.email, a.phone)}</p>
               </div>
               {a.status === "pending" && (
                 <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
