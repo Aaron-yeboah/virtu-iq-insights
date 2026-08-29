@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -24,8 +25,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { deleteMember, explodePlatformData } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  CalendarDays,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Clock,
   Coins,
@@ -37,6 +41,7 @@ import {
   Sliders,
   Trash2,
   User as UserIcon,
+  X,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -61,6 +66,7 @@ import {
   auditLogsQuery,
   ghs,
   paymentSettingsQuery,
+  packagesQuery,
   rolesQuery,
   type AdminApplicationRow,
   type AdminPartnerRow,
@@ -197,16 +203,44 @@ function AdminPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // ── Revenue history calendar state ──
+  const [selectedHistoryDate, setSelectedHistoryDate] = useState<Date | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
   const todayStr = new Date().toISOString().slice(0, 10);
-  const todayRevenue = (payments ?? [])
-    .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === todayStr)
+
+  // Compute which date to show revenue for (selected or today)
+  const activeDate = selectedHistoryDate;
+  const activeDateStr = activeDate
+    ? `${activeDate.getFullYear()}-${String(activeDate.getMonth() + 1).padStart(2, "0")}-${String(activeDate.getDate()).padStart(2, "0")}`
+    : todayStr;
+  const isHistoryMode = selectedHistoryDate !== null;
+
+  const activeRevenue = (payments ?? [])
+    .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === activeDateStr)
     .reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
 
   const devRate = Number(settings?.developer_commission_rate ?? 15);
-  const devCommission = (todayRevenue * devRate) / 100;
+  const devCommission = (activeRevenue * devRate) / 100;
 
   const adminRate = Number(settings?.admin_commission_rate ?? 15);
-  const adminCommission = (todayRevenue * adminRate) / 100;
+  const adminCommission = (activeRevenue * adminRate) / 100;
+
+  // Days that have approved revenue (for calendar indicators)
+  const revenueDays = useMemo(() => {
+    const days = new Set<string>();
+    for (const p of payments ?? []) {
+      if (p.status === "approved" && p.created_at) {
+        days.add(p.created_at.slice(0, 10));
+      }
+    }
+    return Array.from(days).map((d) => new Date(d + "T00:00:00"));
+  }, [payments]);
+
+  // Format the selected date for display
+  const activeDateLabel = activeDate
+    ? activeDate.toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+    : "Today";
 
   if (rolesLoading) return <p className="text-sm text-muted-foreground">Checking access…</p>;
   if (!isAdmin) {
@@ -224,9 +258,38 @@ function AdminPage() {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-8">
         <Stat label="Total Revenue" value={ghs(stats?.revenue_ghs ?? 0)} highlight />
-        <Stat label="Today's Revenue" value={ghs(todayRevenue)} highlight />
-        <Stat label={`Dev Commission (${devRate}%)`} value={ghs(devCommission)} highlight />
-        <Stat label={`Admin Commission (${adminRate}%)`} value={ghs(adminCommission)} highlight />
+        <Stat
+          label={isHistoryMode ? `Revenue · ${activeDateLabel}` : "Today's Revenue"}
+          value={ghs(activeRevenue)}
+          highlight
+          action={
+            <div className="flex items-center gap-1">
+              {isHistoryMode && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setSelectedHistoryDate(null); }}
+                  className="flex items-center gap-0.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold text-white/90 backdrop-blur-sm transition-all hover:bg-white/30 hover:scale-105 active:scale-95"
+                  aria-label="Back to today"
+                >
+                  <X className="size-2.5" />
+                  Today
+                </button>
+              )}
+              <RevenueHistoryCalendar
+                open={calendarOpen}
+                onOpenChange={setCalendarOpen}
+                selected={selectedHistoryDate}
+                onSelect={(day) => {
+                  setSelectedHistoryDate(day ?? null);
+                  setCalendarOpen(false);
+                }}
+                revenueDays={revenueDays}
+              />
+            </div>
+          }
+        />
+        <Stat label={isHistoryMode ? `Dev (${devRate}%) · ${activeDateLabel}` : `Dev Commission (${devRate}%)`} value={ghs(devCommission)} highlight />
+        <Stat label={isHistoryMode ? `Admin (${adminRate}%) · ${activeDateLabel}` : `Admin Commission (${adminRate}%)`} value={ghs(adminCommission)} highlight />
         <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
@@ -874,6 +937,10 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
                       <Coins className="size-3 text-primary" /> {m.credits} credit{m.credits === 1 ? "" : "s"}
                     </span>
                     <span>·</span>
+                    <span className="font-medium text-foreground/85">
+                      {m.max_verdicts ?? 2} verdict{(m.max_verdicts ?? 2) === 1 ? "" : "s"}/scan
+                    </span>
+                    <span>·</span>
                     <span>Spent: <strong className="text-foreground">{ghs(m.spent_ghs)}</strong></span>
                     <span>·</span>
                     <span>Joined: {new Date(m.created_at).toLocaleDateString()}</span>
@@ -894,7 +961,7 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center">
-                <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} />
+                <CreditAdjuster userId={m.id} label={m.full_name ?? m.email ?? "member"} currentVerdicts={m.max_verdicts} currentCredits={m.credits} />
                 {m.id !== currentUserId && (
                   <RemoveMember userId={m.id} label={m.full_name ?? m.email ?? "this member"} />
                 )}
@@ -995,7 +1062,7 @@ function ExplodeCard() {
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function Stat({ label, value, highlight, action }: { label: string; value: string; highlight?: boolean; action?: React.ReactNode }) {
   return (
     <div
       className={
@@ -1016,6 +1083,11 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
         {label}
       </p>
       <p className="relative mt-2 text-xl font-bold tracking-tight">{value}</p>
+      {action && (
+        <div className="absolute bottom-2.5 right-2.5 z-10">
+          {action}
+        </div>
+      )}
       <span
         className={
           highlight
@@ -1027,6 +1099,231 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
         <span className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-15deg] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-all duration-300 group-hover:animate-shine group-hover:opacity-100" />
       )}
     </div>
+  );
+}
+
+/** Custom 10-day strip calendar for browsing daily revenue history */
+function RevenueHistoryCalendar({
+  open,
+  onOpenChange,
+  selected,
+  onSelect,
+  revenueDays,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selected: Date | null;
+  onSelect: (day: Date | undefined) => void;
+  revenueDays: Date[];
+}) {
+  const [page, setPage] = useState(0); // 0 = most recent 10 days, 1 = previous 10, etc.
+  const stripRef = useRef<HTMLDivElement>(null);
+  const activeDayRef = useRef<HTMLButtonElement>(null);
+
+  // Build a set of YYYY-MM-DD strings for fast lookup
+  const revenueDaySet = useMemo(() => {
+    const s = new Set<string>();
+    for (const d of revenueDays) {
+      const yr = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, "0");
+      const da = String(d.getDate()).padStart(2, "0");
+      s.add(`${yr}-${mo}-${da}`);
+    }
+    return s;
+  }, [revenueDays]);
+
+  // Generate 10 days for the current page (page 0 = today minus 0..9, page 1 = today minus 10..19, etc.)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = useMemo(() => {
+    const result: Date[] = [];
+    const startOffset = page * 10;
+    for (let i = startOffset + 9; i >= startOffset; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      result.push(d);
+    }
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  const toDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const selectedStr = selected ? toDateStr(selected) : null;
+  const todayStr = toDateStr(today);
+
+  // Auto-scroll to today or the currently selected day whenever popover opens or page changes
+  useEffect(() => {
+    if (!open) return;
+    const timer = setTimeout(() => {
+      if (activeDayRef.current) {
+        activeDayRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      } else if (stripRef.current && page === 0) {
+        stripRef.current.scrollTo({
+          left: stripRef.current.scrollWidth,
+          behavior: "smooth",
+        });
+      }
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [open, page]);
+
+  // Date range label for the header
+  const rangeStart = days[0];
+  const rangeEnd = days[days.length - 1];
+  const fmtShort = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  const rangeLabel = rangeStart && rangeEnd ? `${fmtShort(rangeStart)} – ${fmtShort(rangeEnd)}` : "";
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (v) setPage(0);
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex size-6 items-center justify-center rounded-md bg-white/15 text-white/80 backdrop-blur-sm transition-all duration-200 hover:bg-white/25 hover:text-white hover:scale-110 hover:shadow-[0_0_12px_rgba(255,255,255,0.2)] active:scale-95 touch-manipulation"
+          aria-label="View daily revenue history"
+        >
+          <CalendarDays className="size-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[calc(100vw-1.5rem)] max-w-[480px] sm:w-auto p-0 border border-slate-200/80 bg-white text-slate-900 shadow-2xl shadow-black/25 rounded-2xl overflow-hidden touch-manipulation"
+        align="end"
+        sideOffset={8}
+        collisionPadding={12}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between gap-2 sm:gap-3 px-3.5 pt-3.5 pb-2.5 border-b border-slate-100 bg-slate-50/70">
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-1.5 truncate">
+              <span className="inline-block size-2 shrink-0 rounded-full bg-red-600 animate-pulse" />
+              Daily Revenue History
+            </p>
+            <p className="text-[11px] text-slate-500 mt-0.5 font-medium truncate">{rangeLabel}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setPage((p) => p + 1)}
+              className="flex size-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-all hover:bg-red-50 hover:border-red-300 hover:text-red-600 active:scale-90 shadow-xs touch-manipulation"
+              title="Previous 10 days"
+              aria-label="Previous 10 days"
+            >
+              <ChevronLeft className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              className={cn(
+                "flex size-7 items-center justify-center rounded-lg border transition-all active:scale-90 shadow-xs touch-manipulation",
+                page === 0
+                  ? "border-slate-100 bg-slate-100/50 text-slate-300 cursor-not-allowed"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+              )}
+              title="Next 10 days"
+              aria-label="Next 10 days"
+            >
+              <ChevronRight className="size-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* 10-day strip with smooth touch scrolling and auto-scroll */}
+        <div
+          ref={stripRef}
+          className="flex gap-1.5 p-2.5 sm:p-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overscroll-contain touch-pan-x"
+        >
+          {days.map((day) => {
+            const ds = toDateStr(day);
+            const isSelected = ds === selectedStr;
+            const isToday = ds === todayStr;
+            const isActiveDay = isSelected || (!selectedStr && isToday);
+            const hasRevenue = revenueDaySet.has(ds);
+            return (
+              <button
+                key={ds}
+                ref={isActiveDay ? activeDayRef : null}
+                type="button"
+                onClick={() => {
+                  onSelect(day);
+                }}
+                className={cn(
+                  "relative flex flex-col items-center justify-center rounded-xl px-2 py-2 min-w-[2.75rem] sm:min-w-[3rem] shrink-0 transition-all duration-200 group/day cursor-pointer touch-manipulation select-none",
+                  isSelected
+                    ? "bg-gradient-to-br from-[#DC2626] via-[#B91C1C] to-[#1D4ED8] text-white shadow-md shadow-red-600/30 scale-105 ring-2 ring-red-400/50"
+                    : isToday
+                      ? "bg-red-50 border-2 border-red-500/80 text-slate-900 hover:bg-red-100/80 hover:border-red-600 shadow-xs"
+                      : "bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-red-50 hover:border-red-200 hover:text-slate-900",
+                )}
+              >
+                {/* Day of week */}
+                <span className={cn(
+                  "text-[9px] font-bold uppercase tracking-wider leading-none",
+                  isSelected ? "text-white/85" : isToday ? "text-red-600 font-extrabold" : "text-slate-400",
+                )}>
+                  {isToday ? "TODAY" : day.toLocaleDateString("en-GB", { weekday: "short" }).slice(0, 2)}
+                </span>
+                {/* Day number */}
+                <span className={cn(
+                  "text-sm font-extrabold leading-none mt-1.5",
+                  isSelected ? "text-white" : isToday ? "text-red-700" : "text-slate-800",
+                )}>
+                  {day.getDate()}
+                </span>
+                {/* Month */}
+                <span className={cn(
+                  "text-[9px] font-semibold leading-none mt-1",
+                  isSelected ? "text-white/80" : "text-slate-400",
+                )}>
+                  {day.toLocaleDateString("en-GB", { month: "short" })}
+                </span>
+                {/* Revenue indicator dot */}
+                {hasRevenue && (
+                  <span
+                    className={cn(
+                      "absolute -top-1 -right-1 size-2.5 rounded-full ring-2",
+                      isSelected
+                        ? "bg-white ring-red-700 shadow-[0_0_6px_rgba(255,255,255,0.8)]"
+                        : "bg-red-600 ring-white shadow-[0_0_6px_rgba(220,38,38,0.5)]",
+                    )}
+                    title="Revenue recorded on this day"
+                  />
+                )}
+                {/* Today bottom indicator pill */}
+                {isToday && !isSelected && (
+                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-red-600" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer hint when navigated back */}
+        {page > 0 && (
+          <div className="border-t border-slate-100 px-3.5 py-2 flex items-center justify-between bg-slate-50/70">
+            <span className="text-[10px] text-slate-500 font-medium">{page * 10} days ago</span>
+            <button
+              type="button"
+              onClick={() => setPage(0)}
+              className="text-[10px] font-bold text-red-600 hover:text-red-700 hover:underline transition-colors touch-manipulation"
+            >
+              Reset to Recent (Today) →
+            </button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -1265,6 +1562,7 @@ type MemberRow = {
   referrer_name: string | null;
   spent_ghs: number;
   referral_count: number;
+  max_verdicts?: number;
 };
 
 function PartnerManager() {
@@ -1469,8 +1767,25 @@ function PartnerManager() {
   );
 }
 
-function CreditAdjuster({ userId, label }: { userId: string; label: string }) {
-  return <CreditAdjusterInner userId={userId} label={label} />;
+function CreditAdjuster({
+  userId,
+  label,
+  currentVerdicts,
+  currentCredits,
+}: {
+  userId: string;
+  label: string;
+  currentVerdicts?: number | undefined;
+  currentCredits?: number | undefined;
+}) {
+  return (
+    <CreditAdjusterInner
+      userId={userId}
+      label={label}
+      currentVerdicts={currentVerdicts}
+      currentCredits={currentCredits}
+    />
+  );
 }
 
 function PartnerInviteLink() {
@@ -1621,29 +1936,62 @@ function PartnerApplications() {
   );
 }
 
-function CreditAdjusterInner({ userId, label }: { userId: string; label: string }) {
+function CreditAdjusterInner({
+  userId,
+  label,
+  currentVerdicts = 2,
+  currentCredits,
+}: {
+  userId: string;
+  label: string;
+  currentVerdicts?: number | undefined;
+  currentCredits?: number | undefined;
+}) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("5");
+  const [verdicts, setVerdicts] = useState(String(currentVerdicts || 2));
   const [reason, setReason] = useState("");
+
+  const { data: sitePackages } = useQuery(packagesQuery());
+
+  const packageList = useMemo(() => {
+    if (sitePackages && sitePackages.length > 0) {
+      return [...sitePackages].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    }
+    return [
+      { id: "starter", name: "Starter", max_verdicts: 2, credits: 5, sort_order: 0 },
+      { id: "plus", name: "Plus", max_verdicts: 4, credits: 15, sort_order: 1 },
+      { id: "premium", name: "Premium", max_verdicts: 8, credits: 30, sort_order: 2 },
+    ];
+  }, [sitePackages]);
+
+  // Sync initial verdicts when dialog opens or member data changes
+  useEffect(() => {
+    if (open) {
+      setVerdicts(String(currentVerdicts || 2));
+    }
+  }, [open, currentVerdicts]);
 
   const adjust = useMutation({
     mutationFn: async (sign: 1 | -1) => {
       const delta = sign * Math.abs(Number(amount));
       if (!Number.isFinite(delta) || delta === 0) throw new Error("Enter a credit amount.");
+      const vNum = Math.max(1, Math.trunc(Number(verdicts) || 2));
       const note = reason.trim();
-      const { error } = await supabase.rpc("admin_adjust_credits", {
+      const { error } = await supabase.rpc("admin_adjust_credits" as never, {
         _user_id: userId,
         _delta: Math.trunc(delta),
+        _max_verdicts: vNum,
         ...(note ? { _reason: note } : {}),
-      });
+      } as never);
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
       setReason("");
       setOpen(false);
       await queryClient.invalidateQueries();
-      toast.success("Credits updated");
+      toast.success("Credits and verdicts updated");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -1653,14 +2001,22 @@ function CreditAdjusterInner({ userId, label }: { userId: string; label: string 
       <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
         Credits
       </Button>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Adjust credits</DialogTitle>
-          <DialogDescription>Grant or remove prediction credits for {label}.</DialogDescription>
+          <DialogTitle>Adjust Credits &amp; Verdicts</DialogTitle>
+          <DialogDescription>
+            Grant or remove prediction credits and set the verdicts-per-screenshot limit for <strong>{label}</strong>.
+            {currentCredits !== undefined && (
+              <span className="block mt-1 text-xs text-muted-foreground">
+                Current balance: <strong className="text-foreground">{currentCredits} credits</strong> · <strong className="text-foreground">{currentVerdicts} verdicts/scan</strong>
+              </span>
+            )}
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4">
+        <div className="grid gap-4 py-2">
+          {/* Credits input */}
           <div className="space-y-2">
-            <Label htmlFor={`amt-${userId}`}>Credits</Label>
+            <Label htmlFor={`amt-${userId}`}>Credits to Add / Remove</Label>
             <Input
               id={`amt-${userId}`}
               type="number"
@@ -1668,21 +2024,93 @@ function CreditAdjusterInner({ userId, label }: { userId: string; label: string 
               max={10000}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              placeholder="5"
             />
           </div>
+
+          {/* Verdicts per screenshot */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor={`verdicts-${userId}`}>Verdicts per Screenshot</Label>
+              <span className="text-xs font-bold text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+                {verdicts || "1"} verdict{Number(verdicts) === 1 ? "" : "s"} per scan
+              </span>
+            </div>
+
+            {/* Packages on the site in exact order */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                Site Package Presets:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {packageList.map((pkg) => {
+                  const vStr = String(pkg.max_verdicts);
+                  const isSelected = verdicts === vStr;
+                  return (
+                    <button
+                      key={pkg.id || pkg.name}
+                      type="button"
+                      onClick={() => {
+                        setVerdicts(vStr);
+                      }}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all border",
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-xs ring-2 ring-primary/30"
+                          : "bg-muted/40 border-border text-foreground/80 hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
+                      )}
+                    >
+                      <span>{pkg.name}</span>
+                      <span
+                        className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded font-mono font-bold",
+                          isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {pkg.max_verdicts} verdicts
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom input placeholder for freely entering any number of verdicts */}
+            <div className="space-y-1 pt-1">
+              <Label htmlFor={`verdicts-${userId}`} className="text-[11px] font-medium text-muted-foreground">
+                Custom Verdicts Count:
+              </Label>
+              <Input
+                id={`verdicts-${userId}`}
+                type="number"
+                min={1}
+                max={50}
+                value={verdicts}
+                onChange={(e) => setVerdicts(e.target.value)}
+                placeholder="Enter custom number of verdicts (e.g. 3, 5, 10, 15...)"
+                className="h-9 text-sm font-medium"
+              />
+            </div>
+
+            <p className="text-[11px] text-muted-foreground">
+              When this member runs a scan using these credits, the AI will deliver up to <strong className="text-foreground">{verdicts || "2"} verdicts</strong>.
+            </p>
+          </div>
+
+          {/* Reason input */}
           <div className="space-y-2">
             <Label htmlFor={`why-${userId}`}>Reason (shown in their ledger)</Label>
             <Input
               id={`why-${userId}`}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Goodwill top-up"
+              placeholder="e.g. Goodwill top-up / Custom allocation"
             />
           </div>
         </div>
         <DialogFooter className="gap-2 sm:justify-start">
           <Button disabled={adjust.isPending} onClick={() => adjust.mutate(1)}>
-            Add credits
+            Add credits ({verdicts || "2"} verdicts)
           </Button>
           <Button variant="destructive" disabled={adjust.isPending} onClick={() => adjust.mutate(-1)}>
             Remove credits
