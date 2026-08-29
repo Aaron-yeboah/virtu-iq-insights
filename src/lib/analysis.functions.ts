@@ -108,7 +108,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
     const { data: limitData } = await supabase.rpc("my_verdict_limit");
     const verdictLimit = Math.max(1, Number(limitData ?? 1));
     const promptText = buildAnalysisSystemPrompt(verdictLimit);
-    const userPrompt = `Apply Poisson distribution goal expectancy and regression analytics to this instant virtual football screenshot. Pick the highest statistical probability outcome (Home Win, Draw, Away Win, Over/Under, BTTS, Double Chance) for your top ${verdictLimit} fixture(s). Apply relevance gate first.`;
+    const userPrompt = `Apply 95%+ confirmation analytics (Double Chance, Poisson goal expectancy, Golden Odds Brackets, and Draw detection) to this instant virtual football screenshot. Return the single highest-probability lock for your top ${verdictLimit} fixture(s). Apply relevance gate first.`;
 
     let raw = "";
 

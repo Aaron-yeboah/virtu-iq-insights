@@ -33,17 +33,21 @@ STEP 2 — If it IS football related, reply with ONLY valid minified JSON:
   }]
 }
 
-STYLE RULES & HIGH-END STATISTICAL ANALYTICS — non-negotiable:
-- STATISTICAL METHODOLOGY:
-  1. BIVARIATE POISSON EXPECTATION: Infer expected goals (lambda_home, lambda_away) from visible odds and team strength tiers. Compute exact outcome distributions P(Home), P(Draw), P(Away), P(Over/Under 2.5), P(BTTS).
-  2. REGRESSION & PROBABILITY CALIBRATION: De-juice market bookmaker margin (overround) to extract true implied win/draw probabilities. Identify the statistical convergence between Poisson expected scorelines and market odds.
-  3. BALANCED 1X2 OUTCOMES (INCLUDING DRAWS): When lambda differences are tight or Poisson probability of 0-0/1-1/2-2 is dominant, pick "Draw" or "Draw (X)" decisively without bias.
-- Be decisive. Choose the single highest-mathematical-edge outcome per fixture.
-- "pick" is a short verdict only, e.g. "Arsenal to win", "Draw (X)", "Real Madrid to win", "Over 2.5 goals", "Under 2.5 goals", "Both teams to score", "Home or Draw (1X)", "Draw or Away (X2)".
-- "market" is the bet type, e.g. "1X2", "Draw", "Over/Under", "BTTS", "Double Chance".
-- "headline" is one confident sentence (max 18 words) summarising the strongest statistical selection (e.g. "Poisson model indicates strong home win advantage for Arsenal" or "Statistical stalemate expected with high probability of a Draw").
+STYLE RULES & 95%+ CONFIRMATION METHODOLOGY — non-negotiable:
+- MATHEMATICAL RISK OPTIMIZATION:
+  1. HIGH-PROBABILITY SAFE MARKETS: Prioritize Double Chance ("1X" / "X2" / "12"), Safe Goal Bands ("Over 1.5 goals", "Under 3.5 goals"), and Direct Draws whenever straight 1X2 outcomes have volatility. Double Chance & Over 1.5 have an 88-96% statistical hit rate in instant virtual simulations.
+  2. BIVARIATE POISSON EXPECTANCY: Derive expected goals (lambda_home, lambda_away) from visible odds and team strength tiers. Calculate exact outcome probabilities: P(Home), P(Draw), P(Away), P(Over 1.5), P(Over 2.5), P(BTTS).
+  3. GOLDEN ODDS BRACKET FILTERING:
+     - Heavy Favorite (Odds <= 1.48): Pick Win or Home/Draw (1X) or Over 1.5 goals.
+     - Balanced / Mid-Range (Odds 2.60 - 3.40): Pick Draw (X), Double Chance (1X/X2), or Under 3.5 goals.
+     - High-Scoring Fixtures: Pick Over 1.5 goals or Both teams to score.
+  4. STRICT QUALITY CURATION: From all visible fixtures on the screenshot, select ONLY the top ${verdictLimit} fixtures with the highest mathematical confirmation index.
+- Be decisive. Choose the single highest-probability outcome per match.
+- "pick" is a short verdict only, e.g. "Arsenal or Draw (1X)", "Over 1.5 goals", "Draw (X)", "Real Madrid to win", "Over 2.5 goals", "Under 3.5 goals", "Both teams to score", "Chelsea or Draw (1X)", "Draw or Away (X2)".
+- "market" is the bet type, e.g. "Double Chance", "Over/Under", "1X2", "Draw", "BTTS".
+- "headline" is one confident sentence (max 18 words) summarising the highest-probability selection (e.g. "High-probability Double Chance lock on Arsenal to secure result" or "Poisson goal model confirms Over 1.5 goals lock").
 - ZERO-LATENCY MINIFIED JSON: Return ONLY the exact minified JSON payload — no intermediate calculations, no markdown, no filler text, no skipped-match explanations.
-- confidence is a calibrated statistical probability (0.65 to 0.98). Only use fixtures actually visible. Never invent teams, odds or times.`;
+- confidence is a calibrated statistical probability (0.75 to 0.98). Only use fixtures actually visible. Never invent teams, odds or times.`;
 
 export type MatchPrediction = {
   fixture: string;
