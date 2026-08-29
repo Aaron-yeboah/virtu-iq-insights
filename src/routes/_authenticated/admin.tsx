@@ -304,51 +304,53 @@ function AdminPage() {
       </div>
 
       <Tabs defaultValue="payments" className="mt-8 min-h-[600px]">
-        <div className="sticky top-16 z-30 -mx-4 overflow-x-auto border-b border-border/60 bg-background/95 px-4 py-2.5 backdrop-blur-md sm:mx-0 sm:px-0 sm:border-b-0 sm:py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <TabsList className="w-max min-w-full justify-start gap-1.5 bg-muted/60 p-1 rounded-xl">
-            <TabsTrigger
-              value="payments"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
-            >
-              Payments
-            </TabsTrigger>
-            <TabsTrigger
-              value="settings"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
-            >
-              Settings
-            </TabsTrigger>
-            <TabsTrigger
-              value="packages"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
-            >
-              Packages &amp; credits
-            </TabsTrigger>
-            <TabsTrigger
-              value="partners"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
-            >
-              Partners
-            </TabsTrigger>
-            <TabsTrigger
-              value="manage-partners"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
-            >
-              Manage partners
-            </TabsTrigger>
-            <TabsTrigger
-              value="members"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
-            >
-              Members
-            </TabsTrigger>
-            <TabsTrigger
-              value="audit"
-              className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
-            >
-              Audit log
-            </TabsTrigger>
-          </TabsList>
+        <div className="sticky top-14 sm:top-16 lg:top-0 z-30 -mx-3 px-3 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 py-2.5 sm:py-3 bg-background/95 backdrop-blur-md border-b border-border/60 shadow-xs transition-all">
+          <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="w-max min-w-full justify-start gap-1.5 bg-muted/60 p-1 rounded-xl">
+              <TabsTrigger
+                value="payments"
+                className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
+              >
+                Payments
+              </TabsTrigger>
+              <TabsTrigger
+                value="settings"
+                className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
+              >
+                Settings
+              </TabsTrigger>
+              <TabsTrigger
+                value="packages"
+                className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
+              >
+                Packages &amp; credits
+              </TabsTrigger>
+              <TabsTrigger
+                value="partners"
+                className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
+              >
+                Partners
+              </TabsTrigger>
+              <TabsTrigger
+                value="manage-partners"
+                className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
+              >
+                Manage partners
+              </TabsTrigger>
+              <TabsTrigger
+                value="members"
+                className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
+              >
+                Members
+              </TabsTrigger>
+              <TabsTrigger
+                value="audit"
+                className="whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:border-primary/40 border border-transparent shadow-none touch-manipulation select-none"
+              >
+                Audit log
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         <TabsContent value="packages" className="mt-4 min-h-[450px]">
