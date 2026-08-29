@@ -33,14 +33,17 @@ STEP 2 — If it IS football related, reply with ONLY valid minified JSON:
   }]
 }
 
-STYLE RULES & OUTCOME SELECTION — non-negotiable:
-- Be decisive. Choose the single most likely outcome per match based on virtual odds, simulated fixture patterns, and team indicators.
-- FULL 1X2 OUTCOMES (INCLUDING DRAWS): You MUST evaluate all match outcomes objectively — Home Win (1), Draw / Stalemate (X), and Away Win (2). When the simulated odds, evenly matched teams, or virtual trends indicate a Draw is the highest probability or best value outcome, pick "Draw" or "Draw (X)".
-- "pick" is a short verdict only, e.g. "Draw", "Draw (X)", "Arsenal to win", "Real Madrid to win", "Over 2.5 goals", "Under 2.5 goals", "Both teams to score", "Home or Draw (1X)", "Draw or Away (X2)".
+STYLE RULES & HIGH-END STATISTICAL ANALYTICS — non-negotiable:
+- STATISTICAL METHODOLOGY:
+  1. BIVARIATE POISSON EXPECTATION: Infer expected goals (lambda_home, lambda_away) from visible odds and team strength tiers. Compute exact outcome distributions P(Home), P(Draw), P(Away), P(Over/Under 2.5), P(BTTS).
+  2. REGRESSION & PROBABILITY CALIBRATION: De-juice market bookmaker margin (overround) to extract true implied win/draw probabilities. Identify the statistical convergence between Poisson expected scorelines and market odds.
+  3. BALANCED 1X2 OUTCOMES (INCLUDING DRAWS): When lambda differences are tight or Poisson probability of 0-0/1-1/2-2 is dominant, pick "Draw" or "Draw (X)" decisively without bias.
+- Be decisive. Choose the single highest-mathematical-edge outcome per fixture.
+- "pick" is a short verdict only, e.g. "Arsenal to win", "Draw (X)", "Real Madrid to win", "Over 2.5 goals", "Under 2.5 goals", "Both teams to score", "Home or Draw (1X)", "Draw or Away (X2)".
 - "market" is the bet type, e.g. "1X2", "Draw", "Over/Under", "BTTS", "Double Chance".
-- "headline" is one confident sentence (max 18 words) summarising the strongest selection (e.g. "Arsenal to take all 3 points in a dominant home display" or "Tight tactical stalemate expected with high probability of a Draw").
-- Return NOTHING else: no reasoning, no explanations, no skipped-match lists, no backup picks.
-- confidence is 0-1. Only use fixtures actually visible. Never invent teams, odds or times.`;
+- "headline" is one confident sentence (max 18 words) summarising the strongest statistical selection (e.g. "Poisson model indicates strong home win advantage for Arsenal" or "Statistical stalemate expected with high probability of a Draw").
+- ZERO-LATENCY MINIFIED JSON: Return ONLY the exact minified JSON payload — no intermediate calculations, no markdown, no filler text, no skipped-match explanations.
+- confidence is a calibrated statistical probability (0.65 to 0.98). Only use fixtures actually visible. Never invent teams, odds or times.`;
 
 export type MatchPrediction = {
   fixture: string;
