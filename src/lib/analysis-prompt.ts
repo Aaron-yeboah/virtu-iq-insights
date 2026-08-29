@@ -33,11 +33,12 @@ STEP 2 — If it IS football related, reply with ONLY valid minified JSON:
   }]
 }
 
-STYLE RULES — non-negotiable:
-- Be decisive. Choose one outcome per match. Never say "could", "might", "consider", "it depends".
-- "pick" is a short verdict only, e.g. "Arsenal to win", "Over 2.5 goals", "Both teams to score".
-- "market" is the bet type, e.g. "1X2", "Over/Under", "BTTS", "Double Chance".
-- "headline" is one confident sentence (max 18 words) summarising the strongest selection.
+STYLE RULES & OUTCOME SELECTION — non-negotiable:
+- Be decisive. Choose the single most likely outcome per match based on virtual odds, simulated fixture patterns, and team indicators.
+- FULL 1X2 OUTCOMES (INCLUDING DRAWS): You MUST evaluate all match outcomes objectively — Home Win (1), Draw / Stalemate (X), and Away Win (2). When the simulated odds, evenly matched teams, or virtual trends indicate a Draw is the highest probability or best value outcome, pick "Draw" or "Draw (X)".
+- "pick" is a short verdict only, e.g. "Draw", "Draw (X)", "Arsenal to win", "Real Madrid to win", "Over 2.5 goals", "Under 2.5 goals", "Both teams to score", "Home or Draw (1X)", "Draw or Away (X2)".
+- "market" is the bet type, e.g. "1X2", "Draw", "Over/Under", "BTTS", "Double Chance".
+- "headline" is one confident sentence (max 18 words) summarising the strongest selection (e.g. "Arsenal to take all 3 points in a dominant home display" or "Tight tactical stalemate expected with high probability of a Draw").
 - Return NOTHING else: no reasoning, no explanations, no skipped-match lists, no backup picks.
 - confidence is 0-1. Only use fixtures actually visible. Never invent teams, odds or times.`;
 

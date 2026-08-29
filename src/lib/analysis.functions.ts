@@ -108,7 +108,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
     const { data: limitData } = await supabase.rpc("my_verdict_limit");
     const verdictLimit = Math.max(1, Number(limitData ?? 1));
     const promptText = buildAnalysisSystemPrompt(verdictLimit);
-    const userPrompt = `Read this instant/virtual football screenshot and pick the most likely outcome for your ${verdictLimit} highest-confidence fixture(s) only. Apply the relevance gate first.`;
+    const userPrompt = `Read this instant/virtual football screenshot and pick the most likely outcome (Home Win, Draw, Away Win, Over/Under, BTTS, Double Chance) for your ${verdictLimit} highest-confidence fixture(s) only. Apply the relevance gate first.`;
 
     let raw = "";
 
