@@ -33,21 +33,25 @@ STEP 2 — If it IS football related, reply with ONLY valid minified JSON:
   }]
 }
 
-STYLE RULES & 95%+ CONFIRMATION METHODOLOGY — non-negotiable:
-- MATHEMATICAL RISK OPTIMIZATION:
-  1. HIGH-PROBABILITY SAFE MARKETS: Prioritize Double Chance ("1X" / "X2" / "12"), Safe Goal Bands ("Over 1.5 goals", "Under 3.5 goals"), and Direct Draws whenever straight 1X2 outcomes have volatility. Double Chance & Over 1.5 have an 88-96% statistical hit rate in instant virtual simulations.
-  2. BIVARIATE POISSON EXPECTANCY: Derive expected goals (lambda_home, lambda_away) from visible odds and team strength tiers. Calculate exact outcome probabilities: P(Home), P(Draw), P(Away), P(Over 1.5), P(Over 2.5), P(BTTS).
-  3. GOLDEN ODDS BRACKET FILTERING:
-     - Heavy Favorite (Odds <= 1.48): Pick Win or Home/Draw (1X) or Over 1.5 goals.
-     - Balanced / Mid-Range (Odds 2.60 - 3.40): Pick Draw (X), Double Chance (1X/X2), or Under 3.5 goals.
-     - High-Scoring Fixtures: Pick Over 1.5 goals or Both teams to score.
-  4. STRICT QUALITY CURATION: From all visible fixtures on the screenshot, select ONLY the top ${verdictLimit} fixtures with the highest mathematical confirmation index.
-- Be decisive. Choose the single highest-probability outcome per match.
-- "pick" is a short verdict only, e.g. "Arsenal or Draw (1X)", "Over 1.5 goals", "Draw (X)", "Real Madrid to win", "Over 2.5 goals", "Under 3.5 goals", "Both teams to score", "Chelsea or Draw (1X)", "Draw or Away (X2)".
-- "market" is the bet type, e.g. "Double Chance", "Over/Under", "1X2", "Draw", "BTTS".
-- "headline" is one confident sentence (max 18 words) summarising the highest-probability selection (e.g. "High-probability Double Chance lock on Arsenal to secure result" or "Poisson goal model confirms Over 1.5 goals lock").
-- ZERO-LATENCY MINIFIED JSON: Return ONLY the exact minified JSON payload — no intermediate calculations, no markdown, no filler text, no skipped-match explanations.
-- confidence is a calibrated statistical probability (0.75 to 0.98). Only use fixtures actually visible. Never invent teams, odds or times.`;
+STYLE RULES & STRICT 1X2 OUTCOME SELECTION (HOME, AWAY, OR DRAW ONLY) — non-negotiable:
+- STRICT 1X2 MARKET ONLY: Every verdict MUST be strictly one of these 3 outcomes and NOTHING else:
+  1. Home Win (1): "<Home Team> to win" (e.g. "Arsenal to win", "Real Madrid to win")
+  2. Draw (X): "Draw"
+  3. Away Win (2): "<Away Team> to win" (e.g. "Chelsea to win", "Barcelona to win")
+  NO Over/Under, NO BTTS, NO Double Chance, NO other markets. Every pick must be strictly Home Win, Draw, or Away Win.
+- "market" is ALWAYS "1X2".
+- STATISTICAL METHODOLOGY FOR 1X2 PRECISION:
+  1. BIVARIATE POISSON EXPECTATION: Derive expected goals (lambda_home, lambda_away) from visible odds and team strength tiers. Calculate exact probabilities P(Home Win), P(Draw), and P(Away Win).
+  2. REGRESSION & OVERROUND DE-JUICING: De-juice the 1X2 market odds margin (p_i = (1/O_i) / sum(1/O_k)) to evaluate true implied probabilities. Compare with Poisson scoreline distributions.
+  3. BALANCED 1X2 EVALUATION:
+     - If Home probability dominates -> Pick "<Home Team> to win".
+     - If Away probability dominates -> Pick "<Away Team> to win".
+     - If teams are closely matched or diagonal scorelines (0-0, 1-1, 2-2) have the highest density -> Pick "Draw".
+  4. STRICT QUALITY CURATION: From all visible fixtures on the screenshot, select ONLY the top ${verdictLimit} fixtures with the highest mathematical confirmation for 1X2.
+- Be decisive. Choose the single highest-probability outcome per match (Home Win, Away Win, or Draw).
+- "headline" is one confident sentence (max 18 words) summarising the strongest 1X2 selection (e.g. "Arsenal to claim maximum points at home" or "Stalemate expected with high probability of a Draw").
+- ZERO-LATENCY MINIFIED JSON: Return ONLY the exact minified JSON payload — no intermediate calculations, no markdown, no filler text.
+- confidence is a calibrated statistical probability (0.70 to 0.98). Only use fixtures actually visible. Never invent teams, odds or times.`;
 
 export type MatchPrediction = {
   fixture: string;
