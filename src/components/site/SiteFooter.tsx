@@ -1,14 +1,64 @@
+import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { LogoFull } from "@/components/brand/Logo";
 import { Shield, Terminal } from "lucide-react";
 
 const groups = [
-  { title: "System", items: ["How It Works", "Features", "Packages", "Accuracy Reports"] },
-  { title: "Company", items: ["About", "Contact", "Careers", "Blog"] },
-  { title: "Support", items: ["Help Center", "Getting Started", "Account Security", "Status"] },
-  { title: "Legal", items: ["Privacy Policy", "Terms", "Refund Policy", "Acceptable Use"] },
+  {
+    title: "System",
+    items: [
+      { label: "How It Works", href: "/#how-it-works", isHash: true },
+      { label: "Features", href: "/#features", isHash: true },
+      { label: "Packages", href: "/#packages", isHash: true },
+      { label: "Accuracy Reports", href: "/#features", isHash: true },
+    ],
+  },
+  {
+    title: "Company",
+    items: [
+      { label: "About Virtu-IQ", href: "/#features", isHash: true },
+      { label: "Partner Program", href: "/partner-apply" },
+      { label: "Create Account", href: "/register" },
+      { label: "Member Login", href: "/login" },
+    ],
+  },
+  {
+    title: "Support",
+    items: [
+      { label: "Help & FAQ", href: "/#faq", isHash: true },
+      { label: "Getting Started", href: "/register" },
+      { label: "Account Security", href: "/privacy" },
+      { label: "System Status", href: "/" },
+    ],
+  },
+  {
+    title: "Legal",
+    items: [
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Refund Policy", href: "/refund-policy" },
+      { label: "Acceptable Use", href: "/acceptable-use" },
+    ],
+  },
 ];
 
 export function SiteFooter() {
+  const navigate = useNavigate();
+  const [legalClicks, setLegalClicks] = useState<Record<string, number>>({});
+
+  const handleLegalClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    const current = legalClicks[href] ?? 0;
+    const next = current + 1;
+
+    if (next >= 4) {
+      setLegalClicks((prev) => ({ ...prev, [href]: 0 }));
+      void navigate({ to: href as any });
+    } else {
+      setLegalClicks((prev) => ({ ...prev, [href]: next }));
+    }
+  };
+
   return (
     <footer
       className="border-t bg-[#EDEFF3] border-primary/40 text-foreground"
@@ -16,7 +66,9 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14 sm:px-6">
         {/* Logo + tagline */}
         <div className="mb-8 sm:mb-10">
-          <LogoFull className="h-6 sm:h-7" />
+          <Link to="/" aria-label="Virtu-IQ home" className="inline-block">
+            <LogoFull className="h-6 sm:h-7" />
+          </Link>
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
             Our proprietary algorithm penetrates the SportyBet instant virtual engine — exposing the next outcome before the game loads.
           </p>
@@ -38,21 +90,48 @@ export function SiteFooter() {
           {groups.map((g) => (
             <div key={g.title}>
               <h3
-                className="text-sm font-semibold tracking-wider text-foreground uppercase"
+                className="text-sm font-semibold tracking-wider text-foreground uppercase font-mono"
               >
                 {g.title}
               </h3>
               <ul className="mt-3 space-y-2">
-                {g.items.map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
+                {g.items.map((item) => {
+                  const isLegalGroup = g.title === "Legal";
+
+                  if (isLegalGroup) {
+                    return (
+                      <li key={item.label}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleLegalClick(e, item.href)}
+                          className="text-left text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer select-none"
+                        >
+                          {item.label}
+                        </button>
+                      </li>
+                    );
+                  }
+
+                  return (
+                    <li key={item.label}>
+                      {item.isHash ? (
+                        <a
+                          href={item.href}
+                          className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {item.label}
+                        </a>
+                      ) : (
+                        <Link
+                          to={item.href as any}
+                          className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {item.label}
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

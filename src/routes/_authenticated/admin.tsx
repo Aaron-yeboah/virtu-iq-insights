@@ -45,6 +45,7 @@ import {
   Mail,
   Percent,
   Phone,
+  RotateCcw,
   Search,
   Sliders,
   Trash2,
@@ -1826,15 +1827,37 @@ function PartnerPayoutHistoryDialog({
   partnerName: string;
   onClose: () => void;
 }) {
+  const queryClient = useQueryClient();
+  const [confirmRevertId, setConfirmRevertId] = useState<string | null>(null);
   const { data: payouts, isLoading } = useQuery(adminPartnerPayoutsQuery(partnerId));
+
+  const revertPayout = useMutation({
+    mutationFn: async (payoutId: string) => {
+      const { error } = await supabase.rpc("admin_revert_partner_payout", {
+        _payout_id: payoutId,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] }),
+        queryClient.invalidateQueries({ queryKey: ["partner-payouts"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-partners"] }),
+        queryClient.invalidateQueries(),
+      ]);
+      toast.success("Payout reverted and partner unpaid balance restored");
+      setConfirmRevertId(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Payout History — {partnerName}</DialogTitle>
           <DialogDescription>
-            Record of cleared payouts and disbursements for this partner.
+            Record of cleared payouts and disbursements for this partner. Revert any mistakenly recorded payout to restore the unpaid balance.
           </DialogDescription>
         </DialogHeader>
 
@@ -1844,15 +1867,50 @@ function PartnerPayoutHistoryDialog({
             <p className="p-4 text-sm text-muted-foreground">No previous payouts recorded for this partner.</p>
           )}
           {(payouts ?? []).map((p: PartnerPayoutRow) => (
-            <div key={p.id} className="flex items-center justify-between p-3 text-sm">
-              <div>
+            <div key={p.id} className="flex items-center justify-between p-3 text-sm gap-2">
+              <div className="min-w-0 flex-1">
                 <p className="font-semibold text-foreground">{ghs(p.amount_ghs)}</p>
                 <p className="text-xs text-muted-foreground">{new Date(p.cleared_at).toLocaleString()}</p>
                 {p.note && <p className="text-xs text-muted-foreground italic mt-0.5">Note: {p.note}</p>}
               </div>
-              <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-600/30">
-                Disbursed
-              </Badge>
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-600/30">
+                  Disbursed
+                </Badge>
+                {confirmRevertId === p.id ? (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-7 px-2 text-xs font-semibold"
+                      disabled={revertPayout.isPending}
+                      onClick={() => revertPayout.mutate(p.id)}
+                    >
+                      {revertPayout.isPending ? "Reverting…" : "Confirm Revert"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      disabled={revertPayout.isPending}
+                      onClick={() => setConfirmRevertId(null)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 gap-1 font-medium"
+                    onClick={() => setConfirmRevertId(p.id)}
+                    title="Revert mistakenly cleared payout"
+                  >
+                    <RotateCcw className="size-3" />
+                    Revert
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>
