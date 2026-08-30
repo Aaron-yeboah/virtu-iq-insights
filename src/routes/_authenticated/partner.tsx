@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, Handshake, Link2, TrendingUp, Users, Wallet } from "lucide-react";
+import { Banknote, Check, Copy, Handshake, Link2, TrendingUp, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/app/AppShell";
 import { LogoSymbol, LogoWatermark } from "@/components/brand/Logo";
-import { commissionsQuery, ghs, partnerStatsQuery, profileQuery } from "@/lib/data";
+import { commissionsQuery, ghs, partnerPayoutsQuery, partnerStatsQuery, profileQuery } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/partner")({
   head: () => ({
@@ -31,6 +31,7 @@ function PartnerPage() {
   const { data: profile } = useQuery(profileQuery(user.id));
   const { data: stats } = useQuery({ ...partnerStatsQuery(user.id), staleTime: 30_000, refetchOnWindowFocus: true });
   const { data: commissions } = useQuery(commissionsQuery(user.id));
+  const { data: payouts } = useQuery(partnerPayoutsQuery(user.id));
 
   const referralLink =
     typeof window !== "undefined" && profile?.referral_code
@@ -162,6 +163,41 @@ function PartnerPage() {
                 </div>
                 <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
                   Earned
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Payout History */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-foreground">Payout history</h2>
+        <div className="relative mt-3 overflow-hidden rounded-2xl border border-border bg-card">
+          <LogoSymbol
+            className="pointer-events-none absolute -right-6 -bottom-8 h-40 w-auto opacity-[0.05]"
+            aria-hidden
+          />
+          <div className="relative divide-y divide-border">
+            {(payouts ?? []).length === 0 && (
+              <p className="p-5 text-sm text-muted-foreground">
+                No payouts yet. Your cleared balances from the admin will appear here.
+              </p>
+            )}
+            {(payouts ?? []).map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{ghs(p.amount_ghs)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(p.cleared_at).toLocaleString()}
+                  </p>
+                  {p.note && (
+                    <p className="mt-0.5 text-xs text-muted-foreground/80 italic">"{p.note}"</p>
+                  )}
+                </div>
+                <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-600">
+                  <Banknote className="size-3.5" />
+                  Paid out
                 </span>
               </div>
             ))}

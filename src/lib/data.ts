@@ -378,6 +378,21 @@ export type PartnerPayoutRow = {
   note: string | null;
 };
 
+// Partner-facing: fetch the calling user's own cleared payouts (RLS: partner_id = auth.uid())
+export const partnerPayoutsQuery = (userId: string) =>
+  queryOptions({
+    queryKey: ["partner-payouts", userId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("partner_payouts")
+        .select("id, amount_ghs, cleared_at, note")
+        .eq("partner_id", userId)
+        .order("cleared_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Pick<PartnerPayoutRow, "id" | "amount_ghs" | "cleared_at" | "note">[];
+    },
+  });
+
 export const adminPartnerPayoutsQuery = (partnerId?: string) =>
   queryOptions({
     queryKey: ["admin-partner-payouts", partnerId ?? "all"],

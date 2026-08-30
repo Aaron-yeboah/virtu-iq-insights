@@ -1635,15 +1635,6 @@ function PartnerPayouts() {
                       <span>{p.referral_count} referred</span>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="size-8 shrink-0 p-0 text-muted-foreground hover:text-foreground"
-                    title="View Payout History"
-                    onClick={() => setSelectedPartnerPayouts({ id: p.id, name: displayUserName(p.full_name, p.email, undefined, "Partner") })}
-                  >
-                    <Clock className="size-4" />
-                  </Button>
                 </div>
 
                 {/* All-time Lifetime Stats */}
@@ -1706,8 +1697,17 @@ function PartnerPayouts() {
                 >
                   {unpaidComm > 0 ? `Mark ${ghs(unpaidComm)} as paid` : "Clear current period"}
                 </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="mt-2 w-full font-medium text-muted-foreground hover:text-foreground gap-1.5"
+                  onClick={() => setSelectedPartnerPayouts({ id: p.id, name: displayUserName(p.full_name, p.email, undefined, "Partner") })}
+                >
+                  <Clock className="size-3.5" />
+                  View payout history
+                </Button>
                 {p.payout_cleared_at && (
-                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                  <p className="mt-1 text-center text-xs text-muted-foreground">
                     Last payout: {new Date(p.payout_cleared_at).toLocaleDateString()}
                   </p>
                 )}
