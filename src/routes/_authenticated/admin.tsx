@@ -41,6 +41,7 @@ import {
   Clock,
   Coins,
   Copy,
+  Lock,
   Mail,
   Percent,
   Phone,
@@ -63,6 +64,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   adminCreditOverviewQuery,
+  adminDailyCommissionSnapshotsQuery,
   adminMemberListQuery,
   adminPackagesQuery,
   adminPartnerApplicationsQuery,
@@ -77,6 +79,7 @@ import {
   rolesQuery,
   type AdminApplicationRow,
   type AdminPartnerRow,
+  type DailyCommissionSnapshot,
   type PackageRow,
   type PartnerPayoutRow,
 } from "@/lib/data";
@@ -113,6 +116,7 @@ function useAdminRealtime(enabled: boolean) {
           void queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
           void queryClient.invalidateQueries({ queryKey: ["admin-members"] });
           void queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] });
         }
       )
       .on(
@@ -124,6 +128,15 @@ function useAdminRealtime(enabled: boolean) {
           void queryClient.invalidateQueries({ queryKey: ["admin-members"] });
           void queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] });
           void queryClient.invalidateQueries({ queryKey: ["credit-transactions"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payment_settings" },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["payment-settings"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] });
         }
       )
       .on(
@@ -188,6 +201,21 @@ function AdminPage() {
   });
   const { data: logs } = useQuery({ ...auditLogsQuery(), enabled: isAdmin, staleTime: 30_000 });
   const { data: settings } = useQuery({ ...paymentSettingsQuery(), enabled: isAdmin, staleTime: 60_000 });
+  const { data: snapshots } = useQuery({
+    ...adminDailyCommissionSnapshotsQuery(),
+    enabled: isAdmin,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+
+  const snapshotMap = useMemo(() => {
+    const map = new Map<string, DailyCommissionSnapshot>();
+    for (const s of snapshots ?? []) {
+      const dateKey = typeof s.date === "string" ? s.date.slice(0, 10) : "";
+      if (dateKey) map.set(dateKey, s);
+    }
+    return map;
+  }, [snapshots]);
 
   const reviewPayment = useMutation({
     mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
@@ -204,6 +232,7 @@ function AdminPage() {
         queryClient.invalidateQueries({ queryKey: ["admin-stats"] }),
         queryClient.invalidateQueries({ queryKey: ["admin-members"] }),
         queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] }),
       ]);
       toast.success("Payment reviewed");
     },
@@ -222,15 +251,24 @@ function AdminPage() {
     ? `${activeDate.getFullYear()}-${String(activeDate.getMonth() + 1).padStart(2, "0")}-${String(activeDate.getDate()).padStart(2, "0")}`
     : todayStr;
   const isHistoryMode = selectedHistoryDate !== null;
+  const isPastLockedDate = isHistoryMode && activeDateStr < todayStr;
 
   const activeRevenue = (payments ?? [])
     .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === activeDateStr)
     .reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
 
-  const devRate = Number(settings?.developer_commission_rate ?? 15);
+  const selectedSnapshot = snapshotMap.get(activeDateStr);
+
+  // If a past date is selected and a locked snapshot exists, use the locked rates for that past day.
+  // This guarantees future commission changes in settings never alter historical records.
+  const devRate = isPastLockedDate && selectedSnapshot
+    ? Number(selectedSnapshot.developer_commission_rate)
+    : Number(settings?.developer_commission_rate ?? 15);
   const devCommission = (activeRevenue * devRate) / 100;
 
-  const adminRate = Number(settings?.admin_commission_rate ?? 15);
+  const adminRate = isPastLockedDate && selectedSnapshot
+    ? Number(selectedSnapshot.admin_commission_rate)
+    : Number(settings?.admin_commission_rate ?? 15);
   const adminCommission = (activeRevenue * adminRate) / 100;
 
   // Days that have approved revenue (for calendar indicators)
@@ -291,12 +329,37 @@ function AdminPage() {
                   setCalendarOpen(false);
                 }}
                 revenueDays={revenueDays}
+                snapshotMap={snapshotMap}
               />
             </div>
           }
         />
-        <Stat label={isHistoryMode ? `Dev (${devRate}%) · ${activeDateLabel}` : `Dev Commission (${devRate}%)`} value={ghs(devCommission)} highlight />
-        <Stat label={isHistoryMode ? `Admin (${adminRate}%) · ${activeDateLabel}` : `Admin Commission (${adminRate}%)`} value={ghs(adminCommission)} highlight />
+        <Stat
+          label={isHistoryMode ? `Dev (${devRate}%) · ${activeDateLabel}` : `Dev Commission (${devRate}%)`}
+          value={ghs(devCommission)}
+          highlight
+          action={
+            isPastLockedDate ? (
+              <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold text-white/90 backdrop-blur-sm" title="Locked rate for this historical day">
+                <Lock className="size-2.5" />
+                Locked
+              </span>
+            ) : undefined
+          }
+        />
+        <Stat
+          label={isHistoryMode ? `Admin (${adminRate}%) · ${activeDateLabel}` : `Admin Commission (${adminRate}%)`}
+          value={ghs(adminCommission)}
+          highlight
+          action={
+            isPastLockedDate ? (
+              <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold text-white/90 backdrop-blur-sm" title="Locked rate for this historical day">
+                <Lock className="size-2.5" />
+                Locked
+              </span>
+            ) : undefined
+          }
+        />
         <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Members" value={String(stats?.members ?? 0)} />
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
@@ -1340,12 +1403,14 @@ function RevenueHistoryCalendar({
   selected,
   onSelect,
   revenueDays,
+  snapshotMap,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selected: Date | null;
   onSelect: (day: Date | undefined) => void;
   revenueDays: Date[];
+  snapshotMap?: Map<string, DailyCommissionSnapshot>;
 }) {
   const [page, setPage] = useState(0); // 0 = most recent 10 days, 1 = previous 10, etc.
   const stripRef = useRef<HTMLDivElement>(null);
@@ -1481,6 +1546,17 @@ function RevenueHistoryCalendar({
             const isToday = ds === todayStr;
             const isActiveDay = isSelected || (!selectedStr && isToday);
             const hasRevenue = revenueDaySet.has(ds);
+            const snap = snapshotMap?.get(ds);
+            const isLocked = ds < todayStr;
+
+            const tooltipTitle = snap
+              ? `${hasRevenue ? `Revenue: ${ghs(snap.revenue_ghs || 0)} · ` : ""}${isLocked ? "Locked" : "Live"}: Dev ${snap.developer_commission_rate}%, Admin ${snap.admin_commission_rate}%`
+              : hasRevenue
+                ? "Revenue recorded on this day"
+                : isToday
+                  ? "Today (Live Commission Rates)"
+                  : "No revenue recorded";
+
             return (
               <button
                 key={ds}
@@ -1489,6 +1565,7 @@ function RevenueHistoryCalendar({
                 onClick={() => {
                   onSelect(day);
                 }}
+                title={tooltipTitle}
                 className={cn(
                   "relative flex flex-col items-center justify-center rounded-xl px-2 py-2 min-w-[2.75rem] sm:min-w-[3rem] shrink-0 transition-all duration-200 group/day cursor-pointer touch-manipulation select-none",
                   isSelected
@@ -1534,6 +1611,18 @@ function RevenueHistoryCalendar({
                 {/* Today bottom indicator pill */}
                 {isToday && !isSelected && (
                   <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-red-600" />
+                )}
+                {/* Locked indicator icon for past dates with snapshot */}
+                {isLocked && snap && (
+                  <span
+                    className={cn(
+                      "absolute top-1 left-1 opacity-60 group-hover/day:opacity-100 transition-opacity",
+                      isSelected ? "text-white" : "text-slate-400",
+                    )}
+                    title={`Locked rates: Dev ${snap.developer_commission_rate}%, Admin ${snap.admin_commission_rate}%`}
+                  >
+                    <Lock className="size-2" />
+                  </span>
                 )}
               </button>
             );
@@ -2430,7 +2519,10 @@ function AdminSettingsManager() {
     },
     onSuccess: async () => {
       setDraft(null);
-      await queryClient.invalidateQueries({ queryKey: ["payment-settings"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["payment-settings"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] }),
+      ]);
       toast.success("Platform settings updated successfully");
     },
     onError: (e: Error) => toast.error(e.message),

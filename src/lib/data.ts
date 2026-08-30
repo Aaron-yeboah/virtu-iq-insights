@@ -207,6 +207,30 @@ export const adminStatsQuery = () =>
     },
   });
 
+export type DailyCommissionSnapshot = {
+  date: string;
+  developer_commission_rate: number;
+  admin_commission_rate: number;
+  default_partner_commission_rate: number;
+  revenue_ghs: number;
+  dev_commission_ghs: number;
+  admin_commission_ghs: number;
+  is_locked: boolean;
+};
+
+export const adminDailyCommissionSnapshotsQuery = () =>
+  queryOptions({
+    queryKey: ["admin-daily-commission-snapshots"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_daily_commission_snapshots" as never);
+      if (error) {
+        // Fallback gracefully if RPC is not yet pushed to remote
+        return [] as DailyCommissionSnapshot[];
+      }
+      return (data ?? []) as DailyCommissionSnapshot[];
+    },
+  });
+
 export const adminPaymentsQuery = () =>
   queryOptions({
     queryKey: ["admin-payments"],
