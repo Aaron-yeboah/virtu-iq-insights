@@ -327,6 +327,7 @@ export const adminCreditOverviewQuery = () =>
         credits_sold: number;
         credits_spent: number;
         revenue_ghs: number;
+        credit_revenue_ghs: number;
         active_packages: number;
       };
     },
