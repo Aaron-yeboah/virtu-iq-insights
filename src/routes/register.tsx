@@ -228,7 +228,7 @@ function RegisterPage() {
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="name">Full name</Label>
-            <Input id="name" value={fullName} maxLength={80} onChange={(e) => setFullName(e.target.value)} placeholder="Ama Mensah" required />
+            <Input id="name" value={fullName} maxLength={80} onChange={(e) => setFullName(e.target.value)} required />
           </div>
 
           <PhoneInput

@@ -193,7 +193,7 @@ function LoginPage() {
               autoComplete="tel"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="024 123 4567"
+              placeholder="e.g. 024 123 4567"
               required
             />
           </div>
