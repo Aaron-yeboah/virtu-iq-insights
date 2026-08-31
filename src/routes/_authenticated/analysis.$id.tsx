@@ -26,6 +26,7 @@ function AnalysisDetailPage() {
   const { id } = Route.useParams();
   const { data: analysis, isLoading } = useQuery(analysisQuery(id));
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (!analysis?.image_path) return;
@@ -33,8 +34,16 @@ function AnalysisDetailPage() {
     void supabase.storage
       .from("screenshots")
       .createSignedUrl(analysis.image_path, 600)
-      .then(({ data }) => {
-        if (active) setImageUrl(data?.signedUrl ?? null);
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error || !data?.signedUrl) {
+          setImageError(true);
+        } else {
+          setImageUrl(data.signedUrl);
+        }
+      })
+      .catch(() => {
+        if (active) setImageError(true);
       });
     return () => {
       active = false;
@@ -153,8 +162,22 @@ function AnalysisDetailPage() {
           <h2 className="mb-3 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
             Source screenshot
           </h2>
-          {imageUrl ? (
-            <img src={imageUrl} alt={analysis.title} className="w-full rounded-lg border border-border" />
+          {imageUrl && !imageError ? (
+            <img
+              src={imageUrl}
+              alt={analysis.title}
+              className="w-full rounded-lg border border-border"
+              onError={() => setImageError(true)}
+            />
+          ) : !analysis.image_path || imageError ? (
+            <div className="rounded-lg border border-dashed border-border bg-secondary/30 p-4 text-center">
+              <p className="text-xs font-medium text-muted-foreground">
+                Screenshot image was automatically purged after 7 days to optimize storage space.
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground/80">
+                Your full prediction verdict remains permanently preserved in your history above.
+              </p>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">Loading image…</p>
           )}
