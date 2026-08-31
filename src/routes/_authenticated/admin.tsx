@@ -1645,7 +1645,7 @@ function PartnerPayouts() {
     mutationFn: async ({ id, note }: { id: string; note?: string }) => {
       const { error } = await supabase.rpc("admin_clear_partner_payout", {
         _user_id: id,
-        _note: note || null,
+        ...(note ? { _note: note } : {}),
       });
       if (error) throw new Error(error.message);
     },

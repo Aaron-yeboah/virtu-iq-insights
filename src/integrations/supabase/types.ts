@@ -426,8 +426,25 @@ export type Database = {
         Returns: number
       }
       admin_clear_partner_payout: {
-        Args: { _user_id: string }
+        Args: { _user_id: string; _note?: string | null }
         Returns: string
+      }
+      admin_revert_partner_payout: {
+        Args: { _payout_id: string }
+        Returns: string | null
+      }
+      admin_daily_commission_snapshots: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          date: string
+          developer_commission_rate: number
+          admin_commission_rate: number
+          default_partner_commission_rate: number
+          revenue_ghs: number
+          dev_commission_ghs: number
+          admin_commission_ghs: number
+          is_locked: boolean
+        }[]
       }
       admin_credit_overview: { Args: never; Returns: Json }
       admin_delete_package: { Args: { _id: string }; Returns: boolean }
