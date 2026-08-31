@@ -339,27 +339,11 @@ function AdminPage() {
           label={isHistoryMode ? `Dev (${devRate}%) · ${activeDateLabel}` : `Dev Commission (${devRate}%)`}
           value={ghs(devCommission)}
           highlight
-          action={
-            isPastLockedDate ? (
-              <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold text-white/90 backdrop-blur-sm" title="Locked rate for this historical day">
-                <Lock className="size-2.5" />
-                Locked
-              </span>
-            ) : undefined
-          }
         />
         <Stat
           label={isHistoryMode ? `Admin (${adminRate}%) · ${activeDateLabel}` : `Admin Commission (${adminRate}%)`}
           value={ghs(adminCommission)}
           highlight
-          action={
-            isPastLockedDate ? (
-              <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold text-white/90 backdrop-blur-sm" title="Locked rate for this historical day">
-                <Lock className="size-2.5" />
-                Locked
-              </span>
-            ) : undefined
-          }
         />
         <Stat label="Partners" value={String(stats?.partners ?? 0)} />
         <Stat label="Members" value={String(stats?.members ?? 0)} />
@@ -1548,10 +1532,8 @@ function RevenueHistoryCalendar({
             const isActiveDay = isSelected || (!selectedStr && isToday);
             const hasRevenue = revenueDaySet.has(ds);
             const snap = snapshotMap?.get(ds);
-            const isLocked = ds < todayStr;
-
             const tooltipTitle = snap
-              ? `${hasRevenue ? `Revenue: ${ghs(snap.revenue_ghs || 0)} · ` : ""}${isLocked ? "Locked" : "Live"}: Dev ${snap.developer_commission_rate}%, Admin ${snap.admin_commission_rate}%`
+              ? `${hasRevenue ? `Revenue: ${ghs(snap.revenue_ghs || 0)} · ` : ""}Dev ${snap.developer_commission_rate}%, Admin ${snap.admin_commission_rate}%`
               : hasRevenue
                 ? "Revenue recorded on this day"
                 : isToday
@@ -1612,18 +1594,6 @@ function RevenueHistoryCalendar({
                 {/* Today bottom indicator pill */}
                 {isToday && !isSelected && (
                   <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-red-600" />
-                )}
-                {/* Locked indicator icon for past dates with snapshot */}
-                {isLocked && snap && (
-                  <span
-                    className={cn(
-                      "absolute top-1 left-1 opacity-60 group-hover/day:opacity-100 transition-opacity",
-                      isSelected ? "text-white" : "text-slate-400",
-                    )}
-                    title={`Locked rates: Dev ${snap.developer_commission_rate}%, Admin ${snap.admin_commission_rate}%`}
-                  >
-                    <Lock className="size-2" />
-                  </span>
                 )}
               </button>
             );
