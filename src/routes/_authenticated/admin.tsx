@@ -2543,7 +2543,7 @@ function CreditAdjusterInner({
 
           <form onSubmit={handleVerifyPassword} className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor={`pass-${userId}`}>Password (default: 1234)</Label>
+              <Label htmlFor={`pass-${userId}`}>Password</Label>
               <Input
                 id={`pass-${userId}`}
                 type="password"
