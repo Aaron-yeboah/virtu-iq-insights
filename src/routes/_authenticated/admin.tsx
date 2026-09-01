@@ -2314,6 +2314,8 @@ function PartnerApplications() {
   );
 }
 
+const ADMIN_EDIT_PASSWORD = "1234";
+
 function CreditAdjusterInner({
   userId,
   label,
@@ -2330,7 +2332,11 @@ function CreditAdjusterInner({
   trigger?: React.ReactNode;
 }) {
   const queryClient = useQueryClient();
+  const [authOpen, setAuthOpen] = useState(false);
   const [open, setOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
+
   const [amount, setAmount] = useState("5");
   const [verdicts, setVerdicts] = useState(String(currentVerdicts || 2));
   const [reason, setReason] = useState("");
@@ -2361,6 +2367,26 @@ function CreditAdjusterInner({
       setVerdicts(String(currentVerdicts || 2));
     }
   }, [open, currentVerdicts]);
+
+  const handleVerifyPassword = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (passwordInput.trim() === ADMIN_EDIT_PASSWORD) {
+      setAuthOpen(false);
+      setPasswordInput("");
+      setPasswordError(false);
+      setOpen(true);
+      toast.success("Authorization granted");
+    } else {
+      setPasswordError(true);
+      toast.error("Incorrect authorization password");
+    }
+  };
+
+  const handleOpenAuth = () => {
+    setPasswordInput("");
+    setPasswordError(false);
+    setAuthOpen(true);
+  };
 
   const adjustCredits = useMutation({
     mutationFn: async (sign: 1 | -1) => {
@@ -2502,17 +2528,65 @@ function CreditAdjusterInner({
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {trigger ? (
-        <div onClick={() => setOpen(true)} className="inline-block cursor-pointer">
-          {trigger}
-        </div>
-      ) : (
-        <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="gap-1.5">
-          <Pencil className="size-3.5" /> Edit Credits / Spent
-        </Button>
-      )}
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+    <>
+      {/* Authorization Password Dialog */}
+      <Dialog open={authOpen} onOpenChange={setAuthOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="size-4 text-amber-500" /> Admin Authorization
+            </DialogTitle>
+            <DialogDescription>
+              Enter the admin password to edit credits or total spent for <strong>{label}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleVerifyPassword} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor={`pass-${userId}`}>Password (default: 1234)</Label>
+              <Input
+                id={`pass-${userId}`}
+                type="password"
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  if (passwordError) setPasswordError(false);
+                }}
+                placeholder="Enter password..."
+                autoFocus
+                className={cn(passwordError && "border-destructive focus-visible:ring-destructive")}
+              />
+              {passwordError && (
+                <p className="text-xs font-semibold text-destructive">
+                  Incorrect password. Access denied.
+                </p>
+              )}
+            </div>
+
+            <DialogFooter className="gap-2 sm:justify-end">
+              <Button type="button" variant="outline" size="sm" onClick={() => setAuthOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" size="sm">
+                Unlock Access
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Main Edit Dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        {trigger ? (
+          <div onClick={handleOpenAuth} className="inline-block cursor-pointer">
+            {trigger}
+          </div>
+        ) : (
+          <Button size="sm" variant="outline" onClick={handleOpenAuth} className="gap-1.5">
+            <Pencil className="size-3.5" /> Edit Credits / Spent
+          </Button>
+        )}
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="size-4 text-primary" /> Edit Credits &amp; Spent Amount
@@ -2749,6 +2823,7 @@ function CreditAdjusterInner({
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 
