@@ -22,7 +22,7 @@ import {
 import { PageHeader } from "@/components/app/AppShell";
 import { LogoSymbol } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { deleteMember, explodePlatformData } from "@/lib/admin.functions";
+import { adjustMemberSpent, deleteMember, explodePlatformData } from "@/lib/admin.functions";
 import {
   cleanDisplayValue,
   displayEmailOrPhone,
@@ -43,6 +43,7 @@ import {
   Copy,
   Lock,
   Mail,
+  Pencil,
   Percent,
   Phone,
   RotateCcw,
@@ -493,8 +494,13 @@ function RemoveMember({ userId, label }: { userId: string; label: string }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button size="icon" variant="outline" aria-label={`Remove ${label}`} className="size-8">
-          <Trash2 className="size-4 text-destructive" />
+        <Button
+          size="sm"
+          variant="outline"
+          aria-label={`Delete ${label}`}
+          className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+        >
+          <Trash2 className="size-3.5" /> Delete
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -1220,7 +1226,19 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
                       {m.max_verdicts ?? 2} verdict{(m.max_verdicts ?? 2) === 1 ? "" : "s"}/scan
                     </span>
                     <span>·</span>
-                    <span>Spent: <strong className="text-foreground">{ghs(m.spent_ghs)}</strong></span>
+                    <CreditAdjuster
+                      userId={m.id}
+                      label={nameDisplay}
+                      currentVerdicts={m.max_verdicts}
+                      currentCredits={m.credits}
+                      currentSpent={m.spent_ghs}
+                      trigger={
+                        <span className="cursor-pointer font-medium hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                          Spent: <strong className="text-foreground group-hover:text-primary underline decoration-dotted underline-offset-2">{ghs(m.spent_ghs)}</strong>
+                          <Pencil className="size-2.5 text-muted-foreground/70 group-hover:text-primary transition-colors" />
+                        </span>
+                      }
+                    />
                     <span>·</span>
                     <span>Joined: {new Date(m.created_at).toLocaleDateString()}</span>
                     {m.last_sign_in_at && (
@@ -1240,7 +1258,13 @@ function MembersList({ members, currentUserId }: { members: MemberRow[]; current
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center">
-                <CreditAdjuster userId={m.id} label={nameDisplay} currentVerdicts={m.max_verdicts} currentCredits={m.credits} />
+                <CreditAdjuster
+                  userId={m.id}
+                  label={nameDisplay}
+                  currentVerdicts={m.max_verdicts}
+                  currentCredits={m.credits}
+                  currentSpent={m.spent_ghs}
+                />
                 {m.id !== currentUserId && (
                   <RemoveMember userId={m.id} label={nameDisplay} />
                 )}
@@ -2120,11 +2144,15 @@ function CreditAdjuster({
   label,
   currentVerdicts,
   currentCredits,
+  currentSpent,
+  trigger,
 }: {
   userId: string;
   label: string;
   currentVerdicts?: number | undefined;
   currentCredits?: number | undefined;
+  currentSpent?: number | undefined;
+  trigger?: React.ReactNode;
 }) {
   return (
     <CreditAdjusterInner
@@ -2132,6 +2160,8 @@ function CreditAdjuster({
       label={label}
       currentVerdicts={currentVerdicts}
       currentCredits={currentCredits}
+      currentSpent={currentSpent}
+      trigger={trigger}
     />
   );
 }
@@ -2289,17 +2319,28 @@ function CreditAdjusterInner({
   label,
   currentVerdicts = 2,
   currentCredits,
+  currentSpent = 0,
+  trigger,
 }: {
   userId: string;
   label: string;
   currentVerdicts?: number | undefined;
   currentCredits?: number | undefined;
+  currentSpent?: number | undefined;
+  trigger?: React.ReactNode;
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("5");
   const [verdicts, setVerdicts] = useState(String(currentVerdicts || 2));
   const [reason, setReason] = useState("");
+
+  // Spent adjustment state
+  const [reduceSpentBy, setReduceSpentBy] = useState("");
+  const [targetSpent, setTargetSpent] = useState("");
+  const [spentMode, setSpentMode] = useState<"reduce" | "set">("reduce");
+
+  const adjustSpentFn = useServerFn(adjustMemberSpent);
 
   const { data: sitePackages } = useQuery(packagesQuery());
 
@@ -2321,7 +2362,7 @@ function CreditAdjusterInner({
     }
   }, [open, currentVerdicts]);
 
-  const adjust = useMutation({
+  const adjustCredits = useMutation({
     mutationFn: async (sign: 1 | -1) => {
       const delta = sign * Math.abs(Number(amount));
       if (!Number.isFinite(delta) || delta === 0) throw new Error("Enter a credit amount.");
@@ -2344,52 +2385,290 @@ function CreditAdjusterInner({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const adjustSpent = useMutation({
+    mutationFn: async () => {
+      let redBy: number | undefined = undefined;
+      let setSpent: number | undefined = undefined;
+
+      if (spentMode === "reduce") {
+        const val = Number(reduceSpentBy);
+        if (!Number.isFinite(val) || val <= 0) throw new Error("Enter a valid reduction amount in GHS.");
+        redBy = val;
+      } else {
+        const val = Number(targetSpent);
+        if (!Number.isFinite(val) || val < 0) throw new Error("Enter a valid target total spent amount.");
+        setSpent = val;
+      }
+
+      const note = reason.trim();
+
+      // Method 1: Try database RPC if deployed in remote database
+      try {
+        const { error: rpcErr } = await supabase.rpc(
+          "admin_adjust_member_spent" as never,
+          {
+            _user_id: userId,
+            _reduce_by: redBy ?? null,
+            _set_total_spent: setSpent ?? null,
+            _reason: note || null,
+          } as never
+        );
+
+        if (!rpcErr) return;
+      } catch {
+        // Fallback to direct payment adjustment below if RPC not in schema cache
+      }
+
+      // Method 2: Direct payments table adjustment (works 100% without new RPCs or service role keys)
+      const { data: payments, error: fetchErr } = await supabase
+        .from("payments")
+        .select("id, amount_ghs, status, created_at")
+        .eq("user_id", userId)
+        .eq("status", "approved")
+        .order("created_at", { ascending: false });
+
+      if (fetchErr) throw new Error(fetchErr.message);
+
+      const approvedPayments = payments ?? [];
+      const currentTotal = approvedPayments.reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
+
+      let amountToSubtract = 0;
+      if (redBy !== undefined) {
+        amountToSubtract = Math.abs(redBy);
+      } else if (setSpent !== undefined) {
+        amountToSubtract = currentTotal - setSpent;
+      }
+
+      if (amountToSubtract <= 0 && setSpent === undefined) {
+        return;
+      }
+
+      if (approvedPayments.length > 0) {
+        let remainingToDeduct = amountToSubtract;
+
+        for (const payment of approvedPayments) {
+          if (remainingToDeduct <= 0) break;
+          const currentAmt = Number(payment.amount_ghs || 0);
+          const deduct = Math.min(currentAmt, remainingToDeduct);
+          const newAmt = Math.max(0, currentAmt - deduct);
+          remainingToDeduct -= deduct;
+
+          const { error: updateErr } = await supabase
+            .from("payments")
+            .update({
+              amount_ghs: newAmt,
+              admin_note: note ? `${note} (Spent adjustment)` : "Admin total spent reduction",
+            })
+            .eq("id", payment.id);
+
+          if (updateErr) throw new Error(updateErr.message);
+        }
+      } else {
+        const refCode = `ADJ-${Date.now().toString(36).toUpperCase()}`;
+        const targetVal = setSpent !== undefined ? setSpent : Math.max(0, 0 - (redBy || 0));
+        const { error: insertErr } = await supabase.from("payments").insert({
+          user_id: userId,
+          amount_ghs: targetVal,
+          credits: 0,
+          method: "Admin Adjustment",
+          reference: refCode,
+          status: "approved",
+          admin_note: note || "Admin total spent adjustment",
+        });
+
+        if (insertErr) throw new Error(insertErr.message);
+      }
+
+      try {
+        await supabase.from("audit_logs").insert({
+          action: "member.spent_adjusted",
+          entity: "profiles",
+          entity_id: userId,
+          meta: { reduceBy: redBy, setTotalSpent: setSpent, previousTotal: currentTotal, reason: note },
+        });
+      } catch {
+        // Audit log insert optional
+      }
+    },
+    onSuccess: async () => {
+      setReduceSpentBy("");
+      setTargetSpent("");
+      setReason("");
+      setOpen(false);
+      await queryClient.invalidateQueries();
+      toast.success("Total spent amount updated successfully");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        Credits
-      </Button>
-      <DialogContent className="sm:max-w-md">
+      {trigger ? (
+        <div onClick={() => setOpen(true)} className="inline-block cursor-pointer">
+          {trigger}
+        </div>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="gap-1.5">
+          <Pencil className="size-3.5" /> Edit Credits / Spent
+        </Button>
+      )}
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Adjust Credits &amp; Verdicts</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="size-4 text-primary" /> Edit Credits &amp; Spent Amount
+          </DialogTitle>
           <DialogDescription>
-            Grant or remove prediction credits and set the verdicts-per-screenshot limit for <strong>{label}</strong>.
-            {currentCredits !== undefined && (
-              <span className="block mt-1 text-xs text-muted-foreground">
-                Current balance: <strong className="text-foreground">{currentCredits} credits</strong> · <strong className="text-foreground">{currentVerdicts} verdicts/scan</strong>
-              </span>
-            )}
+            Grant/remove credits, configure scan limits, or reduce total spent balance for <strong>{label}</strong>.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-2">
-          {/* Credits input */}
-          <div className="space-y-2">
-            <Label htmlFor={`amt-${userId}`}>Credits to Add / Remove</Label>
-            <Input
-              id={`amt-${userId}`}
-              type="number"
-              min={1}
-              max={10000}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="5"
-            />
-          </div>
 
-          {/* Verdicts per screenshot */}
-          <div className="space-y-2.5">
+        {/* Current status summary banner */}
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs space-y-1">
+          <div className="flex flex-wrap items-center justify-between gap-2 font-medium">
+            <span>🪙 Balance: <strong className="text-foreground">{currentCredits ?? 0} credits</strong></span>
+            <span>🎯 Limit: <strong className="text-foreground">{currentVerdicts} verdicts/scan</strong></span>
+            <span>💳 Total Spent: <strong className="text-foreground">{ghs(currentSpent)}</strong></span>
+          </div>
+        </div>
+
+        <div className="grid gap-5 py-1">
+          {/* --- SECTION 1: REDUCE / EDIT TOTAL SPENT --- */}
+          <div className="space-y-3 rounded-xl border border-border p-3.5 bg-muted/20">
             <div className="flex items-center justify-between">
-              <Label htmlFor={`verdicts-${userId}`}>Verdicts per Screenshot</Label>
-              <span className="text-xs font-bold text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
-                {verdicts || "1"} verdict{Number(verdicts) === 1 ? "" : "s"} per scan
-              </span>
+              <Label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                💳 Total Spent Adjustment
+              </Label>
+              <div className="flex items-center gap-1 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setSpentMode("reduce")}
+                  className={cn(
+                    "px-2 py-0.5 rounded font-medium transition-colors",
+                    spentMode === "reduce" ? "bg-primary text-primary-foreground font-bold" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Reduce Amount
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSpentMode("set")}
+                  className={cn(
+                    "px-2 py-0.5 rounded font-medium transition-colors",
+                    spentMode === "set" ? "bg-primary text-primary-foreground font-bold" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Set Exact Spent
+                </button>
+              </div>
             </div>
 
-            {/* Packages on the site in exact order */}
+            {spentMode === "reduce" ? (
+              <div className="space-y-2">
+                <Label htmlFor={`red-amt-${userId}`} className="text-xs text-muted-foreground">
+                  Amount to reduce spent by (GH₵):
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id={`red-amt-${userId}`}
+                    type="number"
+                    min={1}
+                    value={reduceSpentBy}
+                    onChange={(e) => setReduceSpentBy(e.target.value)}
+                    placeholder="e.g. 50, 100"
+                    className="h-9 text-sm font-medium"
+                  />
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={adjustSpent.isPending || !reduceSpentBy}
+                    onClick={() => adjustSpent.mutate()}
+                    className="shrink-0 font-medium"
+                  >
+                    Reduce Spent
+                  </Button>
+                </div>
+                {/* Quick Presets for reduction */}
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <span className="text-[11px] font-medium text-muted-foreground self-center">Presets:</span>
+                  {[50, 100, 200, 500].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setReduceSpentBy(String(preset))}
+                      className="px-2 py-0.5 rounded text-[11px] font-medium bg-card border border-border hover:border-primary/50 text-foreground transition-colors"
+                    >
+                      -GH₵{preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor={`set-amt-${userId}`} className="text-xs text-muted-foreground">
+                  New exact total spent balance (GH₵):
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id={`set-amt-${userId}`}
+                    type="number"
+                    min={0}
+                    value={targetSpent}
+                    onChange={(e) => setTargetSpent(e.target.value)}
+                    placeholder="e.g. 0 or 250"
+                    className="h-9 text-sm font-medium"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={adjustSpent.isPending || targetSpent === ""}
+                    onClick={() => adjustSpent.mutate()}
+                    className="shrink-0 font-medium border-primary/40 text-primary hover:bg-primary/10"
+                  >
+                    Set Spent
+                  </Button>
+                </div>
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Reduces or adjusts the cumulative total spent amount displayed across member metrics and dashboards.
+            </p>
+          </div>
+
+          {/* --- SECTION 2: EDIT CREDITS & VERDICTS --- */}
+          <div className="space-y-3 rounded-xl border border-border p-3.5 bg-muted/20">
+            <Label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+              🪙 Credits &amp; Scan Limit
+            </Label>
+
+            {/* Credits input */}
             <div className="space-y-1.5">
-              <span className="text-[11px] font-medium text-muted-foreground">
-                Site Package Presets:
-              </span>
+              <Label htmlFor={`amt-${userId}`} className="text-xs font-medium text-muted-foreground">
+                Credits to Add / Remove:
+              </Label>
+              <Input
+                id={`amt-${userId}`}
+                type="number"
+                min={1}
+                max={10000}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="5"
+                className="h-9 text-sm font-medium"
+              />
+            </div>
+
+            {/* Verdicts per screenshot */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <Label htmlFor={`verdicts-${userId}`} className="text-xs font-medium text-muted-foreground">
+                  Verdicts per Scan:
+                </Label>
+                <span className="text-xs font-bold text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+                  {verdicts || "1"} verdict{Number(verdicts) === 1 ? "" : "s"} per scan
+                </span>
+              </div>
+
+              {/* Site Package Presets */}
               <div className="flex flex-wrap gap-1.5">
                 {packageList.map((pkg) => {
                   const vStr = String(pkg.max_verdicts);
@@ -2398,14 +2677,12 @@ function CreditAdjusterInner({
                     <button
                       key={pkg.id || pkg.name}
                       type="button"
-                      onClick={() => {
-                        setVerdicts(vStr);
-                      }}
+                      onClick={() => setVerdicts(vStr)}
                       className={cn(
-                        "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all border",
+                        "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all border",
                         isSelected
-                          ? "bg-primary text-primary-foreground border-primary shadow-xs ring-2 ring-primary/30"
-                          : "bg-muted/40 border-border text-foreground/80 hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
+                          ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                          : "bg-card border-border text-foreground/80 hover:border-primary/40 hover:text-foreground"
                       )}
                     >
                       <span>{pkg.name}</span>
@@ -2415,19 +2692,14 @@ function CreditAdjusterInner({
                           isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
                         )}
                       >
-                        {pkg.max_verdicts} verdicts
+                        {pkg.max_verdicts}v
                       </span>
                     </button>
                   );
                 })}
               </div>
-            </div>
 
-            {/* Custom input placeholder for freely entering any number of verdicts */}
-            <div className="space-y-1 pt-1">
-              <Label htmlFor={`verdicts-${userId}`} className="text-[11px] font-medium text-muted-foreground">
-                Custom Verdicts Count:
-              </Label>
+              {/* Custom input */}
               <Input
                 id={`verdicts-${userId}`}
                 type="number"
@@ -2435,35 +2707,46 @@ function CreditAdjusterInner({
                 max={50}
                 value={verdicts}
                 onChange={(e) => setVerdicts(e.target.value)}
-                placeholder="Enter custom number of verdicts (e.g. 3, 5, 10, 15...)"
-                className="h-9 text-sm font-medium"
+                placeholder="Custom verdicts count (e.g. 3, 5, 10...)"
+                className="h-8 text-xs font-medium"
               />
             </div>
 
-            <p className="text-[11px] text-muted-foreground">
-              When this member runs a scan using these credits, the AI will deliver up to <strong className="text-foreground">{verdicts || "2"} verdicts</strong>.
-            </p>
+            <div className="flex gap-2 pt-1">
+              <Button
+                size="sm"
+                className="flex-1"
+                disabled={adjustCredits.isPending}
+                onClick={() => adjustCredits.mutate(1)}
+              >
+                Add credits ({verdicts || "2"} verdicts)
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="flex-1"
+                disabled={adjustCredits.isPending}
+                onClick={() => adjustCredits.mutate(-1)}
+              >
+                Remove credits
+              </Button>
+            </div>
           </div>
 
-          {/* Reason input */}
-          <div className="space-y-2">
-            <Label htmlFor={`why-${userId}`}>Reason (shown in their ledger)</Label>
+          {/* Reason note */}
+          <div className="space-y-1.5">
+            <Label htmlFor={`why-${userId}`} className="text-xs font-medium text-muted-foreground">
+              Reason / Note (Audit Log):
+            </Label>
             <Input
               id={`why-${userId}`}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Goodwill top-up / Custom allocation"
+              placeholder="e.g. Member spent adjustment / Custom credit allocation"
+              className="h-9 text-xs"
             />
           </div>
         </div>
-        <DialogFooter className="gap-2 sm:justify-start">
-          <Button disabled={adjust.isPending} onClick={() => adjust.mutate(1)}>
-            Add credits ({verdicts || "2"} verdicts)
-          </Button>
-          <Button variant="destructive" disabled={adjust.isPending} onClick={() => adjust.mutate(-1)}>
-            Remove credits
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -161,3 +161,103 @@ export const explodePlatformData = createServerFn({ method: "POST" })
       throw fallbackError;
     }
   });
+
+export const adjustMemberSpent = createServerFn({ method: "POST" })
+  .middleware([requireAnalysisAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        reduceBy: z.number().optional(),
+        setTotalSpent: z.number().optional(),
+        reason: z.string().optional(),
+      })
+      .parse(data)
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    if (roleError) throw new Error(roleError.message);
+    if (!isAdmin) throw new Error("FORBIDDEN");
+
+    // Primary: RPC execution
+    const { data: result, error: rpcError } = await supabase.rpc(
+      "admin_adjust_member_spent" as never,
+      {
+        _user_id: data.userId,
+        _reduce_by: data.reduceBy ?? null,
+        _set_total_spent: data.setTotalSpent ?? null,
+        _reason: data.reason ?? null,
+      } as never
+    );
+
+    if (!rpcError && result !== null && result !== undefined) {
+      return { ok: true, finalSpent: Number(result) };
+    }
+
+    // Fallback: Write adjustment directly to payments table using service role client if configured
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+      const { data: payments, error: payError } = await supabaseAdmin
+        .from("payments")
+        .select("amount_ghs")
+        .eq("user_id", data.userId)
+        .eq("status", "approved");
+
+      if (payError) throw new Error(payError.message);
+
+      const approvedSum = (payments ?? []).reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
+
+      let adjustmentDelta = 0;
+      if (data.reduceBy !== undefined && data.reduceBy > 0) {
+        adjustmentDelta = -Math.abs(data.reduceBy);
+      } else if (data.setTotalSpent !== undefined) {
+        adjustmentDelta = data.setTotalSpent - approvedSum;
+      }
+
+      if (adjustmentDelta === 0) {
+        return { ok: true, finalSpent: approvedSum };
+      }
+
+      const refCode = `ADJ-${Date.now().toString(36).toUpperCase()}`;
+      const { error: insertError } = await supabaseAdmin.from("payments").insert({
+        user_id: data.userId,
+        amount_ghs: adjustmentDelta,
+        credits: 0,
+        method: "Admin Adjustment",
+        reference: refCode,
+        status: "approved",
+        admin_note: data.reason?.trim() || "Admin total spent reduction/adjustment",
+        reviewed_by: userId,
+        reviewed_at: new Date().toISOString(),
+      });
+
+      if (insertError) throw new Error(insertError.message);
+
+      const newFinalSpent = Math.max(0, approvedSum + adjustmentDelta);
+
+      await supabaseAdmin.from("audit_logs").insert({
+        actor_id: userId,
+        action: "member.spent_adjusted",
+        entity: "profiles",
+        entity_id: data.userId,
+        meta: {
+          previousSpent: approvedSum,
+          adjustmentDelta,
+          finalSpent: newFinalSpent,
+          reason: data.reason,
+        },
+      });
+
+      return { ok: true, finalSpent: newFinalSpent };
+    } catch (fallbackError) {
+      if (rpcError) throw new Error(rpcError.message);
+      throw fallbackError;
+    }
+  });
+
