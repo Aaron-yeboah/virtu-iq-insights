@@ -137,6 +137,7 @@ export type Database = {
           credits: number
           id: string
           is_active: boolean
+          is_popular: boolean
           max_verdicts: number
           name: string
           perks: Json
@@ -149,6 +150,7 @@ export type Database = {
           credits: number
           id?: string
           is_active?: boolean
+          is_popular?: boolean
           max_verdicts?: number
           name: string
           perks?: Json
@@ -161,6 +163,7 @@ export type Database = {
           credits?: number
           id?: string
           is_active?: boolean
+          is_popular?: boolean
           max_verdicts?: number
           name?: string
           perks?: Json

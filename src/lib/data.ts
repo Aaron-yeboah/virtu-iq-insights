@@ -34,7 +34,7 @@ export const packagesQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("packages")
-        .select("id, name, slug, price_ghs, credits, perks, sort_order, max_verdicts")
+        .select("id, name, slug, price_ghs, credits, perks, sort_order, max_verdicts, is_popular")
         .eq("is_active", true)
         .order("sort_order");
       if (error) throw error;
@@ -324,6 +324,7 @@ export type PackageRow = {
   perks: unknown;
   max_verdicts: number;
   is_active: boolean;
+  is_popular: boolean;
   sort_order: number;
 };
 
@@ -333,7 +334,7 @@ export const adminPackagesQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("packages")
-        .select("id, name, slug, price_ghs, credits, perks, max_verdicts, is_active, sort_order")
+        .select("id, name, slug, price_ghs, credits, perks, max_verdicts, is_active, is_popular, sort_order")
         .order("sort_order");
       if (error) throw error;
       return (data ?? []) as PackageRow[];

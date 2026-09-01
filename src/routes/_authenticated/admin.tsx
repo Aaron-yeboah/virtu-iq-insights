@@ -2478,6 +2478,7 @@ type PackageDraft = {
   perks: string;
   max_verdicts: string;
   is_active: boolean;
+  is_popular: boolean;
   sort_order: string;
 };
 const emptyDraft: PackageDraft = {
@@ -2489,6 +2490,7 @@ const emptyDraft: PackageDraft = {
   perks: "",
   max_verdicts: "2",
   is_active: true,
+  is_popular: false,
   sort_order: "0",
 };
 
@@ -2701,6 +2703,7 @@ function MonetisationManager() {
         _credits: Math.trunc(Number(d.credits)),
         _perks: perks,
         _is_active: d.is_active,
+        _is_popular: d.is_popular,
         _sort_order: Math.trunc(Number(d.sort_order) || 0),
         _max_verdicts: Math.max(1, Math.trunc(Number(d.max_verdicts) || 1)),
       });
@@ -2724,6 +2727,7 @@ function MonetisationManager() {
         _credits: p.credits,
         _perks: (p.perks as string[]) ?? [],
         _is_active: !p.is_active,
+        _is_popular: p.is_popular,
         _sort_order: p.sort_order,
         _max_verdicts: p.max_verdicts,
       });
@@ -2772,6 +2776,7 @@ function MonetisationManager() {
             <div className="min-w-0">
               <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                 {p.name}
+                {p.is_popular && <Badge className="bg-primary text-primary-foreground">⭐ Popular</Badge>}
                 {!p.is_active && <Badge variant="secondary">Hidden</Badge>}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -2801,6 +2806,7 @@ function MonetisationManager() {
                     perks: (((p.perks as string[]) ?? []) as string[]).join("\n"),
                     max_verdicts: String(p.max_verdicts),
                     is_active: p.is_active,
+                    is_popular: p.is_popular,
                     sort_order: String(p.sort_order),
                   })
                 }
@@ -2905,6 +2911,14 @@ function MonetisationManager() {
                     onCheckedChange={(v) => setDraft({ ...draft, is_active: v })}
                   />
                   <Label htmlFor="pkg-active">Visible to members</Label>
+                </div>
+                <div className="flex items-end gap-2 pb-2">
+                  <Switch
+                    id="pkg-popular"
+                    checked={draft.is_popular}
+                    onCheckedChange={(v) => setDraft({ ...draft, is_popular: v })}
+                  />
+                  <Label htmlFor="pkg-popular">⭐ Mark as Popular</Label>
                 </div>
               </div>
               <div className="space-y-2">

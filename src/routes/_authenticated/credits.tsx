@@ -410,7 +410,7 @@ function UpgradeDialog() {
         {step === 1 && (
         <div className="grid gap-4 sm:grid-cols-3">
           {(packages ?? []).map((pkg) => {
-            const popular = pkg.slug === "plus";
+            const popular = pkg.is_popular === true;
             return (
               <button
                 key={pkg.id}
