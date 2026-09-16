@@ -278,8 +278,7 @@ export const adminPaymentsQuery = () =>
       const { data, error } = await supabase
         .from("payments")
         .select("id, user_id, amount_ghs, credits, kind, method, reference, sender_name, status, admin_note, created_at")
-        .order("created_at", { ascending: false })
-        .limit(1000);
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
