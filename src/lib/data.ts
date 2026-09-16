@@ -279,7 +279,7 @@ export const adminPaymentsQuery = () =>
         .from("payments")
         .select("id, user_id, amount_ghs, credits, kind, method, reference, sender_name, status, admin_note, created_at")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(1000);
       if (error) throw error;
       return data ?? [];
     },

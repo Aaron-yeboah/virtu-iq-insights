@@ -275,34 +275,46 @@ function AdminPage() {
   const isHistoryMode = selectedHistoryDate !== null;
   const isPastLockedDate = isHistoryMode && activeDateStr < todayStr;
 
-  const activeRevenue = (payments ?? [])
-    .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === activeDateStr)
-    .reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
-
   const selectedSnapshot = snapshotMap.get(activeDateStr);
+
+  const activeRevenue = selectedSnapshot
+    ? Number(selectedSnapshot.revenue_ghs || 0)
+    : (payments ?? [])
+        .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === activeDateStr)
+        .reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
 
   // If a past date is selected and a locked snapshot exists, use the locked rates for that past day.
   // This guarantees future commission changes in settings never alter historical records.
   const devRate = isPastLockedDate && selectedSnapshot
     ? Number(selectedSnapshot.developer_commission_rate)
     : Number(settings?.developer_commission_rate ?? 15);
-  const devCommission = (activeRevenue * devRate) / 100;
+  const devCommission = selectedSnapshot
+    ? Number(selectedSnapshot.dev_commission_ghs || 0)
+    : (activeRevenue * devRate) / 100;
 
   const adminRate = isPastLockedDate && selectedSnapshot
     ? Number(selectedSnapshot.admin_commission_rate)
     : Number(settings?.admin_commission_rate ?? 15);
-  const adminCommission = (activeRevenue * adminRate) / 100;
+  const adminCommission = selectedSnapshot
+    ? Number(selectedSnapshot.admin_commission_ghs || 0)
+    : (activeRevenue * adminRate) / 100;
 
   // Days that have approved revenue (for calendar indicators)
   const revenueDays = useMemo(() => {
     const days = new Set<string>();
+    for (const s of snapshots ?? []) {
+      if (Number(s.revenue_ghs || 0) > 0 && s.date) {
+        const dStr = typeof s.date === "string" ? s.date.slice(0, 10) : "";
+        if (dStr) days.add(dStr);
+      }
+    }
     for (const p of payments ?? []) {
       if (p.status === "approved" && p.created_at) {
         days.add(p.created_at.slice(0, 10));
       }
     }
     return Array.from(days).map((d) => new Date(d + "T00:00:00"));
-  }, [payments]);
+  }, [snapshots, payments]);
 
   // Format the selected date for display
   const activeDateLabel = activeDate

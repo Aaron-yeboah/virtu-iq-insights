@@ -181,16 +181,16 @@ GRANT EXECUTE ON FUNCTION public.admin_revert_dev_payout(uuid) TO authenticated,
 ALTER TABLE public.daily_commission_snapshots
   ADD COLUMN IF NOT EXISTS is_locked boolean NOT NULL DEFAULT false;
 
--- Trigger function to prevent mutation of locked historical daily revenue snapshots
+-- Trigger function to prevent mutation of locked historical daily revenue snapshot rates
 CREATE OR REPLACE FUNCTION public.prevent_locked_daily_snapshot_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
   IF (OLD.date < CURRENT_DATE OR OLD.is_locked = true) THEN
-    -- Allow updating locked status explicitly if needed, but block mutating historical rates/revenue
-    IF (NEW.revenue_ghs <> OLD.revenue_ghs OR NEW.developer_commission_rate <> OLD.developer_commission_rate OR NEW.admin_commission_rate <> OLD.admin_commission_rate) THEN
-      RAISE EXCEPTION 'CANNOT_MUTATE_LOCKED_DAILY_SNAPSHOT';
+    -- Prevent retroactively altering historical locked commission percentages
+    IF (NEW.developer_commission_rate <> OLD.developer_commission_rate OR NEW.admin_commission_rate <> OLD.admin_commission_rate OR NEW.default_partner_commission_rate <> OLD.default_partner_commission_rate) THEN
+      RAISE EXCEPTION 'CANNOT_MUTATE_LOCKED_DAILY_SNAPSHOT_RATES';
     END IF;
   END IF;
   RETURN NEW;
@@ -292,7 +292,11 @@ BEGIN
   FROM public.payments p
   WHERE p.status = 'approved' AND p.created_at IS NOT NULL AND p.created_at::date < CURRENT_DATE
   GROUP BY p.created_at::date
-  ON CONFLICT (date) DO NOTHING;
+  ON CONFLICT (date) DO UPDATE
+    SET revenue_ghs = EXCLUDED.revenue_ghs,
+        dev_commission_ghs = round(EXCLUDED.revenue_ghs * (daily_commission_snapshots.developer_commission_rate / 100.0), 2),
+        admin_commission_ghs = round(EXCLUDED.revenue_ghs * (daily_commission_snapshots.admin_commission_rate / 100.0), 2),
+        updated_at = now();
 
   -- Mark all past date snapshots as locked
   UPDATE public.daily_commission_snapshots
