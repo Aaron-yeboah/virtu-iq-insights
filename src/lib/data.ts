@@ -62,6 +62,7 @@ export type PaymentSettings = {
   developer_commission_rate?: number;
   admin_commission_rate?: number;
   default_partner_commission_rate?: number;
+  dev_payout_cleared_at?: string | null;
 };
 
 export const paymentSettingsQuery = () =>
@@ -71,7 +72,7 @@ export const paymentSettingsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payment_settings")
-        .select("momo_number, recipient_name, network, instructions, registration_fee_ghs, developer_commission_rate, admin_commission_rate, default_partner_commission_rate")
+        .select("momo_number, recipient_name, network, instructions, registration_fee_ghs, developer_commission_rate, admin_commission_rate, default_partner_commission_rate, dev_payout_cleared_at")
         .maybeSingle();
       if (error) throw error;
       return (data ?? null) as PaymentSettings | null;
@@ -228,6 +229,45 @@ export const adminDailyCommissionSnapshotsQuery = () =>
         return [] as DailyCommissionSnapshot[];
       }
       return (data ?? []) as DailyCommissionSnapshot[];
+    },
+  });
+
+export type DevPayoutRow = {
+  id: string;
+  amount_ghs: number;
+  cleared_at: string;
+  cleared_by: string | null;
+  note: string | null;
+  created_at: string;
+};
+
+export type DevCommissionSummary = {
+  unpaid_dev_commission_ghs: number;
+  lifetime_dev_commission_ghs: number;
+  total_paid_dev_commission_ghs: number;
+  last_cleared_at: string | null;
+};
+
+export const adminDevCommissionSummaryQuery = () =>
+  queryOptions({
+    queryKey: ["admin-dev-commission-summary"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_dev_commission_summary" as never);
+      if (error) return null;
+      return data as DevCommissionSummary;
+    },
+  });
+
+export const adminDevPayoutsQuery = () =>
+  queryOptions({
+    queryKey: ["admin-dev-payouts"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("dev_payouts")
+        .select("id, amount_ghs, cleared_at, cleared_by, note, created_at")
+        .order("cleared_at", { ascending: false });
+      if (error) return [] as DevPayoutRow[];
+      return (data ?? []) as DevPayoutRow[];
     },
   });
 

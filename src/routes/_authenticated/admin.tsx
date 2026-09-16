@@ -67,6 +67,8 @@ import {
 import {
   adminCreditOverviewQuery,
   adminDailyCommissionSnapshotsQuery,
+  adminDevCommissionSummaryQuery,
+  adminDevPayoutsQuery,
   adminMemberListQuery,
   adminPackagesQuery,
   adminPartnerApplicationsQuery,
@@ -82,6 +84,8 @@ import {
   type AdminApplicationRow,
   type AdminPartnerRow,
   type DailyCommissionSnapshot,
+  type DevCommissionSummary,
+  type DevPayoutRow,
   type PackageRow,
   type PartnerPayoutRow,
 } from "@/lib/data";
@@ -119,6 +123,8 @@ function useAdminRealtime(enabled: boolean) {
           void queryClient.invalidateQueries({ queryKey: ["admin-members"] });
           void queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] });
           void queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-dev-commission-summary"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-dev-payouts"] });
         }
       )
       .on(
@@ -131,6 +137,8 @@ function useAdminRealtime(enabled: boolean) {
           void queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] });
           void queryClient.invalidateQueries({ queryKey: ["credit-transactions"] });
           void queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-dev-commission-summary"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-dev-payouts"] });
         }
       )
       .on(
@@ -139,6 +147,8 @@ function useAdminRealtime(enabled: boolean) {
         () => {
           void queryClient.invalidateQueries({ queryKey: ["payment-settings"] });
           void queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-dev-commission-summary"] });
+          void queryClient.invalidateQueries({ queryKey: ["admin-dev-payouts"] });
         }
       )
       .on(
@@ -210,6 +220,14 @@ function AdminPage() {
     refetchOnWindowFocus: true,
   });
 
+  const [devPayoutDialogOpen, setDevPayoutDialogOpen] = useState(false);
+  const { data: devCommissionSummary } = useQuery({
+    ...adminDevCommissionSummaryQuery(),
+    enabled: isAdmin,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
+
   const snapshotMap = useMemo(() => {
     const map = new Map<string, DailyCommissionSnapshot>();
     for (const s of snapshots ?? []) {
@@ -235,6 +253,8 @@ function AdminPage() {
         queryClient.invalidateQueries({ queryKey: ["admin-members"] }),
         queryClient.invalidateQueries({ queryKey: ["admin-partner-payouts"] }),
         queryClient.invalidateQueries({ queryKey: ["admin-daily-commission-snapshots"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-dev-commission-summary"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-dev-payouts"] }),
       ]);
       toast.success("Payment reviewed");
     },
@@ -299,6 +319,8 @@ function AdminPage() {
     );
   }
 
+  const unpaidDevCommission = devCommissionSummary?.unpaid_dev_commission_ghs ?? devCommission;
+
   return (
     <>
       <PageHeader title="Admin console" description="Review payments, partners, commission settings and platform activity." />
@@ -332,14 +354,30 @@ function AdminPage() {
                 }}
                 revenueDays={revenueDays}
                 snapshotMap={snapshotMap}
+                payments={payments ?? []}
               />
             </div>
           }
         />
         <Stat
           label={isHistoryMode ? `Dev (${devRate}%) · ${activeDateLabel}` : `Dev Commission (${devRate}%)`}
-          value={ghs(devCommission)}
+          value={isHistoryMode ? ghs(devCommission) : ghs(unpaidDevCommission)}
           highlight
+          onClick={() => setDevPayoutDialogOpen(true)}
+          action={
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDevPayoutDialogOpen(true);
+              }}
+              className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs backdrop-blur-sm transition-all hover:bg-white/30 hover:scale-105 active:scale-95"
+              aria-label="Manage Developer Payouts"
+            >
+              <Coins className="size-3" />
+              Payouts
+            </button>
+          }
         />
         <Stat
           label={isHistoryMode ? `Admin (${adminRate}%) · ${activeDateLabel}` : `Admin Commission (${adminRate}%)`}
@@ -351,6 +389,10 @@ function AdminPage() {
         <Stat label="Analyses" value={String(stats?.analyses ?? 0)} />
         <Stat label="Pending payments" value={String(stats?.pending_payments ?? 0)} />
       </div>
+
+      {devPayoutDialogOpen && (
+        <DevPayoutDialog onClose={() => setDevPayoutDialogOpen(false)} />
+      )}
 
       <Tabs defaultValue="payments" className="mt-8 min-h-[600px]">
         <div className="sticky top-14 sm:top-16 lg:top-0 z-30 -mx-3 px-3 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 py-2.5 sm:py-3 bg-background/95 backdrop-blur-md border-b border-border/60 shadow-xs transition-all">
@@ -1365,14 +1407,36 @@ function ExplodeCard() {
   );
 }
 
-function Stat({ label, value, highlight, action }: { label: string; value: string; highlight?: boolean; action?: React.ReactNode }) {
+function Stat({
+  label,
+  value,
+  highlight,
+  action,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  action?: React.ReactNode;
+  onClick?: () => void;
+}) {
   return (
     <div
-      className={
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={cn(
         highlight
           ? "group relative overflow-hidden rounded-xl border border-primary/40 bg-gradient-to-br from-primary to-[#1D4ED8] p-5 text-primary-foreground shadow-[var(--shadow-soft)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-          : "group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.08] hover:shadow-md"
-      }
+          : "group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.08] hover:shadow-md",
+        onClick && "cursor-pointer active:scale-[0.99] select-none"
+      )}
     >
       <LogoSymbol
         aria-hidden
@@ -1413,6 +1477,7 @@ function RevenueHistoryCalendar({
   onSelect,
   revenueDays,
   snapshotMap,
+  payments,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -1420,6 +1485,7 @@ function RevenueHistoryCalendar({
   onSelect: (day: Date | undefined) => void;
   revenueDays: Date[];
   snapshotMap?: Map<string, DailyCommissionSnapshot>;
+  payments?: { amount_ghs: number; status: string; created_at: string | null }[];
 }) {
   const [page, setPage] = useState(0); // 0 = most recent 10 days, 1 = previous 10, etc.
   const stripRef = useRef<HTMLDivElement>(null);
@@ -1502,7 +1568,7 @@ function RevenueHistoryCalendar({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[calc(100vw-1.5rem)] max-w-[480px] sm:w-auto p-0 border border-slate-200/80 bg-white text-slate-900 shadow-2xl shadow-black/25 rounded-2xl overflow-hidden touch-manipulation"
+        className="w-[calc(100vw-1.5rem)] max-w-[520px] sm:w-auto p-0 border border-slate-200/80 bg-white text-slate-900 shadow-2xl shadow-black/25 rounded-2xl overflow-hidden touch-manipulation"
         align="end"
         sideOffset={8}
         collisionPadding={12}
@@ -1544,7 +1610,7 @@ function RevenueHistoryCalendar({
           </div>
         </div>
 
-        {/* 10-day strip with smooth touch scrolling and auto-scroll */}
+        {/* 10-day strip with daily revenue amounts */}
         <div
           ref={stripRef}
           className="flex gap-1.5 p-2.5 sm:p-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overscroll-contain touch-pan-x"
@@ -1556,13 +1622,14 @@ function RevenueHistoryCalendar({
             const isActiveDay = isSelected || (!selectedStr && isToday);
             const hasRevenue = revenueDaySet.has(ds);
             const snap = snapshotMap?.get(ds);
+            const calculatedRev = (payments ?? [])
+              .filter((p) => p.status === "approved" && (p.created_at || "").slice(0, 10) === ds)
+              .reduce((acc, p) => acc + Number(p.amount_ghs || 0), 0);
+            const dayRevenue = snap ? Number(snap.revenue_ghs || 0) : calculatedRev;
+
             const tooltipTitle = snap
-              ? `${hasRevenue ? `Revenue: ${ghs(snap.revenue_ghs || 0)} · ` : ""}Dev ${snap.developer_commission_rate}%, Admin ${snap.admin_commission_rate}%`
-              : hasRevenue
-                ? "Revenue recorded on this day"
-                : isToday
-                  ? "Today (Live Commission Rates)"
-                  : "No revenue recorded";
+              ? `Daily Revenue: ${ghs(dayRevenue)} · Dev ${snap.developer_commission_rate}%, Admin ${snap.admin_commission_rate}%`
+              : `Daily Revenue: ${ghs(dayRevenue)}`;
 
             return (
               <button
@@ -1574,7 +1641,7 @@ function RevenueHistoryCalendar({
                 }}
                 title={tooltipTitle}
                 className={cn(
-                  "relative flex flex-col items-center justify-center rounded-xl px-2 py-2 min-w-[2.75rem] sm:min-w-[3rem] shrink-0 transition-all duration-200 group/day cursor-pointer touch-manipulation select-none",
+                  "relative flex flex-col items-center justify-center rounded-xl px-2 py-2 min-w-[3.25rem] sm:min-w-[3.75rem] shrink-0 transition-all duration-200 group/day cursor-pointer touch-manipulation select-none",
                   isSelected
                     ? "bg-gradient-to-br from-[#DC2626] via-[#B91C1C] to-[#1D4ED8] text-white shadow-md shadow-red-600/30 scale-105 ring-2 ring-red-400/50"
                     : isToday
@@ -1603,18 +1670,19 @@ function RevenueHistoryCalendar({
                 )}>
                   {day.toLocaleDateString("en-GB", { month: "short" })}
                 </span>
-                {/* Revenue indicator dot */}
-                {hasRevenue && (
-                  <span
-                    className={cn(
-                      "absolute -top-1 -right-1 size-2.5 rounded-full ring-2",
-                      isSelected
-                        ? "bg-white ring-red-700 shadow-[0_0_6px_rgba(255,255,255,0.8)]"
-                        : "bg-red-600 ring-white shadow-[0_0_6px_rgba(220,38,38,0.5)]",
-                    )}
-                    title="Revenue recorded on this day"
-                  />
-                )}
+                {/* Daily Revenue Amount pill */}
+                <span
+                  className={cn(
+                    "mt-1.5 rounded-md px-1 py-0.5 text-[9px] font-black tracking-tight leading-none transition-all whitespace-nowrap",
+                    isSelected
+                      ? "bg-white/25 text-white"
+                      : dayRevenue > 0
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300/60 font-black"
+                        : "bg-slate-200/60 text-slate-500 font-semibold",
+                  )}
+                >
+                  {ghs(dayRevenue)}
+                </span>
                 {/* Today bottom indicator pill */}
                 {isToday && !isSelected && (
                   <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-red-600" />
@@ -1907,6 +1975,179 @@ function PartnerPayoutHistoryDialog({
               </div>
             </div>
           ))}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DevPayoutDialog({ onClose }: { onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const [note, setNote] = useState("");
+  const [confirmRevertId, setConfirmRevertId] = useState<string | null>(null);
+
+  const { data: summary, isLoading: summaryLoading } = useQuery(adminDevCommissionSummaryQuery());
+  const { data: payouts, isLoading: payoutsLoading } = useQuery(adminDevPayoutsQuery());
+
+  const unpaidComm = Number(summary?.unpaid_dev_commission_ghs ?? 0);
+  const lifetimeComm = Number(summary?.lifetime_dev_commission_ghs ?? 0);
+  const totalPaid = Number(summary?.total_paid_dev_commission_ghs ?? 0);
+
+  const clearPayout = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("admin_clear_dev_payout" as never, {
+        _note: note.trim() || null,
+      } as never);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-dev-commission-summary"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-dev-payouts"] }),
+        queryClient.invalidateQueries({ queryKey: ["payment-settings"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-stats"] }),
+        queryClient.invalidateQueries(),
+      ]);
+      toast.success("Developer payout confirmed & cleared");
+      setNote("");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const revertPayout = useMutation({
+    mutationFn: async (payoutId: string) => {
+      const { error } = await supabase.rpc("admin_revert_dev_payout" as never, {
+        _payout_id: payoutId,
+      } as never);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-dev-commission-summary"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-dev-payouts"] }),
+        queryClient.invalidateQueries({ queryKey: ["payment-settings"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-stats"] }),
+        queryClient.invalidateQueries(),
+      ]);
+      toast.success("Developer payout reverted");
+      setConfirmRevertId(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <Coins className="size-5 text-primary" />
+            Developer Commission Payout &amp; History
+          </DialogTitle>
+          <DialogDescription>
+            Developer commission accumulates continuously over time. Confirm payment to record a payout, or view and revert past disbursements.
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Summary stats row inside modal */}
+        <div className="grid grid-cols-3 gap-3 p-3.5 rounded-xl border border-primary/30 bg-primary/5">
+          <div>
+            <p className="text-[11px] font-medium text-muted-foreground">Unpaid Balance</p>
+            <p className="text-base font-bold text-primary">{summaryLoading ? "…" : ghs(unpaidComm)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-muted-foreground">Lifetime Earned</p>
+            <p className="text-base font-bold text-foreground">{summaryLoading ? "…" : ghs(lifetimeComm)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-muted-foreground">Total Paid</p>
+            <p className="text-base font-bold text-emerald-600">{summaryLoading ? "…" : ghs(totalPaid)}</p>
+          </div>
+        </div>
+
+        {/* Clear payout action box */}
+        <div className="rounded-xl border border-border p-4 bg-card space-y-3">
+          <p className="text-xs font-semibold text-foreground">Confirm New Payout</p>
+          <p className="text-xs text-muted-foreground">
+            Clear the current unpaid balance of <span className="font-bold text-foreground">{ghs(unpaidComm)}</span> after transferring payment to the developer.
+          </p>
+          <Input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Payment reference or note (optional, e.g. MoMo Ref #12345)"
+            className="text-xs"
+          />
+          <Button
+            type="button"
+            disabled={unpaidComm <= 0 || clearPayout.isPending}
+            onClick={() => clearPayout.mutate()}
+            className="w-full font-bold shadow-sm"
+          >
+            {clearPayout.isPending ? "Recording Payout…" : unpaidComm <= 0 ? "No Unpaid Balance to Clear" : `Confirm Developer Paid (${ghs(unpaidComm)})`}
+          </Button>
+        </div>
+
+        {/* Payout history list */}
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-foreground flex items-center justify-between">
+            <span>Payout History</span>
+            <span className="text-[11px] text-muted-foreground font-normal">{(payouts ?? []).length} past payout{(payouts ?? []).length === 1 ? "" : "s"}</span>
+          </p>
+          <div className="max-h-60 overflow-y-auto divide-y divide-border rounded-xl border border-border bg-card">
+            {payoutsLoading && <p className="p-4 text-xs text-muted-foreground">Loading payout history…</p>}
+            {!payoutsLoading && (payouts ?? []).length === 0 && (
+              <p className="p-4 text-xs text-muted-foreground text-center">No developer payouts recorded yet.</p>
+            )}
+            {(payouts ?? []).map((p: DevPayoutRow) => (
+              <div key={p.id} className="flex items-center justify-between p-3 text-xs gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-foreground text-sm">{ghs(p.amount_ghs)}</p>
+                  <p className="text-[11px] text-muted-foreground">{new Date(p.cleared_at).toLocaleString()}</p>
+                  {p.note && <p className="text-[11px] text-muted-foreground italic mt-0.5">Ref: {p.note}</p>}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-600/30 font-semibold">
+                    Paid
+                  </Badge>
+                  {confirmRevertId === p.id ? (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-6 px-2 text-[10px] font-semibold"
+                        disabled={revertPayout.isPending}
+                        onClick={() => revertPayout.mutate(p.id)}
+                      >
+                        {revertPayout.isPending ? "Reverting…" : "Confirm Revert"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-1.5 text-[10px]"
+                        disabled={revertPayout.isPending}
+                        onClick={() => setConfirmRevertId(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 gap-1 font-medium"
+                      onClick={() => setConfirmRevertId(p.id)}
+                      title="Revert mistakenly recorded payout"
+                    >
+                      <RotateCcw className="size-3" /> Revert
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <DialogFooter>

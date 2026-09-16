@@ -112,3 +112,46 @@ test("Daily Commission Snapshots - Locked Historical Rates Preserve Past Numbers
   assert.equal(computeCommission(1000, todayRates.devRate), 300);
   assert.equal(computeCommission(1000, todayRates.adminRate), 200);
 });
+
+test("Developer Payout Accumulation & Clearance History", () => {
+  type Payment = { id: string; amount_ghs: number; created_at: string };
+  type DevPayout = { id: string; amount_ghs: number; cleared_at: string; note: string | null };
+
+  const payments: Payment[] = [
+    { id: "p1", amount_ghs: 100, created_at: "2026-09-01T10:00:00Z" },
+    { id: "p2", amount_ghs: 200, created_at: "2026-09-02T10:00:00Z" },
+    { id: "p3", amount_ghs: 300, created_at: "2026-09-03T10:00:00Z" },
+  ];
+
+  let devPayoutClearedAt: string | null = null;
+  const devPayouts: DevPayout[] = [];
+  const devRate = 15; // 15%
+
+  function getUnpaidDevCommission() {
+    const eligiblePayments = payments.filter((p) => !devPayoutClearedAt || p.created_at > devPayoutClearedAt);
+    const totalRev = eligiblePayments.reduce((acc, p) => acc + p.amount_ghs, 0);
+    return computeCommission(totalRev, devRate);
+  }
+
+  // Initial state: 3 payments totaling 600 GHS revenue @ 15% dev commission = 90 GHS unpaid
+  assert.equal(getUnpaidDevCommission(), 90);
+
+  // Admin clears dev payout on Sept 2 after p1 and p2
+  devPayoutClearedAt = "2026-09-02T23:59:59Z";
+  devPayouts.push({
+    id: "payout-1",
+    amount_ghs: 45, // 15% of (100 + 200)
+    cleared_at: devPayoutClearedAt,
+    note: "MoMo Ref 123",
+  });
+
+  // After clearance, unpaid balance only counts p3 (created after Sept 2 clearance) = 15% of 300 = 45 GHS
+  assert.equal(getUnpaidDevCommission(), 45);
+
+  // Total paid to date is recorded in history
+  const totalPaid = devPayouts.reduce((acc, p) => acc + p.amount_ghs, 0);
+  assert.equal(totalPaid, 45);
+  assert.equal(devPayouts.length, 1);
+  assert.equal(devPayouts[0].note, "MoMo Ref 123");
+});
+
