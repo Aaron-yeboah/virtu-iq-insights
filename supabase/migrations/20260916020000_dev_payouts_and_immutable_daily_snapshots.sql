@@ -119,7 +119,8 @@ BEGIN
   -- Record cleared timestamp in payment_settings
   UPDATE public.payment_settings
      SET dev_payout_cleared_at = _t,
-         updated_at = now();
+         updated_at = now()
+   WHERE id = true;
 
   INSERT INTO public.audit_logs (actor_id, action, entity, entity_id, meta)
   VALUES (auth.uid(), 'dev.payout_cleared', 'payment_settings', _payout_id,
@@ -162,7 +163,8 @@ BEGIN
   -- Restore payment_settings cleared timestamp
   UPDATE public.payment_settings
      SET dev_payout_cleared_at = _prev_cleared_at,
-         updated_at = now();
+         updated_at = now()
+   WHERE id = true;
 
   INSERT INTO public.audit_logs (actor_id, action, entity, entity_id, meta)
   VALUES (auth.uid(), 'dev.payout_reverted', 'dev_payouts', _payout_id,
